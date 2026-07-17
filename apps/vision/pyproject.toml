@@ -9,7 +9,13 @@ description = "Stateless blueprint alignment, CV difference, and OCR service."
 requires-python = ">=3.12,<3.14"
 dependencies = [
   "fastapi>=0.124,<1",
+  "numpy>=2.2,<3",
+  "opencv-contrib-python==4.10.0.84",
+  "paddleocr>=3.0,<4",
+  "paddlepaddle>=3.0,<4",
+  "pillow>=11,<13",
   "pydantic>=2.12,<3",
+  "pymupdf>=1.25,<2",
   "uvicorn[standard]>=0.38,<1"
 ]
 
