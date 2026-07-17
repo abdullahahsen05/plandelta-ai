@@ -2,6 +2,7 @@ import "reflect-metadata";
 
 import { BadRequestException, RequestMethod, ValidationPipe } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
+import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module.js";
@@ -11,7 +12,10 @@ import { loadEnvironment } from "./config/environment.js";
 
 async function bootstrap(): Promise<void> {
   const environment = loadEnvironment();
-  const app = await NestFactory.create(AppModule, { bufferLogs: true });
+  const app = await NestFactory.create<NestExpressApplication>(AppModule, { bufferLogs: true });
+  if (environment.APP_ENV === "production") {
+    app.set("trust proxy", 1);
+  }
 
   app.setGlobalPrefix("v1", {
     exclude: [
