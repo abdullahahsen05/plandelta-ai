@@ -5,12 +5,12 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 0 — Discovery and repository foundation
-- Current task: Commit the verified monorepo and service foundations by concern
-- Last verified command: `pnpm test:e2e` on 2026-07-17 (all 10 tasks passed; Chromium landing smoke and FastAPI readiness passed)
+- Current phase: Phase 2 — Supabase schema, migrations, and authentication
+- Current task: Implement the versioned PostgreSQL schema, RLS policies, and authenticated data boundaries
+- Last verified command: `pnpm build` and `pnpm --filter @plandelta/web test:e2e` on 2026-07-17 (production build passed; all 3 Chromium journeys passed)
 - Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: None recorded
-- Local app status: Web, API, worker, and vision foundations build; live health endpoints and responsive landing page verified; processes stopped cleanly
+- Last completed commit: `2031843 test(web): cover fixture workbench journey`
+- Local app status: Phase 1 project shell and interactive sample workbench are responsive and verified; web, API, worker, and vision foundations build; processes stopped cleanly
 - Supabase status: Protected configuration, Auth/API, service role, REST database access, pooled runtime PostgreSQL, and direct migration PostgreSQL verified
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
@@ -44,7 +44,7 @@ Exit gate:
 - [x] AWS temporary CLI authentication works.
 - [ ] GitHub authentication works.
 - [x] Vercel authentication works.
-- [ ] No secret value appears in terminal output, Git, or documentation.
+- [x] No secret value appears in terminal output, Git, or documentation.
 
 ## Phase 0 — Discovery and repository foundation
 
@@ -59,32 +59,32 @@ Exit gate:
 - [x] Add Docker Compose skeleton and service health checks.
 - [x] Write the first README sections: problem, status, architecture, setup.
 - [x] Run install, lint, typecheck, tests, and build for the skeleton.
-- [ ] Commit in small verified foundation commits.
+- [x] Commit in small verified foundation commits.
 
 Exit gate:
 
-- [ ] A fresh install succeeds and the root quality commands exist.
-- [ ] No secret or generated build output is tracked.
-- [ ] PHASES.md reflects the real state.
+- [x] A fresh install succeeds and the root quality commands exist.
+- [x] No secret or generated build output is tracked.
+- [x] PHASES.md reflects the real state.
 
 ## Phase 1 — Product shell and design system
 
-- [ ] Implement design tokens from docs/DESIGN_SYSTEM.md.
-- [ ] Build responsive marketing entry page with a direct sample-demo action.
-- [ ] Build application shell and routes for project list, new project,
+- [x] Implement design tokens from docs/DESIGN_SYSTEM.md.
+- [x] Build responsive marketing entry page with a direct sample-demo action.
+- [x] Build application shell and routes for project list, new project,
       project detail, and analysis workspace.
-- [ ] Build blueprint workbench layout with fixture data: revision rail,
+- [x] Build blueprint workbench layout with fixture data: revision rail,
       canvas, comparison controls, change ledger, filters, and detail panel.
-- [ ] Add pan, zoom, fit, overlay opacity, before/after, and synchronized view.
-- [ ] Add loading, empty, failure, and reduced-motion states.
-- [ ] Verify keyboard navigation, focus visibility, and mobile fallbacks.
-- [ ] Add component and visual smoke tests.
+- [x] Add pan, zoom, fit, overlay opacity, before/after, and synchronized view.
+- [x] Add loading, empty, failure, and reduced-motion states.
+- [x] Verify keyboard navigation, focus visibility, and mobile fallbacks.
+- [x] Add component and visual smoke tests.
 
 Exit gate:
 
-- [ ] The fixture-driven journey is polished and responsive.
-- [ ] No generic placeholder dashboard or fake live analysis remains.
-- [ ] Web lint, typecheck, tests, and production build pass.
+- [x] The fixture-driven journey is polished and responsive.
+- [x] No generic placeholder dashboard or fake live analysis remains.
+- [x] Web lint, typecheck, tests, and production build pass.
 
 ## Phase 2 — Supabase schema, migrations, and authentication
 
