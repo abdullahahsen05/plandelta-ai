@@ -6,8 +6,8 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 7 — Hardening, documentation, and local release candidate
-- Current task: Run the final committed-history secret scan, publish the verified repository, and confirm default-branch CI
-- Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, and `pnpm build` completed as one root release gate on 2026-07-18; the fresh-clone rehearsal, final Docker builds and high/critical scans, non-root API/worker/vision startup, API and vision readiness, one-worker enforcement, and authenticated upload-to-report journey also passed (3 contract, 5 web, 26 API, and 27 vision unit tests; 3 contract, 26 API, 1 vision, and 6 browser E2E checks passed; the credentialed live browser journey was intentionally skipped in the fixture suite)
+- Current task: Publish the verified repository and confirm default-branch CI
+- Last verified command: Gitleaks `v8.30.1` scanned all 61 commits on 2026-07-18 with no leaks; the complete root release gate, fresh-clone rehearsal, final Docker builds and high/critical scans, non-root API/worker/vision startup, API and vision readiness, one-worker enforcement, and authenticated upload-to-report journey also passed (3 contract, 5 web, 26 API, and 27 vision unit tests; 3 contract, 26 API, 1 vision, and 6 browser E2E checks passed; the credentialed live browser journey was intentionally skipped in the fixture suite)
 - Active blockers: None; AWS resource creation remains intentionally gated behind Phase 7 rather than blocked by authority
 - Last completed implementation commit: `fe8627f fix(test): isolate browser build output`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
@@ -199,7 +199,7 @@ Exit gate:
 - [x] Run dependency and container vulnerability checks; resolve material
       findings.
 - [x] Run fresh-clone setup rehearsal.
-- [ ] Run secret scan and inspect full Git history.
+- [x] Run secret scan and inspect full Git history.
 - [ ] Create GitHub repository plandelta-ai and push verified commits.
 
 Exit gate:
