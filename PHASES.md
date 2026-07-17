@@ -5,14 +5,14 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 7 — Hardening, documentation, and local release candidate
-- Current task: Publish the verified repository and confirm default-branch CI
-- Last verified command: Gitleaks `v8.30.1` scanned all 61 commits on 2026-07-18 with no leaks; the complete root release gate, fresh-clone rehearsal, final Docker builds and high/critical scans, non-root API/worker/vision startup, API and vision readiness, one-worker enforcement, and authenticated upload-to-report journey also passed (3 contract, 5 web, 26 API, and 27 vision unit tests; 3 contract, 26 API, 1 vision, and 6 browser E2E checks passed; the credentialed live browser journey was intentionally skipped in the fixture suite)
+- Current phase: Phase 8 — Vercel frontend deployment
+- Current task: Connect the verified GitHub repository to Vercel, configure the production environment, and test the public frontend
+- Last verified command: GitHub Actions run `29619641074` passed all six default-branch jobs for commit `ca80500` on 2026-07-18; Gitleaks `v8.30.1` also scanned all 62 commits with no leaks, and annotated prerelease `v0.1.0-rc.1` was published from the green commit
 - Active blockers: None; AWS resource creation remains intentionally gated behind Phase 7 rather than blocked by authority
 - Last completed implementation commit: `fe8627f fix(test): isolate browser build output`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
-- GitHub status: Codex profile and CLI authentication verified for `abdullahahsen05`; `plandelta-ai` is available, no remote exists yet, and public repository creation waits only for the final committed-history secret scan
+- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed and annotated prerelease `v0.1.0-rc.1` is published
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: MFA-protected non-root IAM user, temporary browser-authenticated `plandelta` profile, `us-east-1`, billing visibility, required service reads, scoped permissions boundary, bounded role/instance-profile creation, EC2 pass-role, and GitHub OIDC verified; no billable project resources created
 - AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
@@ -200,13 +200,13 @@ Exit gate:
       findings.
 - [x] Run fresh-clone setup rehearsal.
 - [x] Run secret scan and inspect full Git history.
-- [ ] Create GitHub repository plandelta-ai and push verified commits.
+- [x] Create GitHub repository plandelta-ai and push verified commits.
 
 Exit gate:
 
-- [ ] Public repository is portfolio ready and contains no secrets.
-- [ ] CI passes on the default branch.
-- [ ] Local release tag and changelog are accurate.
+- [x] Public repository is portfolio ready and contains no secrets.
+- [x] CI passes on the default branch.
+- [x] Local release tag and changelog are accurate.
 
 ## Phase 8 — Vercel frontend deployment
 
