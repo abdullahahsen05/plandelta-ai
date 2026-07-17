@@ -67,7 +67,8 @@ jobs:
           cache-dependency-path: apps/vision/pyproject.toml
       - run: python -m venv .venv
       - run: .venv/bin/python -m pip install --upgrade pip
-      - run: .venv/bin/python -m pip install -e './apps/vision[dev]'
+      - run: .venv/bin/python -m pip install -e ./apps/vision
+      - run: .venv/bin/python -m pip install httpx mypy pytest ruff
       - run:
           .venv/bin/python -m ruff check apps/vision scripts/generate_vision_fixtures.py
           scripts/benchmark_vision.py scripts/train_changed_region_classifier.py
