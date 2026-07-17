@@ -5,12 +5,12 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 4 — FastAPI vision pipeline
-- Current task: Implement typed vision contracts, secure input resolution, page rendering, normalization, and alignment
-- Last verified command: `pnpm db:verify-clean`, `pnpm db:verify-behavior`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm --filter @plandelta/web test:e2e` on 2026-07-17 (isolated clean migration, database isolation/queue behavior, production builds, 21 unit tests, 3 vision health tests, and all 5 Chromium journeys passed)
+- Current phase: Phase 5 — End-to-end local product
+- Current task: Connect the authenticated web upload journey to the API, worker, real vision service, evidence viewer, and report
+- Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, the live FastAPI HTTP smoke, and `node scripts/python.mjs scripts/benchmark_vision.py` on 2026-07-17 (23 vision tests plus all repository tests/builds passed; real PaddleOCR text comparison and seven generated artifacts verified)
 - Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: `a05270e feat(api): wire validated application contract`
-- Local app status: Phase 3 API modules, safe multipart storage, consistent request boundaries, OpenAPI, and the durable single-concurrency worker are verified; all PlanDelta local processes stopped cleanly
+- Last completed commit: `9f88e78 test(vision): add golden CV and OCR evidence`
+- Local app status: Phase 4 deterministic OpenCV/PyMuPDF/PaddleOCR pipeline, safe internal HTTP boundary, normalized evidence, golden fixtures, and CPU benchmark are verified; all PlanDelta local processes stopped cleanly
 - Supabase status: Initial versioned migration applied; Auth/API, RLS isolation, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
@@ -126,26 +126,26 @@ Exit gate:
 
 ## Phase 4 — FastAPI vision pipeline
 
-- [ ] Implement typed request/result models from docs/API_CONTRACT.md.
-- [ ] Add health/readiness endpoints and engine version reporting.
-- [ ] Validate input paths/URLs, bytes, formats, page selection, and limits.
-- [ ] Implement PDF rendering and image normalization.
-- [ ] Implement alignment with quality metrics and safe fallbacks.
-- [ ] Implement directional diff, morphology, region extraction, merging, and
+- [x] Implement typed request/result models from docs/API_CONTRACT.md.
+- [x] Add health/readiness endpoints and engine version reporting.
+- [x] Validate input paths/URLs, bytes, formats, page selection, and limits.
+- [x] Implement PDF rendering and image normalization.
+- [x] Implement alignment with quality metrics and safe fallbacks.
+- [x] Implement directional diff, morphology, region extraction, merging, and
       normalized coordinates.
-- [ ] Implement crop-level PaddleOCR and text comparison.
-- [ ] Implement deterministic category and affected-trade rules.
-- [ ] Save overlay, evidence crops, debug metrics, and structured result.
-- [ ] Add golden tests for unchanged, translated, annotated, added-wall,
+- [x] Implement crop-level PaddleOCR and text comparison.
+- [x] Implement deterministic category and affected-trade rules.
+- [x] Save overlay, evidence crops, debug metrics, and structured result.
+- [x] Add golden tests for unchanged, translated, annotated, added-wall,
       removed-door, text-change, rotation, and invalid-input fixtures.
-- [ ] Benchmark a representative sample on CPU.
+- [x] Benchmark a representative sample on CPU.
 
 Exit gate:
 
-- [ ] The committed sample produces stable evidence-based regions.
-- [ ] An unchanged pair produces no material changes within tolerance.
-- [ ] Bad alignment is reported, not disguised as a confident result.
-- [ ] Pytest and formatting pass.
+- [x] The committed sample produces stable evidence-based regions.
+- [x] An unchanged pair produces no material changes within tolerance.
+- [x] Bad alignment is reported, not disguised as a confident result.
+- [x] Pytest and formatting pass.
 
 ## Phase 5 — End-to-end local product
 
