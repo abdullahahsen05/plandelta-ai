@@ -1,10 +1,13 @@
 import { randomUUID } from "node:crypto";
 
-import { Injectable, Logger } from "@nestjs/common";
+import { Inject, Injectable, Logger } from "@nestjs/common";
 
 import { DatabaseService } from "../database/database.service.js";
 import { Prisma, type Analysis } from "../generated/prisma/client.js";
 import { buildDeterministicReport } from "../reports/deterministic-report.js";
+import { LocalStorageProvider } from "../storage/local-storage.provider.js";
+import { OBJECT_STORAGE, type ObjectStorage } from "../storage/storage.types.js";
+import { persistVisionArtifacts } from "./artifact-persistence.js";
 import { JobQueueService } from "./job-queue.service.js";
 import { VisionClient } from "./vision-client.js";
 
@@ -16,6 +19,8 @@ export class AnalysisProcessorService {
     private readonly database: DatabaseService,
     private readonly queue: JobQueueService,
     private readonly vision: VisionClient,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+    private readonly localStorage: LocalStorageProvider,
   ) {}
 
   async process(claimed: Analysis, workerId: string, leaseSeconds: number) {
@@ -45,20 +50,42 @@ export class AnalysisProcessorService {
       if (!analysis) throw new Error("Claimed analysis no longer exists.");
       await this.queue.advance(analysis.id, workerId, "PREPROCESSING", "vision_request", 5);
 
-      const result = await this.vision.analyze({
+      const referenceLifetime = Math.min(
+        900,
+        Math.max(30, Number(process.env.VISION_TIMEOUT_SECONDS ?? 240) + 60),
+      );
+      const [baseline, candidate] = await Promise.all([
+        this.storage.createReadReference(analysis.baselineRevision.storageKey, referenceLifetime),
+        this.storage.createReadReference(analysis.candidateRevision.storageKey, referenceLifetime),
+      ]);
+      const scratchPrefix =
+        this.storage.provider === "LOCAL"
+          ? `analyses/${analysis.id}`
+          : `scratch/${analysis.id}/${correlationId}`;
+      const visionResult = await this.vision.analyze({
         analysisId: analysis.id,
         correlationId,
-        baseline: { kind: "local", path: analysis.baselineRevision.storageKey },
-        candidate: { kind: "local", path: analysis.candidateRevision.storageKey },
+        baseline,
+        candidate,
         selectedPage: Number(
           (analysis.configuration as { page?: unknown } | null)?.page ??
             analysis.candidateRevision.selectedPage ??
             1,
         ),
         configuration: analysis.configuration,
-        artifactOutput: { kind: "local", prefix: `analyses/${analysis.id}` },
+        artifactOutput: { kind: "local", prefix: scratchPrefix },
       });
-      if (result.analysisId !== analysis.id) throw new Error("Vision result analysis id mismatch.");
+      if (visionResult.analysisId !== analysis.id) {
+        await this.localStorage.deletePrefix(scratchPrefix).catch(() => undefined);
+        throw new Error("Vision result analysis id mismatch.");
+      }
+      const result = await persistVisionArtifacts(
+        visionResult,
+        analysis.id,
+        scratchPrefix,
+        this.storage,
+        this.localStorage,
+      );
 
       await this.database.inTransaction(async (transaction) => {
         await transaction.detectedChange.deleteMany({ where: { analysisId: analysis.id } });
@@ -93,7 +120,7 @@ export class AnalysisProcessorService {
             data: result.artifacts.map((artifact) => ({
               analysisId: analysis.id,
               kind: artifact.kind,
-              storageProvider: "LOCAL",
+              storageProvider: this.storage.provider,
               storageKey: artifact.storageKey,
               mimeType: artifact.mimeType,
               widthPx: artifact.widthPx,

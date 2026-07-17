@@ -6,8 +6,8 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 9 — AWS storage and AI providers
-- Current task: Implement and verify the private S3 provider, establish AWS cost controls, and add the bounded Bedrock summary path
-- Last verified command: Vercel deployment `dpl_G4C1fCMMBS1TZWwKioCN7EtUyoyY` from commit `81b533f` is Ready at `https://plandelta-ai.vercel.app`; landing, labelled sample, offline auth/upload boundaries, desktop and 390 × 844 layouts, eight security headers, zero console issues, and 13 public scripts with zero server-only variable-name matches passed on 2026-07-18; GitHub Actions run `29621308086` passed all six default-branch jobs
+- Current task: Establish AWS budget controls, then verify the new private S3 provider against a real development bucket and add the bounded Bedrock summary path
+- Last verified command: Authenticated non-root AWS identity and empty PlanDelta EC2/S3/Budgets baseline passed; the configurable S3 provider, encrypted and bounded object operations, short-lived read references, private scratch artifact promotion, environment validation, and cleanup behavior passed API typecheck, lint, and 35 tests on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 enables live authentication; this does not block Phase 9
 - Last completed implementation commit: `fe8627f fix(test): isolate browser build output`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one

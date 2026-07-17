@@ -100,8 +100,8 @@ export type VisionResult = z.infer<typeof visionResultSchema>;
 type VisionRequest = {
   analysisId: string;
   correlationId: string;
-  baseline: { kind: "local"; path: string };
-  candidate: { kind: "local"; path: string };
+  baseline: { kind: "local"; path: string } | { kind: "https"; url: string };
+  candidate: { kind: "local"; path: string } | { kind: "https"; url: string };
   selectedPage: number;
   configuration: unknown;
   artifactOutput: { kind: "local"; prefix: string };
