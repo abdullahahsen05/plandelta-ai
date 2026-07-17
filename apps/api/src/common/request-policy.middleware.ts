@@ -60,7 +60,7 @@ export class RequestPolicyMiddleware implements NestMiddleware {
   }
 
   private allowRequest(request: Request, response: Response) {
-    if (request.path.startsWith("/health/")) return true;
+    if (request.path === "/health/live") return true;
     const now = Date.now();
     const readOnly = ["GET", "HEAD", "OPTIONS"].includes(request.method);
     const limit = Number(
@@ -77,6 +77,11 @@ export class RequestPolicyMiddleware implements NestMiddleware {
     if (this.windows.size > 10_000) {
       for (const [candidate, value] of this.windows) {
         if (value.resetAt <= now) this.windows.delete(candidate);
+      }
+      while (this.windows.size > 10_000) {
+        const oldest = this.windows.keys().next().value;
+        if (!oldest) break;
+        this.windows.delete(oldest);
       }
     }
 
