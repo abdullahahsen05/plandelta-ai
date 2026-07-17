@@ -150,8 +150,9 @@ pnpm docker:down   Stop local service containers
 
 ### Troubleshooting
 
-- If an app port is busy, stop only the process you own or configure another port; PlanDelta's
-  browser tests intentionally use port 3100 and do not reuse an existing server.
+- If an app port is busy, stop only the process you own or configure another port. Browser tests use
+  an isolated Next build directory on port 3100, so they do not disturb the development server on
+  port 3000.
 - `NEXT_PUBLIC_API_URL` may be the API origin (`http://localhost:4000`) or include `/v1`; the web
   client normalizes it once.
 - A failed analysis remains visible with its safe error message and can be retried from the progress
@@ -176,4 +177,5 @@ See [PLAN.md](./PLAN.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and
 [docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract. API examples and
 operational limits are documented in [docs/OPERATIONS.md](./docs/OPERATIONS.md). Classifier scope,
 reproduction, measured metrics, and limitations are recorded in
-[docs/MODEL_CARD.md](./docs/MODEL_CARD.md).
+[docs/MODEL_CARD.md](./docs/MODEL_CARD.md). The current local gate and accepted base-image findings
+are recorded in [docs/RELEASE.md](./docs/RELEASE.md).

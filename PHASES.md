@@ -6,17 +6,17 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 7 — Hardening, documentation, and local release candidate
-- Current task: Audit accessibility, responsiveness, performance, error copy, security limits, observability, CI, and release documentation
-- Last verified command: classifier reproduction, `docker compose build vision`, production-image ONNX inference, `pnpm format`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, and `pnpm build` on 2026-07-17 (changed-region-cnn-v1 measured 1.000 accuracy and macro-F1 versus rules at 0.750 accuracy and 0.667 macro-F1 on the 192-example synthetic validation split; PyTorch/ONNX max logit error 0.00001144; production container ONNX inference passed; 27 vision, 19 API, all web/contracts tests, five browser journeys, and all production builds passed)
-- Active blockers: Cloud-only IAM create/pass-role access remains deferred by explicit user direction; no local implementation blocker
-- Last completed implementation commit: `860e6db feat(vision): integrate ONNX classification`
+- Current task: Run the final committed-history secret scan, publish the verified repository, and confirm default-branch CI
+- Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, and `pnpm build` completed as one root release gate on 2026-07-18; the fresh-clone rehearsal, final Docker builds and high/critical scans, non-root API/worker/vision startup, API and vision readiness, one-worker enforcement, and authenticated upload-to-report journey also passed (3 contract, 5 web, 26 API, and 27 vision unit tests; 3 contract, 26 API, 1 vision, and 6 browser E2E checks passed; the credentialed live browser journey was intentionally skipped in the fixture suite)
+- Active blockers: None; AWS resource creation remains intentionally gated behind Phase 7 rather than blocked by authority
+- Last completed implementation commit: `fe8627f fix(test): isolate browser build output`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
-- GitHub status: Codex profile and CLI authentication verified for `abdullahahsen05`; `plandelta-ai` is available, no remote exists yet, and public repository creation waits for the Docker local release gate
+- GitHub status: Codex profile and CLI authentication verified for `abdullahahsen05`; `plandelta-ai` is available, no remote exists yet, and public repository creation waits only for the final committed-history secret scan
 - Vercel status: CLI authentication verified; not deployed
-- AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
+- AWS status: MFA-protected non-root IAM user, temporary browser-authenticated `plandelta` profile, `us-east-1`, billing visibility, required service reads, scoped permissions boundary, bounded role/instance-profile creation, EC2 pass-role, and GitHub OIDC verified; no billable project resources created
 - AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
-- Credential preflight: Supabase, Vercel, GitHub, and non-root AWS service access passed; scoped IAM remains intentionally deferred for local demo work
+- Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
 ## Credential preflight — blocking before Phase 0
 
@@ -35,7 +35,7 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
       and never expose credentials.
 - [x] Verify GitHub authentication already available to Codex.
 - [x] Verify Vercel authentication without requesting a raw token in chat.
-- [ ] Record any unavailable optional deployment credentials, but obtain all
+- [x] Record any unavailable optional deployment credentials, but obtain all
       Supabase/AWS access needed by the committed plan.
 - [x] Receive explicit user confirmation to begin implementation.
 
@@ -190,15 +190,15 @@ Exit gate:
 
 ## Phase 7 — Hardening, documentation, and local release candidate
 
-- [ ] Audit accessibility, responsiveness, performance, and error copy.
-- [ ] Add rate limits, upload quotas, cleanup policy, and request timeouts.
-- [ ] Add structured logs, redaction, health checks, and job observability.
-- [ ] Add architecture diagram, product screenshots, API examples,
+- [x] Audit accessibility, responsiveness, performance, and error copy.
+- [x] Add rate limits, upload quotas, cleanup policy, and request timeouts.
+- [x] Add structured logs, redaction, health checks, and job observability.
+- [x] Add architecture diagram, product screenshots, API examples,
       limitations, and security notes to README/docs.
-- [ ] Add GitHub Actions for web, API, vision, E2E smoke, and secret scanning.
-- [ ] Run dependency and container vulnerability checks; resolve material
+- [x] Add GitHub Actions for web, API, vision, E2E smoke, and secret scanning.
+- [x] Run dependency and container vulnerability checks; resolve material
       findings.
-- [ ] Run fresh-clone setup rehearsal.
+- [x] Run fresh-clone setup rehearsal.
 - [ ] Run secret scan and inspect full Git history.
 - [ ] Create GitHub repository plandelta-ai and push verified commits.
 
