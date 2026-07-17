@@ -38,4 +38,14 @@ describe("LocalStorageProvider", () => {
       "Storage key is invalid",
     );
   });
+
+  it("deletes only the requested artifact prefix", async () => {
+    await storage.write("analyses/one/evidence/region.png", Buffer.from("remove"));
+    await storage.write("analyses/two/evidence/region.png", Buffer.from("keep"));
+
+    await storage.deletePrefix("analyses/one");
+
+    await expect(storage.exists("analyses/one/evidence/region.png")).resolves.toBe(false);
+    await expect(storage.exists("analyses/two/evidence/region.png")).resolves.toBe(true);
+  });
 });

@@ -11,6 +11,8 @@ function databaseWithProject() {
     project: { findFirst: vi.fn().mockResolvedValue({ id: "project", status: "ACTIVE" }) },
     planRevision: {
       create: vi.fn((input: { data: Record<string, unknown> }) => Promise.resolve(input.data)),
+      count: vi.fn().mockResolvedValue(0),
+      aggregate: vi.fn().mockResolvedValue({ _sum: { byteSize: 0n } }),
     },
   };
 }
@@ -21,6 +23,7 @@ function storageMock() {
     write,
     read: vi.fn(),
     delete: vi.fn().mockResolvedValue(undefined),
+    deletePrefix: vi.fn().mockResolvedValue(undefined),
     exists: vi.fn(),
   } satisfies ObjectStorage;
 }
@@ -101,6 +104,25 @@ describe("RevisionsService", () => {
       ),
       "PROJECT_NOT_FOUND",
       404,
+    );
+    expect(storage.write).not.toHaveBeenCalled();
+  });
+
+  it("rejects an upload when the daily owner quota is exhausted", async () => {
+    const database = databaseWithProject();
+    database.planRevision.count.mockResolvedValue(40);
+    const storage = storageMock();
+    const service = new RevisionsService(database as unknown as DatabaseService, storage);
+
+    await expectApiError(
+      service.upload(
+        "owner-a",
+        "00000000-0000-4000-8000-000000000020",
+        { label: "Candidate", role: "CANDIDATE" },
+        await pngFile(),
+      ),
+      "UPLOAD_QUOTA_EXCEEDED",
+      429,
     );
     expect(storage.write).not.toHaveBeenCalled();
   });

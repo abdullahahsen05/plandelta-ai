@@ -30,6 +30,18 @@ const environmentSchema = z.object({
   JOB_LEASE_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
   JOB_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(10).default(3),
   VISION_TIMEOUT_SECONDS: z.coerce.number().int().min(10).max(1800).default(240),
+  REQUEST_TIMEOUT_MS: z.coerce.number().int().min(1000).max(120_000).default(30_000),
+  RATE_LIMIT_READ_PER_MINUTE: z.coerce.number().int().min(10).max(5000).default(300),
+  RATE_LIMIT_WRITE_PER_MINUTE: z.coerce.number().int().min(5).max(1000).default(60),
+  MAX_UPLOADS_PER_DAY: z.coerce.number().int().min(2).max(500).default(40),
+  MAX_UPLOAD_BYTES_PER_DAY: z.coerce
+    .number()
+    .int()
+    .min(20 * 1024 * 1024)
+    .max(5 * 1024 * 1024 * 1024)
+    .default(500 * 1024 * 1024),
+  MAX_ANALYSES_PER_HOUR: z.coerce.number().int().min(1).max(100).default(12),
+  MAX_ACTIVE_ANALYSES: z.coerce.number().int().min(1).max(10).default(3),
 });
 
 export type Environment = z.infer<typeof environmentSchema>;

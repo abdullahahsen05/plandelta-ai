@@ -1,8 +1,9 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 
 import { ApiException } from "../common/api.exception.js";
 import { decodeCursor, encodeCursor } from "../common/pagination.js";
 import { DatabaseService } from "../database/database.service.js";
+import { OBJECT_STORAGE, type ObjectStorage } from "../storage/storage.types.js";
 import type { AnalysisListQueryDto, CreateAnalysisDto } from "./analysis.dto.js";
 
 export const safeAnalysisSelect = {
@@ -32,7 +33,47 @@ export const safeAnalysisSelect = {
 
 @Injectable()
 export class AnalysesService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
+  ) {}
+
+  private async enforceAnalysisQuota(ownerId: string) {
+    const since = new Date(Date.now() - 60 * 60 * 1000);
+    const [recentCount, activeCount] = await Promise.all([
+      this.database.analysis.count({
+        where: { requestedBy: ownerId, createdAt: { gte: since } },
+      }),
+      this.database.analysis.count({
+        where: {
+          requestedBy: ownerId,
+          status: {
+            in: [
+              "QUEUED",
+              "CLAIMED",
+              "PREPROCESSING",
+              "ALIGNING",
+              "DIFFING",
+              "OCR",
+              "CLASSIFYING",
+              "SUMMARIZING",
+              "RETRYING",
+            ],
+          },
+        },
+      }),
+    ]);
+    if (
+      recentCount >= Number(process.env.MAX_ANALYSES_PER_HOUR ?? 12) ||
+      activeCount >= Number(process.env.MAX_ACTIVE_ANALYSES ?? 3)
+    ) {
+      throw new ApiException(
+        "ANALYSIS_QUOTA_EXCEEDED",
+        "The analysis allowance has been reached. Wait for active work to finish.",
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
 
   async create(ownerId: string, projectId: string, input: CreateAnalysisDto) {
     if (input.baselineRevisionId === input.candidateRevisionId) {
@@ -84,6 +125,7 @@ export class AnalysesService {
         HttpStatus.BAD_REQUEST,
       );
     }
+    await this.enforceAnalysisQuota(ownerId);
 
     return this.database.analysis.create({
       data: {
@@ -194,5 +236,6 @@ export class AnalysesService {
         HttpStatus.CONFLICT,
       );
     }
+    await this.storage.deletePrefix(`analyses/${analysisId}`);
   }
 }

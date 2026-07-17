@@ -55,6 +55,29 @@ export class RevisionsService {
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
   ) {}
 
+  private async enforceUploadQuota(ownerId: string, incomingBytes: number) {
+    const since = new Date(Date.now() - 24 * 60 * 60 * 1000);
+    const [uploadCount, byteUsage] = await Promise.all([
+      this.database.planRevision.count({
+        where: { project: { ownerId }, createdAt: { gte: since } },
+      }),
+      this.database.planRevision.aggregate({
+        where: { project: { ownerId }, createdAt: { gte: since } },
+        _sum: { byteSize: true },
+      }),
+    ]);
+    const maxUploads = Number(process.env.MAX_UPLOADS_PER_DAY ?? 40);
+    const maxBytes = BigInt(process.env.MAX_UPLOAD_BYTES_PER_DAY ?? 500 * 1024 * 1024);
+    const usedBytes = byteUsage._sum.byteSize ?? 0n;
+    if (uploadCount >= maxUploads || usedBytes + BigInt(incomingBytes) > maxBytes) {
+      throw new ApiException(
+        "UPLOAD_QUOTA_EXCEEDED",
+        "The daily drawing upload allowance has been reached. Try again later.",
+        HttpStatus.TOO_MANY_REQUESTS,
+      );
+    }
+  }
+
   private async requireOwnedProject(ownerId: string, projectId: string) {
     const project = await this.database.project.findFirst({ where: { id: projectId, ownerId } });
     if (!project) {
@@ -159,6 +182,7 @@ export class RevisionsService {
       );
     }
     const inspected = await this.inspectFile(file);
+    await this.enforceUploadQuota(ownerId, file.size);
     const selectedPage = input.selectedPage ?? 1;
     if (selectedPage > inspected.pageCount) {
       throw new ApiException(

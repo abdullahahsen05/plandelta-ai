@@ -58,6 +58,11 @@ export class LocalStorageProvider implements ObjectStorage {
     await rm(this.resolveKey(key), { force: true });
   }
 
+  async deletePrefix(prefix: string) {
+    const directory = dirname(this.resolveKey(`${prefix}/.prefix-root`));
+    await rm(directory, { recursive: true, force: true });
+  }
+
   async exists(key: string) {
     try {
       await access(this.resolveKey(key));

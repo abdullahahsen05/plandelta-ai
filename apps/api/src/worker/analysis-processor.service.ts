@@ -1,6 +1,6 @@
 import { randomUUID } from "node:crypto";
 
-import { Injectable } from "@nestjs/common";
+import { Injectable, Logger } from "@nestjs/common";
 
 import { DatabaseService } from "../database/database.service.js";
 import { Prisma, type Analysis } from "../generated/prisma/client.js";
@@ -10,6 +10,8 @@ import { VisionClient } from "./vision-client.js";
 
 @Injectable()
 export class AnalysisProcessorService {
+  private readonly logger = new Logger(AnalysisProcessorService.name);
+
   constructor(
     private readonly database: DatabaseService,
     private readonly queue: JobQueueService,
@@ -17,6 +19,16 @@ export class AnalysisProcessorService {
   ) {}
 
   async process(claimed: Analysis, workerId: string, leaseSeconds: number) {
+    const startedAt = Date.now();
+    const correlationId = randomUUID();
+    this.logger.log(
+      JSON.stringify({
+        event: "analysis_processing_started",
+        analysisId: claimed.id,
+        workerId,
+        correlationId,
+      }),
+    );
     const heartbeat = setInterval(
       () => {
         void this.queue.heartbeat(claimed.id, workerId, leaseSeconds);
@@ -35,7 +47,7 @@ export class AnalysisProcessorService {
 
       const result = await this.vision.analyze({
         analysisId: analysis.id,
-        correlationId: randomUUID(),
+        correlationId,
         baseline: { kind: "local", path: analysis.baselineRevision.storageKey },
         candidate: { kind: "local", path: analysis.candidateRevision.storageKey },
         selectedPage: Number(
@@ -133,6 +145,17 @@ export class AnalysisProcessorService {
         });
         if (completion.count !== 1) throw new Error("Analysis lease ownership was lost.");
       });
+      this.logger.log(
+        JSON.stringify({
+          event: "analysis_processing_completed",
+          analysisId: analysis.id,
+          workerId,
+          correlationId,
+          durationMs: Date.now() - startedAt,
+          regionCount: result.changes.length,
+          engineVersion: result.engineVersion,
+        }),
+      );
     } finally {
       clearInterval(heartbeat);
     }
