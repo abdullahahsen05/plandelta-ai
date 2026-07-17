@@ -1,17 +1,24 @@
-import { ArrowRight, Check, ScanSearch } from "lucide-react";
+"use client";
+
+import { ArrowRight, Check, ImageOff, ScanSearch } from "lucide-react";
 import Image from "next/image";
+import { useState } from "react";
 
 import { changeKindMeta, type ChangeKind, type SampleChange } from "../lib/sample-data";
 
 export type ChangeFilter = "all" | ChangeKind;
+
+function sentenceCase(value: string) {
+  return value.length > 0 ? `${value[0]?.toUpperCase()}${value.slice(1)}` : value;
+}
 
 function EvidenceCrop({ label, variant }: { label: string; variant: "old" | "new" }) {
   return (
     <div className="evidence-crop">
       <span>{label}</span>
       <svg aria-hidden="true" viewBox="0 0 160 78">
-        <rect fill="#10263B" height="78" width="160" />
-        <g fill="none" opacity="0.8" stroke="#DCE7EC" strokeWidth="1.5">
+        <rect fill="#F7F6F2" height="78" width="160" />
+        <g fill="none" opacity="0.82" stroke="#263844" strokeWidth="1.5">
           <path d="M12 14h136v49H12zM56 14v49M104 14v49" />
           <path d={variant === "old" ? "M56 44h48" : "M56 44h22m12 0h14"} />
         </g>
@@ -28,6 +35,36 @@ function EvidenceCrop({ label, variant }: { label: string; variant: "old" | "new
         ) : null}
       </svg>
     </div>
+  );
+}
+
+function LiveEvidenceImage({ change }: { change: SampleChange }) {
+  const [failedUrl, setFailedUrl] = useState<string | null>(null);
+  const failed = failedUrl === change.evidenceUrl;
+
+  if (!change.evidenceUrl || failed) {
+    return failed ? (
+      <div className="evidence-image-error" role="status">
+        <ImageOff aria-hidden="true" size={18} />
+        <span>
+          Evidence preview could not load. The source drawings remain available in the viewer.
+        </span>
+      </div>
+    ) : null;
+  }
+
+  return (
+    <figure className="live-evidence-crop">
+      <Image
+        alt={`Before and revised evidence for change ${change.sequence}`}
+        height={220}
+        onError={() => setFailedUrl(change.evidenceUrl ?? null)}
+        src={change.evidenceUrl}
+        unoptimized
+        width={640}
+      />
+      <figcaption>Before on left · revised on right</figcaption>
+    </figure>
   );
 }
 
@@ -51,8 +88,11 @@ export function ChangeLedger({
     <aside aria-label="Change ledger" className="change-ledger">
       <div className="ledger-heading">
         <div>
-          <p className="eyebrow">CHANGE LEDGER</p>
-          <h2>{changes.length} evidence regions</h2>
+          <p className="eyebrow">ANALYSIS RESULT</p>
+          <h2>
+            {changes.length} {changes.length === 1 ? "change" : "changes"} found
+          </h2>
+          <p>Select a change to see what PlanDelta detected.</p>
         </div>
         <ScanSearch aria-hidden="true" size={20} strokeWidth={1.6} />
       </div>
@@ -65,7 +105,11 @@ export function ChangeLedger({
             onClick={() => onFilterChange(value)}
             type="button"
           >
-            {value === "all" ? "All" : changeKindMeta[value].label}
+            {value === "all"
+              ? "All"
+              : value === "modified"
+                ? "Changed"
+                : changeKindMeta[value].label}
           </button>
         ))}
       </div>
@@ -88,11 +132,11 @@ export function ChangeLedger({
                 <span className="ledger-sequence">{String(change.sequence).padStart(2, "0")}</span>
                 <span className="min-w-0 text-left">
                   <span className="ledger-row-meta">
-                    <b style={{ color: meta.color }}>{meta.shortLabel}</b> {meta.label} ·{" "}
-                    {change.category}
+                    <b style={{ color: meta.color }}>{meta.label}</b> ·{" "}
+                    {change.category.replaceAll("_", " ")}
                   </span>
-                  <strong>{change.title}</strong>
-                  <span>{change.trades.join(" · ")}</span>
+                  <strong>{sentenceCase(change.title)}</strong>
+                  <span>Relevant to {change.trades.join(" and ")}</span>
                 </span>
                 <span className="technical text-[10px] text-[#646762]">
                   {Math.round(change.confidence * 100)}%
@@ -103,7 +147,7 @@ export function ChangeLedger({
         ) : (
           <div className="ledger-empty">
             <Check aria-hidden="true" size={20} />
-            <p>No {filter} regions in this sample.</p>
+            <p>No {filter === "modified" ? "changed" : filter} items were detected.</p>
           </div>
         )}
       </div>
@@ -112,53 +156,53 @@ export function ChangeLedger({
         <section aria-live="polite" className="change-detail">
           <div className="detail-heading">
             <div>
-              <p className="eyebrow">
-                SELECTED EVIDENCE · {String(selected.sequence).padStart(2, "0")}
-              </p>
-              <h3>{selected.title}</h3>
+              <p className="eyebrow">WHAT CHANGED · {String(selected.sequence).padStart(2, "0")}</p>
+              <h3>{sentenceCase(selected.title)}</h3>
             </div>
             <span style={{ color: changeKindMeta[selected.kind].color }}>
               {changeKindMeta[selected.kind].label}
             </span>
           </div>
+
           {selected.evidenceUrl ? (
-            <figure className="live-evidence-crop">
-              {/* The API authorizes this private artifact through the same user session. */}
-              <Image
-                alt={`Baseline and candidate evidence for region ${selected.sequence}`}
-                height={220}
-                src={selected.evidenceUrl}
-                unoptimized
-                width={640}
-              />
-              <figcaption>Baseline · Candidate</figcaption>
-            </figure>
+            <LiveEvidenceImage change={selected} />
           ) : (
             <div className="crop-pair">
-              <EvidenceCrop label="Baseline crop" variant="old" />
-              <EvidenceCrop label="Candidate crop" variant="new" />
+              <EvidenceCrop label="Before" variant="old" />
+              <EvidenceCrop label="Revised" variant="new" />
             </div>
           )}
-          <dl className="detail-data">
-            <div>
-              <dt>Baseline text</dt>
-              <dd>{selected.oldText ?? "No matching text"}</dd>
-            </div>
-            <ArrowRight aria-hidden="true" size={14} />
-            <div>
-              <dt>Candidate text</dt>
-              <dd>{selected.newText ?? "Element absent"}</dd>
-            </div>
-          </dl>
+
+          {selected.oldText || selected.newText ? (
+            <dl className="detail-data">
+              <div>
+                <dt>Text before</dt>
+                <dd>{selected.oldText ?? "Not present"}</dd>
+              </div>
+              <ArrowRight aria-hidden="true" size={14} />
+              <div>
+                <dt>Text in revised drawing</dt>
+                <dd>{selected.newText ?? "Removed"}</dd>
+              </div>
+            </dl>
+          ) : (
+            <p className="geometry-change-note">
+              Drawing geometry changed here; no text change was detected.
+            </p>
+          )}
+
           <div className="detail-metrics">
             <span>
-              Confidence <b>{Math.round(selected.confidence * 100)}%</b>
+              Detection confidence <b>{Math.round(selected.confidence * 100)}%</b>
             </span>
             <span>
-              Affected trades <b>{selected.trades.join(", ")}</b>
+              Relevant work <b>{selected.trades.join(", ")}</b>
             </span>
           </div>
-          <p className="detail-impact">{selected.impact}</p>
+          <p className="detail-impact">
+            <strong>Review note</strong>
+            {selected.impact}
+          </p>
         </section>
       ) : null}
     </aside>

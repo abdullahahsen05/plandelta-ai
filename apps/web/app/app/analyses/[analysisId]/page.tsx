@@ -50,6 +50,8 @@ export default async function AnalysisPage({
   );
   const baselineArtifact = artifacts.find((artifact) => artifact.kind === "BASELINE_RENDER");
   const candidateArtifact = artifacts.find((artifact) => artifact.kind === "ALIGNED_CANDIDATE");
+  const baselineIsImage = baselineRevision?.mimeType.startsWith("image/") ?? false;
+  const candidateIsImage = candidateRevision?.mimeType.startsWith("image/") ?? false;
   const alignment = analysis.metrics.alignment;
   const alignmentRecord =
     alignment && typeof alignment === "object" ? (alignment as Record<string, unknown>) : {};
@@ -97,8 +99,21 @@ export default async function AnalysisPage({
     alignment: String(alignmentRecord.quality ?? alignmentRecord.method ?? "verified"),
     reprojectionError: `${metricNumber(alignmentRecord.reprojectionErrorPx).toFixed(2)} px`,
     changes,
-    baselineImageUrl: baselineArtifact ? `/api/artifacts/${baselineArtifact.id}` : undefined,
-    candidateImageUrl: candidateArtifact ? `/api/artifacts/${candidateArtifact.id}` : undefined,
+    baselineImageUrl:
+      baselineIsImage && baselineRevision
+        ? `/api/revisions/${baselineRevision.id}/preview`
+        : baselineArtifact
+          ? `/api/artifacts/${baselineArtifact.id}`
+          : undefined,
+    candidateImageUrl:
+      candidateIsImage && candidateRevision
+        ? `/api/revisions/${candidateRevision.id}/preview`
+        : candidateArtifact
+          ? `/api/artifacts/${candidateArtifact.id}`
+          : undefined,
+    alignedCandidateImageUrl: candidateArtifact
+      ? `/api/artifacts/${candidateArtifact.id}`
+      : undefined,
     documentWidth: baselineArtifact?.widthPx ?? undefined,
     documentHeight: baselineArtifact?.heightPx ?? undefined,
     reportSummary: report.executiveSummary,

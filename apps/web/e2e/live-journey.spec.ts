@@ -88,8 +88,19 @@ test("authenticated upload reaches real evidence and printable report", async ({
     await expect(page.getByRole("complementary", { name: "Change ledger" })).toBeVisible({
       timeout: 120_000,
     });
-    await expect(page.getByText(/1 evidence region/)).toBeVisible();
+    await expect(page.getByText("1 change found")).toBeVisible();
+    await expect(page.locator(".blueprint-canvas-host")).toHaveAttribute(
+      "data-preview-state",
+      "ready",
+    );
     await expect(page.locator(".live-evidence-crop img")).toHaveJSProperty("complete", true);
+    await expect
+      .poll(() =>
+        page
+          .locator(".live-evidence-crop img")
+          .evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
 
     const projectLink = page.locator(".workbench-crumbs a").first();
     const projectHref = await projectLink.getAttribute("href");

@@ -18,8 +18,8 @@ import { useState } from "react";
 
 import { sampleChanges, sampleProject } from "../lib/sample-data";
 import type { SampleChange } from "../lib/sample-data";
-import { ChangeLedger, type ChangeFilter } from "./change-ledger";
 import type { CompareMode } from "./blueprint-canvas";
+import { ChangeLedger, type ChangeFilter } from "./change-ledger";
 
 const BlueprintCanvas = dynamic(
   () => import("./blueprint-canvas").then((module) => module.BlueprintCanvas),
@@ -28,7 +28,7 @@ const BlueprintCanvas = dynamic(
     loading: () => (
       <div aria-busy="true" className="blueprint-canvas-loading">
         <span className="loading-line w-44" />
-        <p>Preparing blueprint viewport…</p>
+        <p>Preparing drawing comparison…</p>
       </div>
     ),
   },
@@ -49,6 +49,7 @@ export type WorkbenchData = {
   changes: SampleChange[];
   baselineImageUrl?: string | undefined;
   candidateImageUrl?: string | undefined;
+  alignedCandidateImageUrl?: string | undefined;
   documentWidth?: number | undefined;
   documentHeight?: number | undefined;
   reportSummary?: string | undefined;
@@ -74,32 +75,42 @@ function RevisionRail({ data }: { data: WorkbenchData }) {
   return (
     <aside aria-label="Revision rail" className="revision-rail">
       <div className="revision-rail-heading">
-        <p className="eyebrow">REVISION SET</p>
-        <h2>{data.sheet}</h2>
-        <p>{data.sheetTitle}</p>
+        <p className="eyebrow">DRAWINGS BEING COMPARED</p>
+        <h2>Before and revised</h2>
+        <p>
+          {data.sheet} · {data.sheetTitle}
+        </p>
       </div>
       {[data.baseline, data.candidate].map((revision, index) => (
         <article className="rail-revision" key={revision.label}>
-          <div className="rail-sheet-preview" aria-hidden="true">
-            <span>{data.sheet}</span>
-            <i className={index === 1 ? "candidate-mark" : undefined} />
+          <div
+            aria-hidden="true"
+            className={index === 1 ? "rail-revision-key candidate" : "rail-revision-key"}
+          >
+            {index === 0 ? "A" : "B"}
           </div>
           <div>
-            <span className="eyebrow">{revision.label}</span>
+            <span className="eyebrow">
+              {index === 0 ? "BEFORE · BASELINE" : "REVISED · CANDIDATE"}
+            </span>
             <h3>{revision.revision}</h3>
             <p>Issued {revision.issuedAt}</p>
           </div>
         </article>
       ))}
+      <p className="revision-explainer">
+        PlanDelta compares drawing B against drawing A. Change markers appear on the revised
+        drawing.
+      </p>
       <dl className="alignment-data">
         <div>
-          <dt>Alignment</dt>
+          <dt>Drawing alignment</dt>
           <dd>
             <span className="status-dot" /> {data.alignment}
           </dd>
         </div>
         <div>
-          <dt>Reprojection</dt>
+          <dt>Alignment error</dt>
           <dd>{data.reprojectionError}</dd>
         </div>
         <div>
@@ -109,17 +120,32 @@ function RevisionRail({ data }: { data: WorkbenchData }) {
       </dl>
       <p className="rail-note">
         {data.sample
-          ? "This is committed sample evidence, not a live uploaded result."
-          : "Live deterministic evidence. Verify every region against the source drawings."}
+          ? "Built-in example using committed sample drawings. It is not client data."
+          : "Result from your uploaded drawings. Verify each marked area before coordinating work."}
       </p>
     </aside>
   );
 }
 
+function modeDescription(mode: CompareMode) {
+  if (mode === "split") {
+    return "Original drawings are shown next to each other. The revised drawing carries the change markers.";
+  }
+  if (mode === "overlay") {
+    return "The aligned revised drawing is placed over the baseline. Adjust opacity to inspect the difference.";
+  }
+  if (mode === "swipe") {
+    return "Move the divider to reveal the aligned revised drawing over the baseline.";
+  }
+  if (mode === "baseline") return "Only the earlier baseline drawing is shown.";
+  if (mode === "candidate") return "Only the revised drawing is shown.";
+  return "The aligned baseline and revised drawing alternate automatically.";
+}
+
 export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) {
   const [selectedId, setSelectedId] = useState(data.changes[0]?.id ?? "");
   const [filter, setFilter] = useState<ChangeFilter>("all");
-  const [mode, setMode] = useState<CompareMode>("overlay");
+  const [mode, setMode] = useState<CompareMode>("split");
   const [opacity, setOpacity] = useState(72);
   const [swipe, setSwipe] = useState(58);
   const [zoom, setZoom] = useState(1);
@@ -149,25 +175,30 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
         </div>
         <div className="analysis-state">
           <span className="status-dot" />
-          <span>Complete</span>
+          <span>Analysis complete</span>
           <span className="technical">{data.engine}</span>
         </div>
         {data.reportUrl ? (
-          <a className="export-button" href={data.reportUrl} rel="noreferrer" target="_blank">
+          <a
+            className="export-button active"
+            href={data.reportUrl}
+            rel="noreferrer"
+            target="_blank"
+          >
             <Download aria-hidden="true" size={15} /> Print report
           </a>
         ) : data.sample ? (
-          <Link className="export-button" href="/app/projects/new">
+          <Link className="export-button active" href="/app/projects/new">
             <RotateCcw aria-hidden="true" size={15} /> Run fresh analysis
           </Link>
         ) : (
           <button className="export-button" disabled type="button">
-            <Download aria-hidden="true" size={15} /> Export
+            <Download aria-hidden="true" size={15} /> Report unavailable
           </button>
         )}
       </div>
 
-      <div className="workbench-controls" aria-label="Blueprint comparison controls">
+      <div className="workbench-controls" aria-label="Drawing comparison controls">
         <div className="control-group">
           <button
             aria-label="Zoom out"
@@ -192,35 +223,53 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           </button>
         </div>
 
+        <div aria-label="Comparison view" className="comparison-view-switcher" role="group">
+          <button aria-pressed={mode === "split"} onClick={() => setMode("split")} type="button">
+            Side by side
+          </button>
+          <button
+            aria-pressed={mode === "overlay"}
+            onClick={() => setMode("overlay")}
+            type="button"
+          >
+            Overlay
+          </button>
+          <button aria-pressed={mode === "swipe"} onClick={() => setMode("swipe")} type="button">
+            Swipe
+          </button>
+        </div>
+
         <div className="control-group comparison-mode">
           <Eye aria-hidden="true" size={15} />
-          <label htmlFor="compare-mode">View</label>
+          <label htmlFor="compare-mode">More views</label>
           <select
             id="compare-mode"
             onChange={(event) => setMode(event.target.value as CompareMode)}
-            value={mode}
+            value={["blink", "baseline", "candidate"].includes(mode) ? mode : ""}
           >
-            <option value="overlay">Overlay</option>
-            <option value="split">Split</option>
-            <option value="swipe">Swipe</option>
-            <option value="blink">Blink</option>
+            <option disabled value="">
+              Select
+            </option>
+            <option value="blink">Blink comparison</option>
             <option value="baseline">Baseline only</option>
-            <option value="candidate">Candidate only</option>
+            <option value="candidate">Revised only</option>
           </select>
         </div>
 
-        <div className="control-group range-control">
-          <label htmlFor="overlay-opacity">Opacity</label>
-          <input
-            id="overlay-opacity"
-            max="100"
-            min="20"
-            onChange={(event) => setOpacity(Number(event.target.value))}
-            type="range"
-            value={opacity}
-          />
-          <span className="technical">{opacity}%</span>
-        </div>
+        {mode === "overlay" ? (
+          <div className="control-group range-control">
+            <label htmlFor="overlay-opacity">Revised opacity</label>
+            <input
+              id="overlay-opacity"
+              max="100"
+              min="20"
+              onChange={(event) => setOpacity(Number(event.target.value))}
+              type="range"
+              value={opacity}
+            />
+            <span className="technical">{opacity}%</span>
+          </div>
+        ) : null}
 
         {mode === "swipe" ? (
           <div className="control-group range-control">
@@ -243,14 +292,21 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           onClick={() => setSynchronized((value) => !value)}
           type="button"
         >
-          <Link2 aria-hidden="true" size={15} /> {synchronized ? "Views linked" : "Views unlinked"}
+          <Link2 aria-hidden="true" size={15} />{" "}
+          {synchronized ? "Pan and zoom linked" : "Pan and zoom unlinked"}
         </button>
+      </div>
+
+      <div className="comparison-guidance" role="status">
+        <strong>{mode === "split" ? "Start here: compare left and right" : `${mode} view`}</strong>
+        <span>{modeDescription(mode)}</span>
       </div>
 
       <div className="workbench-grid">
         <RevisionRail data={data} />
-        <section className="canvas-panel" aria-label="Blueprint viewport">
+        <section className="canvas-panel" aria-label="Drawing comparison viewport">
           <BlueprintCanvas
+            alignedCandidateImageUrl={data.alignedCandidateImageUrl}
             baselineImageUrl={data.baselineImageUrl}
             candidateImageUrl={data.candidateImageUrl}
             changes={data.changes}
@@ -267,11 +323,10 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           />
           <div className="canvas-statusbar">
             <span>
-              <Focus aria-hidden="true" size={13} /> Alignment {data.alignment.toLowerCase()}
+              <Focus aria-hidden="true" size={13} /> Markers are shown on the revised drawing
             </span>
-            <span className="technical">NORMALIZED GEOMETRY · PAGE 01</span>
             <span>
-              {data.reportSummary ?? "Evidence regions are selectable in the canvas and ledger."}
+              {data.reportSummary ?? "Select a change marker or list item to review its evidence."}
             </span>
           </div>
         </section>

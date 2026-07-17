@@ -9,25 +9,40 @@ import { changeKindMeta, type SampleChange } from "../lib/sample-data";
 export type CompareMode = "overlay" | "split" | "swipe" | "blink" | "baseline" | "candidate";
 
 type CanvasSize = { width: number; height: number };
+type BlueprintImageState = {
+  image: HTMLImageElement | null;
+  source?: string;
+  status: "idle" | "loading" | "ready" | "error";
+};
 
 const planWidth = 1000;
 const planHeight = 700;
 
 function useBlueprintImage(source?: string) {
-  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  const [state, setState] = useState<BlueprintImageState>({
+    image: null,
+    status: "idle",
+  });
+
   useEffect(() => {
-    if (!source) {
-      return;
-    }
+    if (!source) return;
     const nextImage = new window.Image();
     nextImage.decoding = "async";
-    nextImage.onload = () => setImage(nextImage);
+    nextImage.onload = () => setState({ image: nextImage, source, status: "ready" });
+    nextImage.onerror = () => setState({ image: null, source, status: "error" });
     nextImage.src = source;
+
     return () => {
       nextImage.onload = null;
+      nextImage.onerror = null;
     };
   }, [source]);
-  return image;
+
+  if (!source) return { image: null, status: "idle" } satisfies BlueprintImageState;
+  if (state.source !== source) {
+    return { image: null, source, status: "loading" } satisfies BlueprintImageState;
+  }
+  return state;
 }
 
 const baselineLines = [
@@ -124,6 +139,59 @@ function BlueprintDrawing({
   );
 }
 
+function ChangeRegions({
+  changes,
+  selectedId,
+  documentWidth,
+  documentHeight,
+  onSelect,
+}: {
+  changes: SampleChange[];
+  selectedId: string;
+  documentWidth: number;
+  documentHeight: number;
+  onSelect: (id: string) => void;
+}) {
+  return changes.map((change) => {
+    const meta = changeKindMeta[change.kind];
+    const selected = change.id === selectedId;
+
+    return (
+      <Group key={change.id}>
+        <Rect
+          dash={change.kind === "modified" ? [13, 8] : change.kind === "removed" ? [4, 6] : []}
+          fill={selected ? `${meta.color}24` : "transparent"}
+          height={change.box.height * documentHeight}
+          onClick={() => onSelect(change.id)}
+          onTap={() => onSelect(change.id)}
+          stroke={meta.color}
+          strokeWidth={selected ? 5 : 3}
+          width={change.box.width * documentWidth}
+          x={change.box.x * documentWidth}
+          y={change.box.y * documentHeight}
+        />
+        <Rect
+          fill={meta.color}
+          height={24}
+          width={40}
+          x={change.box.x * documentWidth}
+          y={change.box.y * documentHeight - 24}
+        />
+        <Text
+          align="center"
+          fill="#FFFFFF"
+          fontFamily="monospace"
+          fontSize={12}
+          text={String(change.sequence).padStart(2, "0")}
+          width={40}
+          x={change.box.x * documentWidth}
+          y={change.box.y * documentHeight - 18}
+        />
+      </Group>
+    );
+  });
+}
+
 export function BlueprintCanvas({
   changes,
   selectedId,
@@ -136,6 +204,7 @@ export function BlueprintCanvas({
   onZoomChange,
   baselineImageUrl,
   candidateImageUrl,
+  alignedCandidateImageUrl,
   documentWidth = planWidth,
   documentHeight = planHeight,
 }: {
@@ -150,6 +219,7 @@ export function BlueprintCanvas({
   onZoomChange: (zoom: number) => void;
   baselineImageUrl?: string | undefined;
   candidateImageUrl?: string | undefined;
+  alignedCandidateImageUrl?: string | undefined;
   documentWidth?: number | undefined;
   documentHeight?: number | undefined;
 }) {
@@ -158,9 +228,20 @@ export function BlueprintCanvas({
   const [size, setSize] = useState<CanvasSize>({ width: 960, height: 640 });
   const [blinkVisible, setBlinkVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
-  const baselineImage = useBlueprintImage(baselineImageUrl);
-  const candidateImage = useBlueprintImage(candidateImageUrl);
+  const baselineImageState = useBlueprintImage(baselineImageUrl);
+  const candidateImageState = useBlueprintImage(candidateImageUrl);
+  const alignedCandidateImageState = useBlueprintImage(
+    alignedCandidateImageUrl ?? candidateImageUrl,
+  );
   const usesArtifacts = Boolean(baselineImageUrl && candidateImageUrl);
+  const isSideBySide = mode === "split";
+  const activeCandidateImageState = isSideBySide ? candidateImageState : alignedCandidateImageState;
+  const imagesReady =
+    !usesArtifacts ||
+    (baselineImageState.status === "ready" && activeCandidateImageState.status === "ready");
+  const imageLoadFailed =
+    usesArtifacts &&
+    (baselineImageState.status === "error" || activeCandidateImageState.status === "error");
 
   useEffect(() => {
     const host = hostRef.current;
@@ -200,19 +281,40 @@ export function BlueprintCanvas({
   const drawingScale = fitScale * zoom;
   const drawingX = (size.width - documentWidth * drawingScale) / 2;
   const drawingY = (size.height - documentHeight * drawingScale) / 2;
+  const comparisonGap = 18;
+  const comparisonInset = 12;
+  const comparisonLabelHeight = 42;
+  const comparisonPanelWidth = Math.max(
+    150,
+    (size.width - comparisonInset * 2 - comparisonGap) / 2,
+  );
+  const comparisonPanelHeight = Math.max(320, size.height - comparisonInset * 2);
+  const sideBySideScale =
+    Math.min(
+      (comparisonPanelWidth - 24) / documentWidth,
+      (comparisonPanelHeight - comparisonLabelHeight - 18) / documentHeight,
+    ) * zoom;
+  const sideBySideY =
+    comparisonInset +
+    comparisonLabelHeight +
+    (comparisonPanelHeight - comparisonLabelHeight - documentHeight * sideBySideScale) / 2;
+  const baselineSideX =
+    comparisonInset + (comparisonPanelWidth - documentWidth * sideBySideScale) / 2;
+  const candidatePanelX = comparisonInset + comparisonPanelWidth + comparisonGap;
+  const candidateSideX =
+    candidatePanelX + (comparisonPanelWidth - documentWidth * sideBySideScale) / 2;
   const showBaseline = mode !== "candidate";
   const showCandidate = mode !== "baseline" && (mode !== "blink" || reducedMotion || blinkVisible);
   const candidateClip =
-    mode === "split"
-      ? { x: documentWidth / 2, y: 0, width: documentWidth / 2, height: documentHeight }
-      : mode === "swipe"
-        ? { x: 0, y: 0, width: documentWidth * (swipe / 100), height: documentHeight }
-        : { x: 0, y: 0, width: documentWidth, height: documentHeight };
+    mode === "swipe"
+      ? { x: 0, y: 0, width: documentWidth * (swipe / 100), height: documentHeight }
+      : { x: 0, y: 0, width: documentWidth, height: documentHeight };
 
   return (
     <div
-      aria-label="Interactive blueprint comparison. Pan by dragging and use the toolbar to zoom or change comparison mode."
+      aria-label="Interactive blueprint comparison. The baseline is the earlier drawing and the candidate is the revised drawing."
       className="blueprint-canvas-host"
+      data-preview-state={imageLoadFailed ? "error" : imagesReady ? "ready" : "loading"}
       ref={hostRef}
       role="img"
     >
@@ -227,125 +329,200 @@ export function BlueprintCanvas({
         width={size.width}
       >
         <Layer>
-          <Rect fill="#10263B" height={size.height} width={size.width} />
-          <Group scaleX={drawingScale} scaleY={drawingScale} x={drawingX} y={drawingY}>
-            {!usesArtifacts
-              ? Array.from({ length: 36 }, (_, index) => (
-                  <Line
-                    key={`grid-v-${index}`}
-                    opacity={index % 5 === 0 ? 0.09 : 0.035}
-                    points={[index * 30, 0, index * 30, documentHeight]}
-                    stroke="#FFFFFF"
-                    strokeWidth={1 / drawingScale}
-                  />
-                ))
-              : null}
-            {!usesArtifacts
-              ? Array.from({ length: 25 }, (_, index) => (
-                  <Line
-                    key={`grid-h-${index}`}
-                    opacity={index % 5 === 0 ? 0.09 : 0.035}
-                    points={[0, index * 30, documentWidth, index * 30]}
-                    stroke="#FFFFFF"
-                    strokeWidth={1 / drawingScale}
-                  />
-                ))
-              : null}
-            {usesArtifacts && showBaseline && baselineImage ? (
-              <KonvaImage
-                height={documentHeight}
-                image={baselineImage}
-                opacity={mode === "overlay" ? 0.62 : 1}
-                width={documentWidth}
+          <Rect
+            fill={isSideBySide || usesArtifacts ? "#D9D7D0" : "#10263B"}
+            height={size.height}
+            width={size.width}
+          />
+          {isSideBySide ? (
+            <>
+              <Rect
+                fill="#FFFFFF"
+                height={comparisonPanelHeight}
+                stroke="#AAA79F"
+                width={comparisonPanelWidth}
+                x={comparisonInset}
+                y={comparisonInset}
               />
-            ) : showBaseline ? (
-              <BlueprintDrawing
-                labels="baseline"
-                lines={baselineLines}
-                opacity={mode === "overlay" ? 0.58 : 0.9}
-                stroke="#8EA8B9"
+              <Rect
+                fill="#FFFFFF"
+                height={comparisonPanelHeight}
+                stroke="#AAA79F"
+                width={comparisonPanelWidth}
+                x={candidatePanelX}
+                y={comparisonInset}
               />
-            ) : null}
-            {usesArtifacts && showCandidate && candidateImage ? (
-              <Group clip={candidateClip}>
+              <Text
+                fill="#171A1C"
+                fontFamily="sans-serif"
+                fontSize={13}
+                fontStyle="bold"
+                text="BEFORE  ·  BASELINE"
+                x={comparisonInset + 14}
+                y={comparisonInset + 14}
+              />
+              <Text
+                fill="#171A1C"
+                fontFamily="sans-serif"
+                fontSize={13}
+                fontStyle="bold"
+                text="REVISED  ·  CANDIDATE"
+                x={candidatePanelX + 14}
+                y={comparisonInset + 14}
+              />
+              <Group
+                scaleX={sideBySideScale}
+                scaleY={sideBySideScale}
+                x={baselineSideX}
+                y={sideBySideY}
+              >
+                {usesArtifacts && baselineImageState.image ? (
+                  <KonvaImage
+                    height={documentHeight}
+                    image={baselineImageState.image}
+                    width={documentWidth}
+                  />
+                ) : !usesArtifacts ? (
+                  <BlueprintDrawing
+                    labels="baseline"
+                    lines={baselineLines}
+                    opacity={0.92}
+                    stroke="#263844"
+                  />
+                ) : null}
+              </Group>
+              <Group
+                scaleX={sideBySideScale}
+                scaleY={sideBySideScale}
+                x={candidateSideX}
+                y={sideBySideY}
+              >
+                {usesArtifacts && candidateImageState.image ? (
+                  <KonvaImage
+                    height={documentHeight}
+                    image={candidateImageState.image}
+                    width={documentWidth}
+                  />
+                ) : !usesArtifacts ? (
+                  <BlueprintDrawing
+                    labels="candidate"
+                    lines={candidateLines}
+                    opacity={0.92}
+                    stroke="#263844"
+                  />
+                ) : null}
+                <ChangeRegions
+                  changes={changes}
+                  documentHeight={documentHeight}
+                  documentWidth={documentWidth}
+                  onSelect={onSelect}
+                  selectedId={selectedId}
+                />
+              </Group>
+            </>
+          ) : (
+            <Group scaleX={drawingScale} scaleY={drawingScale} x={drawingX} y={drawingY}>
+              {!usesArtifacts
+                ? Array.from({ length: 36 }, (_, index) => (
+                    <Line
+                      key={`grid-v-${index}`}
+                      opacity={index % 5 === 0 ? 0.09 : 0.035}
+                      points={[index * 30, 0, index * 30, documentHeight]}
+                      stroke="#FFFFFF"
+                      strokeWidth={1 / drawingScale}
+                    />
+                  ))
+                : null}
+              {!usesArtifacts
+                ? Array.from({ length: 25 }, (_, index) => (
+                    <Line
+                      key={`grid-h-${index}`}
+                      opacity={index % 5 === 0 ? 0.09 : 0.035}
+                      points={[0, index * 30, documentWidth, index * 30]}
+                      stroke="#FFFFFF"
+                      strokeWidth={1 / drawingScale}
+                    />
+                  ))
+                : null}
+              {usesArtifacts && showBaseline && baselineImageState.image ? (
                 <KonvaImage
                   height={documentHeight}
-                  image={candidateImage}
-                  opacity={mode === "overlay" ? opacity / 100 : 1}
+                  image={baselineImageState.image}
+                  opacity={mode === "overlay" ? 0.62 : 1}
                   width={documentWidth}
                 />
-              </Group>
-            ) : showCandidate ? (
-              <Group clip={candidateClip}>
+              ) : !usesArtifacts && showBaseline ? (
                 <BlueprintDrawing
-                  labels="candidate"
-                  lines={candidateLines}
-                  opacity={opacity / 100}
-                  stroke="#F2F5F3"
+                  labels="baseline"
+                  lines={baselineLines}
+                  opacity={mode === "overlay" ? 0.58 : 0.9}
+                  stroke="#8EA8B9"
                 />
-              </Group>
-            ) : null}
-            {mode !== "baseline"
-              ? changes.map((change) => {
-                  const meta = changeKindMeta[change.kind];
-                  const selected = change.id === selectedId;
-                  return (
-                    <Group key={change.id}>
-                      <Rect
-                        dash={
-                          change.kind === "modified"
-                            ? [13, 8]
-                            : change.kind === "removed"
-                              ? [4, 6]
-                              : []
-                        }
-                        fill={selected ? `${meta.color}24` : "transparent"}
-                        height={change.box.height * documentHeight}
-                        onClick={() => onSelect(change.id)}
-                        onTap={() => onSelect(change.id)}
-                        stroke={meta.color}
-                        strokeWidth={selected ? 5 : 3}
-                        width={change.box.width * documentWidth}
-                        x={change.box.x * documentWidth}
-                        y={change.box.y * documentHeight}
-                      />
-                      <Rect
-                        fill={meta.color}
-                        height={24}
-                        width={40}
-                        x={change.box.x * documentWidth}
-                        y={change.box.y * documentHeight - 24}
-                      />
-                      <Text
-                        align="center"
-                        fill="#FFFFFF"
-                        fontFamily="monospace"
-                        fontSize={12}
-                        text={String(change.sequence).padStart(2, "0")}
-                        width={40}
-                        x={change.box.x * documentWidth}
-                        y={change.box.y * documentHeight - 18}
-                      />
-                    </Group>
-                  );
-                })
-              : null}
-            {mode === "split" || mode === "swipe" ? (
-              <Line
-                points={[
-                  candidateClip.x + candidateClip.width,
-                  0,
-                  candidateClip.x + candidateClip.width,
-                  documentHeight,
-                ]}
-                stroke="#E6532F"
-                strokeWidth={3}
-              />
-            ) : null}
-          </Group>
+              ) : null}
+              {usesArtifacts && showCandidate && activeCandidateImageState.image ? (
+                <Group clip={candidateClip}>
+                  <KonvaImage
+                    height={documentHeight}
+                    image={activeCandidateImageState.image}
+                    opacity={mode === "overlay" ? opacity / 100 : 1}
+                    width={documentWidth}
+                  />
+                </Group>
+              ) : !usesArtifacts && showCandidate ? (
+                <Group clip={candidateClip}>
+                  <BlueprintDrawing
+                    labels="candidate"
+                    lines={candidateLines}
+                    opacity={opacity / 100}
+                    stroke="#F2F5F3"
+                  />
+                </Group>
+              ) : null}
+              {mode !== "baseline" ? (
+                <ChangeRegions
+                  changes={changes}
+                  documentHeight={documentHeight}
+                  documentWidth={documentWidth}
+                  onSelect={onSelect}
+                  selectedId={selectedId}
+                />
+              ) : null}
+              {mode === "swipe" ? (
+                <Line
+                  points={[
+                    candidateClip.x + candidateClip.width,
+                    0,
+                    candidateClip.x + candidateClip.width,
+                    documentHeight,
+                  ]}
+                  stroke="#E6532F"
+                  strokeWidth={3}
+                />
+              ) : null}
+            </Group>
+          )}
         </Layer>
       </Stage>
-      <span className="canvas-instruction">DRAG TO PAN · SCROLL TO ZOOM</span>
+      {usesArtifacts && !imagesReady ? (
+        <div
+          className={imageLoadFailed ? "canvas-image-error" : "canvas-image-loading"}
+          role="status"
+        >
+          <strong>
+            {imageLoadFailed ? "Drawing preview unavailable" : "Loading your drawings…"}
+          </strong>
+          <span>
+            {imageLoadFailed
+              ? "The viewer did not substitute another drawing. Refresh to retry the secure preview."
+              : "PlanDelta is opening the uploaded files."}
+          </span>
+        </div>
+      ) : null}
+      <span className="canvas-instruction">
+        {isSideBySide
+          ? "BEFORE ON LEFT  ·  REVISED ON RIGHT  ·  DRAG TO PAN"
+          : "DRAG TO PAN  ·  SCROLL TO ZOOM"}
+      </span>
     </div>
   );
 }
