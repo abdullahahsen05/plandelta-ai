@@ -113,6 +113,19 @@ def test_revision_annotation_produces_real_directional_evidence(fixture_root: Pa
     assert any(artifact.kind == "EVIDENCE_CROP" for artifact in result.artifacts)
 
 
+def test_auto_classifier_uses_selected_onnx_model(fixture_root: Path) -> None:
+    analysis_request = request("added-wall.png", "artifacts/onnx")
+    analysis_request.configuration.classifier = "auto"
+    result = analyze(analysis_request, settings(fixture_root))
+
+    assert any(change.source == "ONNX" for change in result.changes)
+    assert any(
+        change.evidence.get("classifierVersion") == "changed-region-cnn-v1"
+        for change in result.changes
+    )
+    assert not any("inference failed" in warning for warning in result.warnings)
+
+
 def test_unrelated_sheets_fail_alignment_instead_of_returning_boxes(fixture_root: Path) -> None:
     with pytest.raises(UnsafeAlignmentError, match="sufficient confidence"):
         analyze(request("unrelated.png", "artifacts/unrelated"), settings(fixture_root))

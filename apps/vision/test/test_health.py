@@ -27,6 +27,7 @@ def test_engine_contract() -> None:
 
     assert response.status_code == 200
     assert response.json()["schemaVersion"] == "1.0"
+    assert response.json()["onnxModelVersion"] == "changed-region-cnn-v1"
     assert "application/pdf" in response.json()["supportedFormats"]
 
 
@@ -36,3 +37,4 @@ def test_readiness_boundary() -> None:
 
     assert response.status_code == 200
     assert response.json()["writableTemporaryDirectory"] is True
+    assert response.json()["onnxRuntimeReady"] is True

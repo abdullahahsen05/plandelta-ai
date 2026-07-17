@@ -17,9 +17,28 @@ are never represented by random or hardcoded regions.
    connected evidence, and normalize all coordinates to 0–1.
 7. Run the PP-OCRv5 English mobile detector/recognizer on contextual crops when
    OCR is enabled. Preserve low confidence and never invent missing text.
-8. Apply deterministic geometry/text category and affected-trade rules.
+8. Classify changed crops with the selected ONNX model when its confidence is
+   at least `ONNX_CONFIDENCE_THRESHOLD`; otherwise retain deterministic
+   geometry/text rules and add a visible processing warning.
 9. Atomically save source renders, aligned candidate, masks, overlay, and paired
    evidence crops beneath the authorized output prefix.
+
+## Changed-region classifier
+
+The optional classifier receives an absolute grayscale difference of an
+already-detected baseline/candidate crop, resized to 64×64. It does not detect
+changes. `classifier=rules` always uses deterministic rules; `classifier=onnx`
+requests ONNX inference; and `classifier=auto` uses the committed model only
+when `ONNX_CLASSIFIER_ENABLED=true` and model metadata marks it as better than
+the rules baseline.
+
+The committed `changed-region-cnn-v1` artifact is 408 KiB and runs with ONNX
+Runtime on CPU. On the 192-example seed-disjoint synthetic validation split it
+measured 1.000 accuracy and macro-F1 versus 0.750 accuracy and 0.667 macro-F1
+for the rules baseline. PyTorch and ONNX predictions were identical with a
+maximum absolute logit difference of 0.00001144. These measurements describe
+only the synthetic benchmark; they are not a claim about arbitrary customer
+drawings. See `docs/MODEL_CARD.md`.
 
 ## Golden evidence
 

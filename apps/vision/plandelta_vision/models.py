@@ -25,6 +25,7 @@ class ReadinessResponse(HealthResponse):
     opencv_ready: bool
     pdf_renderer_ready: bool
     ocr_runtime_ready: bool
+    onnx_runtime_ready: bool
 
 
 class EngineResponse(ContractModel):

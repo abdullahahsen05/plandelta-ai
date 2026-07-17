@@ -30,6 +30,11 @@ class VisionSettings(BaseModel):
     render_dpi: int = Field(default=180, ge=96, le=300)
     ocr_enabled: bool = True
     ocr_language: str = "en"
+    onnx_classifier_enabled: bool = True
+    onnx_model_path: Path = (
+        Path(__file__).resolve().parents[1] / "models" / "changed-region-classifier.onnx"
+    )
+    onnx_confidence_threshold: float = Field(default=0.78, ge=0.5, le=0.99)
     signed_url_timeout_seconds: int = Field(default=20, ge=2, le=60)
 
 
@@ -48,5 +53,17 @@ def load_settings() -> VisionSettings:
         render_dpi=int(os.getenv("VISION_RENDER_DPI", "180")),
         ocr_enabled=os.getenv("OCR_ENABLED", "true").lower() == "true",
         ocr_language=os.getenv("OCR_LANGUAGE", "en"),
+        onnx_classifier_enabled=os.getenv("ONNX_CLASSIFIER_ENABLED", "true").lower() == "true",
+        onnx_model_path=_platform_path(
+            os.getenv(
+                "ONNX_MODEL_PATH",
+                str(
+                    Path(__file__).resolve().parents[1]
+                    / "models"
+                    / "changed-region-classifier.onnx"
+                ),
+            )
+        ),
+        onnx_confidence_threshold=float(os.getenv("ONNX_CONFIDENCE_THRESHOLD", "0.78")),
         signed_url_timeout_seconds=int(os.getenv("SIGNED_URL_TIMEOUT_SECONDS", "20")),
     )

@@ -148,7 +148,12 @@ pnpm docker:down   Stop local service containers
   code compliance.
 - Uploaded drawings are private runtime data and never training material.
 - Low-confidence alignment or OCR remains visibly uncertain.
+- The small ONNX changed-region classifier is confidence-gated and falls back visibly to
+  deterministic rules; its published metrics are synthetic-set measurements, not real-world
+  accuracy.
 - Public demos use labelled sample evidence when temporary backend compute is unavailable.
 
 See [PLAN.md](./PLAN.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and
-[docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract.
+[docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract. Classifier scope,
+reproduction, measured metrics, and limitations are recorded in
+[docs/MODEL_CARD.md](./docs/MODEL_CARD.md).

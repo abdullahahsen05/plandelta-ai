@@ -22,6 +22,7 @@ from plandelta_vision.models import (
     HealthResponse,
     ReadinessResponse,
 )
+from plandelta_vision.onnx_classifier import read_model_metadata
 from plandelta_vision.pipeline import analyze
 from plandelta_vision.security import require_internal_secret
 
@@ -73,6 +74,7 @@ def live() -> HealthResponse:
 @app.get("/health/ready", response_model=ReadinessResponse)
 def ready() -> ReadinessResponse:
     settings = load_settings()
+    model_metadata = read_model_metadata(settings.onnx_model_path)
     settings.temporary_directory.mkdir(parents=True, exist_ok=True)
     settings.shared_root.mkdir(parents=True, exist_ok=True)
     probe = settings.temporary_directory / ".readiness-probe"
@@ -93,19 +95,34 @@ def ready() -> ReadinessResponse:
         opencv_ready=True,
         pdf_renderer_ready=True,
         ocr_runtime_ready=importlib.util.find_spec("paddleocr") is not None,
+        onnx_runtime_ready=(
+            not settings.onnx_classifier_enabled
+            or (
+                importlib.util.find_spec("onnxruntime") is not None
+                and model_metadata is not None
+                and model_metadata.selected_by_default
+            )
+        ),
     )
 
 
 @app.get("/internal/v1/engine", response_model=EngineResponse)
 def engine() -> EngineResponse:
     settings = load_settings()
+    model_metadata = read_model_metadata(settings.onnx_model_path)
     return EngineResponse(
         schema_version=settings.schema_version,
         engine_version=settings.engine_version,
         opencv_version=cv2.__version__,
         pdf_renderer=f"PyMuPDF {pymupdf.VersionBind}",
         ocr_engine=f"PaddleOCR {version('paddleocr')}",
-        onnx_model_version=None,
+        onnx_model_version=(
+            model_metadata.version
+            if settings.onnx_classifier_enabled
+            and model_metadata is not None
+            and model_metadata.selected_by_default
+            else None
+        ),
         supported_formats=["application/pdf", "image/png", "image/jpeg"],
     )
 

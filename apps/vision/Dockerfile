@@ -13,6 +13,7 @@ WORKDIR /app
 COPY pyproject.toml ./
 COPY plandelta_vision ./plandelta_vision
 RUN python -m pip install --upgrade pip && python -m pip install .
+COPY models ./models
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*

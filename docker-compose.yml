@@ -53,6 +53,7 @@ services:
     env_file: .env.local
     environment:
       VISION_SHARED_ROOT: /data
+      ONNX_MODEL_PATH: /app/models/changed-region-classifier.onnx
     ports:
       - "8000:8000"
     volumes:

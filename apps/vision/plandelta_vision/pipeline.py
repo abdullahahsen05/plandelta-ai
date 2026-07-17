@@ -8,7 +8,6 @@ import numpy as np
 
 from plandelta_vision.alignment import align_candidate
 from plandelta_vision.artifacts import ArtifactStore
-from plandelta_vision.classify import classify_region
 from plandelta_vision.config import VisionSettings
 from plandelta_vision.differ import PixelRegion, calculate_differences
 from plandelta_vision.errors import VisionError
@@ -28,6 +27,7 @@ from plandelta_vision.models import (
     NormalizedPoint,
 )
 from plandelta_vision.ocr import OcrEvidence, extract_crop_text
+from plandelta_vision.onnx_classifier import classify_change
 
 
 def _crop(image: ColorImage, region: PixelRegion, padding: int = 4) -> ColorImage:
@@ -151,24 +151,47 @@ def _change_result(
     new_ocr: OcrEvidence,
     evidence_key: str,
     alignment_confidence: float,
-) -> DetectedChangeResult:
+    baseline_crop: ColorImage,
+    candidate_crop: ColorImage,
+    classifier: str,
+    settings: VisionSettings,
+) -> tuple[DetectedChangeResult, str | None]:
     text_changed = _normalize_text(old_ocr.text) != _normalize_text(new_ocr.text) and bool(
         old_ocr.text or new_ocr.text
     )
     change_type = "TEXT_CHANGED" if text_changed else region.change_type
-    category, trades, impact = classify_region(region, old_ocr.text, new_ocr.text)
+    decision = classify_change(
+        region,
+        old_ocr.text,
+        new_ocr.text,
+        baseline_crop,
+        candidate_crop,
+        classifier,  # type: ignore[arg-type]
+        settings.onnx_classifier_enabled,
+        settings.onnx_model_path,
+        settings.onnx_confidence_threshold,
+    )
     text_scores = [value for value in [old_ocr.confidence, new_ocr.confidence] if value is not None]
     text_confidence = round(sum(text_scores) / len(text_scores), 4) if text_scores else None
-    source = "HYBRID" if text_changed else "RULES"
+    source = "HYBRID" if text_changed else decision.source
     x = region.x / canvas_width
     y = region.y / canvas_height
     width = min(1 - x, region.width / canvas_width)
     height = min(1 - y, region.height / canvas_height)
     confidence = round(min(region.confidence, alignment_confidence), 4)
-    return DetectedChangeResult(
+    evidence: dict[str, str | int | float | bool | None] = {
+        "artifactStorageKey": evidence_key,
+        "method": "crop-pair",
+        "classifierSource": decision.source,
+    }
+    if decision.classifier_confidence is not None:
+        evidence["classifierConfidence"] = decision.classifier_confidence
+    if decision.model_version is not None:
+        evidence["classifierVersion"] = decision.model_version
+    result = DetectedChangeResult(
         sequence=sequence,
         change_type=change_type,  # type: ignore[arg-type]
-        category=category,  # type: ignore[arg-type]
+        category=decision.category,
         source=source,  # type: ignore[arg-type]
         box=NormalizedBox(x=x, y=y, width=width, height=height),
         polygon=[
@@ -181,10 +204,11 @@ def _change_result(
         old_text=old_ocr.text,
         new_text=new_ocr.text,
         text_confidence=text_confidence,
-        affected_trades=trades,
-        impact=impact,
-        evidence={"artifactStorageKey": evidence_key, "method": "crop-pair"},
+        affected_trades=decision.trades,
+        impact=decision.impact,
+        evidence=evidence,
     )
+    return result, decision.warning
 
 
 def analyze(request: AnalysisRequest, settings: VisionSettings) -> AnalysisResponse:
@@ -221,6 +245,7 @@ def analyze(request: AnalysisRequest, settings: VisionSettings) -> AnalysisRespo
     artifacts.append(store.write_png("OVERLAY", "overlay.png", overlay))
 
     changes: list[DetectedChangeResult] = []
+    warnings: list[str] = []
     ocr_enabled = request.configuration.ocr_enabled and settings.ocr_enabled
     for sequence, region in enumerate(difference.regions, start=1):
         baseline_crop = _crop(baseline_color, region)
@@ -239,20 +264,24 @@ def analyze(request: AnalysisRequest, settings: VisionSettings) -> AnalysisRespo
             ocr_enabled,
             settings.ocr_language,
         )
-        changes.append(
-            _change_result(
-                sequence,
-                region,
-                baseline_gray.shape[1],
-                baseline_gray.shape[0],
-                old_ocr,
-                new_ocr,
-                evidence_artifact.storage_key,
-                aligned.result.confidence,
-            )
+        change, classifier_warning = _change_result(
+            sequence,
+            region,
+            baseline_gray.shape[1],
+            baseline_gray.shape[0],
+            old_ocr,
+            new_ocr,
+            evidence_artifact.storage_key,
+            aligned.result.confidence,
+            baseline_crop,
+            candidate_crop,
+            request.configuration.classifier,
+            settings,
         )
+        changes.append(change)
+        if classifier_warning:
+            warnings.append(f"Region {sequence}: {classifier_warning}")
 
-    warnings: list[str] = []
     if not ocr_enabled:
         warnings.append("Crop OCR was disabled for this analysis.")
     duration_ms = round((perf_counter() - started) * 1000)
