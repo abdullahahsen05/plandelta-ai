@@ -19,6 +19,8 @@
     "format:check": "prettier --check .",
     "db:generate": "pnpm --filter @plandelta/api db:generate",
     "db:migrate": "pnpm --filter @plandelta/api db:migrate",
+    "db:verify-behavior": "pnpm --filter @plandelta/api db:verify-behavior",
+    "db:verify-clean": "pnpm --filter @plandelta/api db:verify-clean",
     "db:seed": "pnpm --filter @plandelta/api db:seed",
     "vision:install": "node scripts/python.mjs -m pip install -e ./apps/vision[dev]",
     "docker:up": "docker compose up --build -d",

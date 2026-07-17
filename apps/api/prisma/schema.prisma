@@ -6,3 +6,272 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+enum ProjectStatus {
+  ACTIVE
+  ARCHIVED
+}
+
+enum RevisionRole {
+  BASELINE
+  CANDIDATE
+}
+
+enum StorageProvider {
+  LOCAL
+  S3
+}
+
+enum UploadStatus {
+  PENDING
+  READY
+  FAILED
+}
+
+enum AnalysisStatus {
+  QUEUED
+  CLAIMED
+  PREPROCESSING
+  ALIGNING
+  DIFFING
+  OCR
+  CLASSIFYING
+  SUMMARIZING
+  RETRYING
+  COMPLETED
+  FAILED
+}
+
+enum SummaryProvider {
+  DETERMINISTIC
+  BEDROCK
+}
+
+enum ArtifactKind {
+  BASELINE_RENDER
+  CANDIDATE_RENDER
+  ALIGNED_CANDIDATE
+  OVERLAY
+  ADDED_MASK
+  REMOVED_MASK
+  EVIDENCE_CROP
+  REPORT
+}
+
+enum ChangeType {
+  ADDED
+  REMOVED
+  MODIFIED
+  TEXT_CHANGED
+}
+
+enum ChangeCategory {
+  WALL_LINEWORK
+  DOOR
+  WINDOW
+  FIXTURE_SYMBOL
+  DIMENSION
+  TEXT_NOTE
+  ROOM_LABEL
+  UNKNOWN
+}
+
+enum ChangeSource {
+  RULES
+  ONNX
+  OCR
+  HYBRID
+}
+
+model Profile {
+  id          String   @id @db.Uuid
+  displayName String   @map("display_name")
+  avatarUrl   String?  @map("avatar_url")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  projects          Project[]
+  requestedAnalyses Analysis[]
+  auditEvents       AuditEvent[]
+
+  @@map("profiles")
+}
+
+model Project {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId     String        @map("owner_id") @db.Uuid
+  name        String
+  projectCode String?       @map("project_code")
+  description String?
+  status      ProjectStatus @default(ACTIVE)
+  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  owner       Profile        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  revisions   PlanRevision[]
+  analyses    Analysis[]
+  auditEvents AuditEvent[]
+
+  @@index([ownerId, updatedAt(sort: Desc)], map: "projects_owner_updated_idx")
+  @@map("projects")
+}
+
+model PlanRevision {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId       String          @map("project_id") @db.Uuid
+  label           String
+  revisionCode    String?         @map("revision_code")
+  role            RevisionRole
+  originalName    String          @map("original_filename")
+  mimeType        String          @map("mime_type")
+  byteSize        BigInt          @map("byte_size") @db.BigInt
+  checksumSha256  String          @map("checksum_sha256")
+  storageProvider StorageProvider @map("storage_provider")
+  storageKey      String          @map("storage_key")
+  pageCount       Int             @map("page_count")
+  selectedPage    Int?            @map("selected_page")
+  widthPx         Int?            @map("width_px")
+  heightPx        Int?            @map("height_px")
+  uploadStatus    UploadStatus    @default(PENDING) @map("upload_status")
+  metadata        Json            @default("{}")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  project           Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  baselineAnalyses  Analysis[] @relation("BaselineRevision")
+  candidateAnalyses Analysis[] @relation("CandidateRevision")
+
+  @@unique([storageProvider, storageKey], map: "plan_revisions_storage_key_unique")
+  @@index([projectId, createdAt], map: "plan_revisions_project_created_idx")
+  @@map("plan_revisions")
+}
+
+model Analysis {
+  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId           String          @map("project_id") @db.Uuid
+  baselineRevisionId  String          @map("baseline_revision_id") @db.Uuid
+  candidateRevisionId String          @map("candidate_revision_id") @db.Uuid
+  requestedBy         String          @map("requested_by") @db.Uuid
+  status              AnalysisStatus  @default(QUEUED)
+  progress            Int             @default(0)
+  currentStage        String          @default("queued") @map("current_stage")
+  priority            Int             @default(0) @db.SmallInt
+  attemptCount        Int             @default(0) @map("attempt_count")
+  maxAttempts         Int             @default(3) @map("max_attempts")
+  leaseOwner          String?         @map("lease_owner")
+  leaseExpiresAt      DateTime?       @map("lease_expires_at") @db.Timestamptz(6)
+  heartbeatAt         DateTime?       @map("heartbeat_at") @db.Timestamptz(6)
+  nextAttemptAt       DateTime?       @map("next_attempt_at") @db.Timestamptz(6)
+  startedAt           DateTime?       @map("started_at") @db.Timestamptz(6)
+  completedAt         DateTime?       @map("completed_at") @db.Timestamptz(6)
+  errorCode           String?         @map("error_code")
+  errorMessage        String?         @map("error_message")
+  schemaVersion       String          @default("1.0") @map("schema_version")
+  engineVersion       String          @default("pending") @map("engine_version")
+  configuration       Json            @default("{}")
+  metrics             Json            @default("{}")
+  warnings            Json            @default("[]")
+  summaryProvider     SummaryProvider @default(DETERMINISTIC) @map("summary_provider")
+  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  baselineRevision  PlanRevision       @relation("BaselineRevision", fields: [baselineRevisionId], references: [id], onDelete: Restrict)
+  candidateRevision PlanRevision       @relation("CandidateRevision", fields: [candidateRevisionId], references: [id], onDelete: Restrict)
+  requester         Profile            @relation(fields: [requestedBy], references: [id], onDelete: Restrict)
+  artifacts         AnalysisArtifact[]
+  changes           DetectedChange[]
+  report            AnalysisReport?
+  auditEvents       AuditEvent[]
+
+  @@index([status, nextAttemptAt, priority(sort: Desc), createdAt], map: "analyses_queue_idx")
+  @@index([status, leaseExpiresAt], map: "analyses_lease_idx")
+  @@index([projectId, createdAt(sort: Desc)], map: "analyses_project_created_idx")
+  @@map("analyses")
+}
+
+model AnalysisArtifact {
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  analysisId      String          @map("analysis_id") @db.Uuid
+  kind            ArtifactKind
+  storageProvider StorageProvider @map("storage_provider")
+  storageKey      String          @map("storage_key")
+  mimeType        String          @map("mime_type")
+  widthPx         Int?            @map("width_px")
+  heightPx        Int?            @map("height_px")
+  byteSize        BigInt?         @map("byte_size") @db.BigInt
+  checksumSha256  String?         @map("checksum_sha256")
+  metadata        Json            @default("{}")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, kind, storageKey], map: "analysis_artifacts_kind_key_unique")
+  @@index([analysisId], map: "analysis_artifacts_analysis_idx")
+  @@map("analysis_artifacts")
+}
+
+model DetectedChange {
+  id             String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  analysisId     String         @map("analysis_id") @db.Uuid
+  sequence       Int
+  changeType     ChangeType     @map("change_type")
+  category       ChangeCategory
+  source         ChangeSource
+  x              Float          @db.Real
+  y              Float          @db.Real
+  width          Float          @db.Real
+  height         Float          @db.Real
+  polygon        Json?
+  confidence     Float          @db.Real
+  oldText        String?        @map("old_text")
+  newText        String?        @map("new_text")
+  textConfidence Float?         @map("text_confidence") @db.Real
+  affectedTrades String[]       @default([]) @map("affected_trades")
+  quantityDelta  Decimal?       @map("quantity_delta") @db.Decimal
+  unit           String?
+  impact         String?
+  evidence       Json           @default("{}")
+  createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@unique([analysisId, sequence], map: "detected_changes_analysis_sequence_unique")
+  @@index([analysisId, changeType, category], map: "detected_changes_filter_idx")
+  @@map("detected_changes")
+}
+
+model AnalysisReport {
+  id                String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  analysisId        String          @unique @map("analysis_id") @db.Uuid
+  executiveSummary  String          @map("executive_summary")
+  structuredSummary Json            @map("structured_summary")
+  provider          SummaryProvider @default(DETERMINISTIC)
+  modelId           String?         @map("model_id")
+  promptVersion     String?         @map("prompt_version")
+  generatedAt       DateTime        @default(now()) @map("generated_at") @db.Timestamptz(6)
+  updatedAt         DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+
+  @@map("analysis_reports")
+}
+
+model AuditEvent {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  actorId       String?  @map("actor_id") @db.Uuid
+  projectId     String?  @map("project_id") @db.Uuid
+  analysisId    String?  @map("analysis_id") @db.Uuid
+  eventType     String   @map("event_type")
+  correlationId String   @map("correlation_id")
+  metadata      Json     @default("{}")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  actor    Profile?  @relation(fields: [actorId], references: [id], onDelete: SetNull)
+  project  Project?  @relation(fields: [projectId], references: [id], onDelete: SetNull)
+  analysis Analysis? @relation(fields: [analysisId], references: [id], onDelete: SetNull)
+
+  @@index([projectId, createdAt], map: "audit_events_project_created_idx")
+  @@index([analysisId, createdAt], map: "audit_events_analysis_created_idx")
+  @@map("audit_events")
+}
