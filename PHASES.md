@@ -5,13 +5,13 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 5 — End-to-end local product
-- Current task: Connect the authenticated web upload journey to the API, worker, real vision service, evidence viewer, and report
-- Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, the live FastAPI HTTP smoke, and `node scripts/python.mjs scripts/benchmark_vision.py` on 2026-07-17 (23 vision tests plus all repository tests/builds passed; real PaddleOCR text comparison and seven generated artifacts verified)
+- Current phase: Phase 5 — End-to-end local product (Docker exit gate pending)
+- Current task: Install/start Docker Desktop, then run `pnpm docker:up` and verify all Compose health checks before Phase 6
+- Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm build`, `pnpm db:verify-behavior`, `pnpm verify:local-stack`, and `pnpm verify:local-e2e` on 2026-07-17 (23 vision tests, 17 API tests, all root checks, a real authenticated upload-to-report integration, and six browser journeys passed)
 - Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: `9f88e78 test(vision): add golden CV and OCR evidence`
-- Local app status: Phase 4 deterministic OpenCV/PyMuPDF/PaddleOCR pipeline, safe internal HTTP boundary, normalized evidence, golden fixtures, and CPU benchmark are verified; all PlanDelta local processes stopped cleanly
-- Supabase status: Initial versioned migration applied; Auth/API, RLS isolation, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
+- Last completed commit: `217d9ef docs(readme): document verified local workflow`
+- Local app status: The non-containerized local product is verified from authenticated upload through worker, real CV/OCR, private artifacts, React Konva evidence, Realtime/polling progress, retry, and printable report; all PlanDelta local processes stopped cleanly
+- Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
 - AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
@@ -149,25 +149,25 @@ Exit gate:
 
 ## Phase 5 — End-to-end local product
 
-- [ ] Connect upload, revision selection, analysis creation, worker, FastAPI,
+- [x] Connect upload, revision selection, analysis creation, worker, FastAPI,
       persistence, progress, retry, and result retrieval.
-- [ ] Use Supabase Realtime where reliable and polling as a resilient fallback.
-- [ ] Implement the built-in sample through the real pipeline or clearly use a
+- [x] Use Supabase Realtime where reliable and polling as a resilient fallback.
+- [x] Implement the built-in sample through the real pipeline or clearly use a
       committed precomputed result paired with a Run fresh analysis option.
-- [ ] Render real overlay geometry and evidence in React Konva.
-- [ ] Implement change filters, selection, old/new text, confidence, metrics,
+- [x] Render real overlay geometry and evidence in React Konva.
+- [x] Implement change filters, selection, old/new text, confidence, metrics,
       and affected trades.
-- [ ] Implement deterministic executive summary and printable report.
-- [ ] Add failure recovery and retry from the UI.
-- [ ] Run the critical Playwright journey.
+- [x] Implement deterministic executive summary and printable report.
+- [x] Add failure recovery and retry from the UI.
+- [x] Run the critical Playwright journey.
 
 Exit gate — local release:
 
-- [ ] A clean local setup completes upload through report.
-- [ ] Built-in sample works for a reviewer.
-- [ ] Root lint, typecheck, test, E2E, and build pass.
+- [x] A clean local setup completes upload through report.
+- [x] Built-in sample works for a reviewer.
+- [x] Root lint, typecheck, test, E2E, and build pass.
 - [ ] Docker Compose services become healthy.
-- [ ] README setup and troubleshooting are accurate.
+- [x] README setup and troubleshooting are accurate.
 
 ## Phase 6 — PyTorch and ONNX evidence classifier
 
