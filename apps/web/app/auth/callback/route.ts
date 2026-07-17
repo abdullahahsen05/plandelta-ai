@@ -1,8 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
 
+import { getPublicAppOrigin } from "../../../lib/app-origin";
 import { createServerSupabaseClient } from "../../../lib/supabase/server";
 
 export async function GET(request: NextRequest) {
+  const appOrigin = getPublicAppOrigin();
   const code = request.nextUrl.searchParams.get("code");
   const requestedNext = request.nextUrl.searchParams.get("next") ?? "/app";
   const next =
@@ -10,7 +12,7 @@ export async function GET(request: NextRequest) {
 
   if (!code) {
     return NextResponse.redirect(
-      new URL("/auth/sign-in?error=The+sign-in+link+is+invalid.", request.url),
+      new URL("/auth/sign-in?error=The+sign-in+link+is+invalid.", appOrigin),
     );
   }
 
@@ -18,9 +20,9 @@ export async function GET(request: NextRequest) {
   const { error } = await supabase.auth.exchangeCodeForSession(code);
   if (error) {
     return NextResponse.redirect(
-      new URL("/auth/sign-in?error=The+sign-in+link+has+expired.", request.url),
+      new URL("/auth/sign-in?error=The+sign-in+link+has+expired.", appOrigin),
     );
   }
 
-  return NextResponse.redirect(new URL(next, request.url));
+  return NextResponse.redirect(new URL(next, appOrigin));
 }

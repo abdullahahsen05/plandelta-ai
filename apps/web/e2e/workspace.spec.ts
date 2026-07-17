@@ -34,3 +34,26 @@ test("comparison controls expose zoom, swipe, filtering, and evidence selection"
   await page.getByRole("button", { name: /Break-room sink removed/ }).click();
   await expect(page.getByRole("heading", { name: "Break-room sink removed" })).toBeVisible();
 });
+
+test("projects and evidence remain usable at mobile width with reduced motion", async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await page.emulateMedia({ reducedMotion: "reduce" });
+
+  await page.goto("/app");
+  await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+
+  await page.goto("/app/analyses/sample");
+  await expect(page.getByRole("heading", { name: "4 changes found" })).toBeVisible();
+  expect(
+    await page.evaluate(
+      () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
+    ),
+  ).toBeLessThanOrEqual(1);
+});
