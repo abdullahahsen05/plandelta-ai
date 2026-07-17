@@ -1,9 +1,14 @@
-import { CircleUserRound, FolderKanban, Plus } from "lucide-react";
+import { CircleUserRound, FolderKanban, LogOut, Plus } from "lucide-react";
 import Link from "next/link";
 
+import { signOut } from "../app/auth/actions";
+import { createServerSupabaseClient } from "../lib/supabase/server";
 import { BrandMark } from "./brand-mark";
 
-export function AppHeader() {
+export async function AppHeader() {
+  const supabase = await createServerSupabaseClient();
+  const { data } = await supabase.auth.getUser();
+
   return (
     <header className="app-header">
       <BrandMark compact />
@@ -19,15 +24,27 @@ export function AppHeader() {
       </nav>
       <div className="ml-auto flex items-center gap-3 border-l border-[#D8D4CA] pl-3">
         <span className="technical hidden text-[10px] tracking-[0.08em] text-[#646762] md:inline">
-          LOCAL WORKSPACE
+          {data.user ? "AUTHENTICATED" : "SAMPLE WORKSPACE"}
         </span>
-        <Link
-          aria-label="Sign in"
-          className="grid h-10 w-10 place-items-center"
-          href="/auth/sign-in"
-        >
-          <CircleUserRound aria-hidden="true" size={20} strokeWidth={1.6} />
-        </Link>
+        {data.user ? (
+          <form action={signOut}>
+            <button
+              aria-label="Sign out"
+              className="grid h-10 w-10 place-items-center"
+              type="submit"
+            >
+              <LogOut aria-hidden="true" size={18} strokeWidth={1.6} />
+            </button>
+          </form>
+        ) : (
+          <Link
+            aria-label="Sign in"
+            className="grid h-10 w-10 place-items-center"
+            href="/auth/sign-in"
+          >
+            <CircleUserRound aria-hidden="true" size={20} strokeWidth={1.6} />
+          </Link>
+        )}
       </div>
     </header>
   );

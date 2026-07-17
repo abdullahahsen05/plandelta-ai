@@ -327,11 +327,15 @@ button {
   }
 
   .auth-form input {
-    @apply mt-2 min-h-11 w-full border border-[#B9B6AE] bg-[#ECE9E1] px-3 text-[#777A75];
+    @apply mt-2 min-h-11 w-full border border-[#B9B6AE] bg-white px-3 text-[#171A1C];
   }
 
   .auth-form button {
-    @apply mt-3 min-h-11 w-full cursor-not-allowed bg-[#B9B6AE] px-4 font-semibold text-white;
+    @apply mt-3 min-h-11 w-full bg-[#E6532F] px-4 font-semibold text-white transition-colors hover:bg-[#C94325];
+  }
+
+  .auth-form .auth-error {
+    @apply mt-5 border-l-2 border-[#C53F3F] bg-[#FFF1F1] p-3 text-sm text-[#8F2929];
   }
 
   .auth-form .text-action {
