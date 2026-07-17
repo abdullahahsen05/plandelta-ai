@@ -25,8 +25,15 @@ export class ArtifactsService {
   ) {}
 
   async list(ownerId: string, analysisId: string) {
-    const owned = await this.database.analysis.count({ where: { id: analysisId, project: { ownerId } } });
-    if (!owned) throw new ApiException("ANALYSIS_NOT_FOUND", "The analysis was not found.", HttpStatus.NOT_FOUND);
+    const owned = await this.database.analysis.count({
+      where: { id: analysisId, project: { ownerId } },
+    });
+    if (!owned)
+      throw new ApiException(
+        "ANALYSIS_NOT_FOUND",
+        "The analysis was not found.",
+        HttpStatus.NOT_FOUND,
+      );
     return this.database.analysisArtifact.findMany({
       where: { analysisId },
       select: artifactSelect,
@@ -38,7 +45,12 @@ export class ArtifactsService {
     const artifact = await this.database.analysisArtifact.findFirst({
       where: { id: artifactId, analysis: { project: { ownerId } } },
     });
-    if (!artifact) throw new ApiException("ARTIFACT_NOT_FOUND", "The artifact was not found.", HttpStatus.NOT_FOUND);
+    if (!artifact)
+      throw new ApiException(
+        "ARTIFACT_NOT_FOUND",
+        "The artifact was not found.",
+        HttpStatus.NOT_FOUND,
+      );
     return { artifact, bytes: await this.storage.read(artifact.storageKey) };
   }
 }

@@ -13,7 +13,10 @@ export class ArtifactsController {
   constructor(private readonly artifacts: ArtifactsService) {}
 
   @Get("analyses/:analysisId/artifacts")
-  list(@CurrentAuth() auth: AuthContext, @Param("analysisId", new ParseUUIDPipe()) analysisId: string) {
+  list(
+    @CurrentAuth() auth: AuthContext,
+    @Param("analysisId", new ParseUUIDPipe()) analysisId: string,
+  ) {
     return this.artifacts.list(auth.userId, analysisId);
   }
 
@@ -25,7 +28,10 @@ export class ArtifactsController {
   ) {
     const { artifact, bytes } = await this.artifacts.download(auth.userId, artifactId);
     response.setHeader("content-type", artifact.mimeType);
-    response.setHeader("content-disposition", `attachment; filename="${artifact.kind.toLowerCase()}"`);
+    response.setHeader(
+      "content-disposition",
+      `attachment; filename="${artifact.kind.toLowerCase()}"`,
+    );
     response.setHeader("cache-control", "private, no-store");
     return new StreamableFile(bytes);
   }
