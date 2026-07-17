@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { isLiveProcessingEnabled } from "../lib/live-processing";
 
 function RevisionPreview() {
   return (
@@ -75,6 +76,8 @@ function RevisionPreview() {
 }
 
 export default function Home() {
+  const liveProcessingEnabled = isLiveProcessingEnabled();
+
   return (
     <main>
       <header className="mx-auto flex h-14 max-w-[1280px] items-center justify-between border-x border-[#D8D4CA] px-4 sm:px-6">
@@ -117,16 +120,27 @@ export default function Home() {
               >
                 Open labelled sample
               </Link>
-              <Link
-                className="inline-flex min-h-11 items-center justify-center border border-[#171A1C] px-5 font-semibold transition-colors hover:bg-[#171A1C] hover:text-white"
-                href="/app/projects/new"
-              >
-                Compare revisions
-              </Link>
+              {liveProcessingEnabled ? (
+                <Link
+                  className="inline-flex min-h-11 items-center justify-center border border-[#171A1C] px-5 font-semibold transition-colors hover:bg-[#171A1C] hover:text-white"
+                  href="/app/projects/new"
+                >
+                  Compare revisions
+                </Link>
+              ) : (
+                <button
+                  className="inline-flex min-h-11 items-center justify-center border border-[#A6A49E] px-5 font-semibold text-[#646762]"
+                  disabled
+                  type="button"
+                >
+                  Live processing offline
+                </button>
+              )}
             </div>
             <p className="mt-4 text-xs text-[#646762]">
-              The sample uses committed evidence. Uploaded drawings run through the real CV/OCR
-              pipeline.
+              {liveProcessingEnabled
+                ? "The sample uses committed evidence. Uploaded drawings run through the real CV/OCR pipeline."
+                : "The labelled sample remains available while temporary live compute is offline."}
             </p>
           </div>
         </div>

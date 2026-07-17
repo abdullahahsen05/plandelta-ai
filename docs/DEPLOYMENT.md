@@ -21,8 +21,17 @@ at production resources.
 3. Configure public Supabase URL/anon key and public API base URL.
 4. Keep all service-role, database, AWS, and internal-service secrets out of
    Vercel client variables.
-5. Deploy and test routes, client console, network failures, and responsive UI.
-6. Add verified URL to README.
+5. Set `NEXT_PUBLIC_LIVE_PROCESSING_ENABLED=false` until the AWS API is verified.
+   While disabled, use the reserved non-routable
+   `NEXT_PUBLIC_API_URL=https://api.plandelta-ai.invalid`; no live request should
+   be issued and the labelled sample remains available.
+6. Before enabling live processing, replace that reserved URL with the verified
+   HTTPS API origin and set the API `WEB_ORIGINS` value to the exact Vercel
+   production origin.
+7. Keep Next.js remote image patterns empty. Source drawings and evidence are
+   delivered through authenticated same-origin proxy routes.
+8. Deploy and test routes, client console, network failures, and responsive UI.
+9. Add the verified URL to README.
 
 ## AWS services
 

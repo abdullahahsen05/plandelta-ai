@@ -5,10 +5,16 @@ test("fixture-driven project journey reaches the labelled evidence workbench", a
   await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
   await expect(page.getByText("BUILT-IN SAMPLE", { exact: true })).toBeVisible();
 
-  await page.getByRole("link", { name: /Open Northline Office Renovation/ }).click();
+  await Promise.all([
+    page.waitForURL("**/app/projects/northline-office"),
+    page.getByRole("link", { name: /Open Northline Office Renovation/ }).click(),
+  ]);
   await expect(page.getByRole("heading", { name: "Compared revisions" })).toBeVisible();
 
-  await page.getByRole("link", { name: "Open evidence review" }).click();
+  await Promise.all([
+    page.waitForURL("**/app/analyses/sample"),
+    page.getByRole("link", { name: "Open evidence review" }).click(),
+  ]);
   await expect(page.getByText("PRECOMPUTED SAMPLE").first()).toBeVisible();
   await expect(page.getByRole("complementary", { name: "Change ledger" })).toBeVisible();
   await expect(page.getByText("4 changes found")).toBeVisible();
