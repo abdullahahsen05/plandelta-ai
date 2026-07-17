@@ -2,13 +2,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 
 import { ApiException } from "../common/api.exception.js";
 import { DatabaseService } from "../database/database.service.js";
-
-function titleCase(value: string) {
-  return value
-    .toLowerCase()
-    .replaceAll("_", " ")
-    .replace(/\b\w/g, (letter) => letter.toUpperCase());
-}
+import { buildDeterministicReport } from "./deterministic-report.js";
 
 @Injectable()
 export class ReportsService {
@@ -53,30 +47,19 @@ export class ReportsService {
       where: { analysisId },
       orderBy: { sequence: "asc" },
     });
-    const counts = changes.reduce<Record<string, number>>((result, change) => {
-      result[change.changeType] = (result[change.changeType] ?? 0) + 1;
-      return result;
-    }, {});
-    const executiveSummary =
-      changes.length === 0
-        ? "No material revision regions were detected within the configured tolerance."
-        : `${changes.length} evidence-based revision region${changes.length === 1 ? " was" : "s were"} detected: ${Object.entries(
-            counts,
-          )
-            .map(([type, count]) => `${count} ${titleCase(type)}`)
-            .join(", ")}. Review each region against the source drawings before coordination.`;
+    const { executiveSummary, structuredSummary } = buildDeterministicReport(changes);
     return this.database.analysisReport.upsert({
       where: { analysisId },
       create: {
         analysisId,
         executiveSummary,
-        structuredSummary: { counts, changeIds: changes.map((change) => change.id) },
+        structuredSummary,
         provider: "DETERMINISTIC",
         promptVersion: "deterministic-v1",
       },
       update: {
         executiveSummary,
-        structuredSummary: { counts, changeIds: changes.map((change) => change.id) },
+        structuredSummary,
         provider: "DETERMINISTIC",
         modelId: null,
         promptVersion: "deterministic-v1",

@@ -4,6 +4,7 @@ import { Injectable } from "@nestjs/common";
 
 import { DatabaseService } from "../database/database.service.js";
 import { Prisma, type Analysis } from "../generated/prisma/client.js";
+import { buildDeterministicReport } from "../reports/deterministic-report.js";
 import { JobQueueService } from "./job-queue.service.js";
 import { VisionClient } from "./vision-client.js";
 
@@ -91,6 +92,27 @@ export class AnalysisProcessorService {
             })),
           });
         }
+        const persistedChanges = await transaction.detectedChange.findMany({
+          where: { analysisId: analysis.id },
+          orderBy: { sequence: "asc" },
+          select: { id: true, changeType: true },
+        });
+        const report = buildDeterministicReport(persistedChanges);
+        await transaction.analysisReport.upsert({
+          where: { analysisId: analysis.id },
+          create: {
+            analysisId: analysis.id,
+            ...report,
+            provider: "DETERMINISTIC",
+            promptVersion: "deterministic-v1",
+          },
+          update: {
+            ...report,
+            provider: "DETERMINISTIC",
+            modelId: null,
+            promptVersion: "deterministic-v1",
+          },
+        });
         const completion = await transaction.analysis.updateMany({
           where: { id: analysis.id, leaseOwner: workerId },
           data: {
