@@ -1,13 +1,29 @@
 from __future__ import annotations
 
-import tempfile
-from pathlib import Path
+import importlib.util
+import re
+from importlib.metadata import version
 
-from fastapi import FastAPI, HTTPException, status
+import cv2
+import pymupdf
+from fastapi import Depends, FastAPI, Request
+from fastapi.exceptions import RequestValidationError
+from fastapi.responses import JSONResponse
 
 from plandelta_vision import __version__
 from plandelta_vision.config import load_settings
-from plandelta_vision.models import EngineResponse, HealthResponse, ReadinessResponse
+from plandelta_vision.errors import VisionError
+from plandelta_vision.models import (
+    AnalysisRequest,
+    AnalysisResponse,
+    EngineResponse,
+    ErrorBody,
+    ErrorResponse,
+    HealthResponse,
+    ReadinessResponse,
+)
+from plandelta_vision.pipeline import analyze
+from plandelta_vision.security import require_internal_secret
 
 app = FastAPI(
     title="PlanDelta Vision",
@@ -18,6 +34,37 @@ app = FastAPI(
 )
 
 
+def _correlation_id(request: Request) -> str:
+    supplied = request.headers.get("x-correlation-id", "")
+    return supplied if re.fullmatch(r"[A-Za-z0-9._:-]{1,100}", supplied) else "missing"
+
+
+@app.exception_handler(VisionError)
+async def vision_error_handler(request: Request, error: VisionError) -> JSONResponse:
+    body = ErrorResponse(
+        error=ErrorBody(
+            code=error.code,
+            message=error.message,
+            correlation_id=_correlation_id(request),
+        )
+    )
+    return JSONResponse(status_code=error.status_code, content=body.model_dump(by_alias=True))
+
+
+@app.exception_handler(RequestValidationError)
+async def validation_error_handler(
+    request: Request, _error: RequestValidationError
+) -> JSONResponse:
+    body = ErrorResponse(
+        error=ErrorBody(
+            code="REQUEST_VALIDATION_FAILED",
+            message="The vision request did not match the service contract.",
+            correlation_id=_correlation_id(request),
+        )
+    )
+    return JSONResponse(status_code=422, content=body.model_dump(by_alias=True))
+
+
 @app.get("/health/live", response_model=HealthResponse)
 def live() -> HealthResponse:
     return HealthResponse(service="vision", status="ok", version=__version__)
@@ -25,18 +72,27 @@ def live() -> HealthResponse:
 
 @app.get("/health/ready", response_model=ReadinessResponse)
 def ready() -> ReadinessResponse:
-    temporary_directory = Path(tempfile.gettempdir())
-    if not temporary_directory.is_dir() or not temporary_directory.exists():
-        raise HTTPException(
-            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
-            detail="Temporary processing directory is unavailable.",
-        )
-
+    settings = load_settings()
+    settings.temporary_directory.mkdir(parents=True, exist_ok=True)
+    settings.shared_root.mkdir(parents=True, exist_ok=True)
+    probe = settings.temporary_directory / ".readiness-probe"
+    try:
+        probe.write_bytes(b"ready")
+        probe.unlink()
+    except OSError as error:
+        raise VisionError(
+            "TEMPORARY_DIRECTORY_UNAVAILABLE",
+            "The temporary processing directory is not writable.",
+            503,
+        ) from error
     return ReadinessResponse(
         service="vision",
         status="ok",
         version=__version__,
         writable_temporary_directory=True,
+        opencv_ready=True,
+        pdf_renderer_ready=True,
+        ocr_runtime_ready=importlib.util.find_spec("paddleocr") is not None,
     )
 
 
@@ -46,5 +102,23 @@ def engine() -> EngineResponse:
     return EngineResponse(
         schema_version=settings.schema_version,
         engine_version=settings.engine_version,
+        opencv_version=cv2.__version__,
+        pdf_renderer=f"PyMuPDF {pymupdf.VersionBind}",
+        ocr_engine=f"PaddleOCR {version('paddleocr')}",
+        onnx_model_version=None,
         supported_formats=["application/pdf", "image/png", "image/jpeg"],
     )
+
+
+@app.post(
+    "/internal/v1/analyses",
+    response_model=AnalysisResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        401: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
+    },
+    dependencies=[Depends(require_internal_secret)],
+)
+def analyze_revision(request: AnalysisRequest) -> AnalysisResponse:
+    return analyze(request, load_settings())

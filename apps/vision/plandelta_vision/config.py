@@ -1,24 +1,52 @@
 from __future__ import annotations
 
 import os
+from functools import lru_cache
 from pathlib import Path
 
 from pydantic import BaseModel, Field
 
 
+def _platform_path(value: str) -> Path:
+    configured = Path(value)
+    if os.name == "nt" and value.startswith("/"):
+        repository_root = Path(__file__).resolve().parents[3]
+        configured = repository_root / value.lstrip("/")
+    return configured.resolve()
+
+
 class VisionSettings(BaseModel):
-    """Validated non-secret settings used by the service foundation."""
+    """Validated settings for deterministic, bounded blueprint processing."""
 
     port: int = Field(default=8000, gt=0, le=65535)
-    shared_root: Path = Path("data")
+    shared_root: Path
+    temporary_directory: Path
     schema_version: str = "1.0"
     engine_version: str = "dev"
+    internal_service_secret: str = ""
+    max_upload_bytes: int = Field(default=20 * 1024 * 1024, gt=0, le=50 * 1024 * 1024)
+    max_pdf_pages: int = Field(default=50, gt=0, le=200)
+    max_image_pixels: int = Field(default=60_000_000, gt=0, le=120_000_000)
+    render_dpi: int = Field(default=180, ge=96, le=300)
+    ocr_enabled: bool = True
+    ocr_language: str = "en"
+    signed_url_timeout_seconds: int = Field(default=20, ge=2, le=60)
 
 
+@lru_cache(maxsize=1)
 def load_settings() -> VisionSettings:
     return VisionSettings(
         port=int(os.getenv("VISION_PORT", "8000")),
-        shared_root=Path(os.getenv("VISION_SHARED_ROOT", "data")),
+        shared_root=_platform_path(os.getenv("VISION_SHARED_ROOT", "data")),
+        temporary_directory=_platform_path(os.getenv("TEMP_DIRECTORY", "tmp/plandelta")),
         schema_version=os.getenv("VISION_SCHEMA_VERSION", "1.0"),
         engine_version=os.getenv("VISION_ENGINE_VERSION", "dev"),
+        internal_service_secret=os.getenv("INTERNAL_SERVICE_SECRET", ""),
+        max_upload_bytes=int(os.getenv("MAX_UPLOAD_BYTES", str(20 * 1024 * 1024))),
+        max_pdf_pages=int(os.getenv("MAX_PDF_PAGES", "50")),
+        max_image_pixels=int(os.getenv("MAX_IMAGE_PIXELS", "60000000")),
+        render_dpi=int(os.getenv("VISION_RENDER_DPI", "180")),
+        ocr_enabled=os.getenv("OCR_ENABLED", "true").lower() == "true",
+        ocr_language=os.getenv("OCR_LANGUAGE", "en"),
+        signed_url_timeout_seconds=int(os.getenv("SIGNED_URL_TIMEOUT_SECONDS", "20")),
     )
