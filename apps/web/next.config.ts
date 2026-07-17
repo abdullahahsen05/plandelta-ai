@@ -10,6 +10,9 @@ const nextConfig: NextConfig = {
   output: "standalone",
   reactStrictMode: true,
   transpilePackages: ["@plandelta/contracts", "@plandelta/ui"],
+  turbopack: {
+    root: resolve(import.meta.dirname, "../.."),
+  },
 };
 
 export default nextConfig;
