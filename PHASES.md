@@ -5,12 +5,12 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 5 — End-to-end local product (Docker exit gate pending)
-- Current task: Phase 5 report and viewer UX corrections verified; install/start Docker Desktop, then run `pnpm docker:up` and verify all Compose health checks before Phase 6
-- Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm build`, and `pnpm verify:local-e2e -- --live-only` on 2026-07-17 (23 vision tests, 19 API tests, all root checks, five standard browser journeys, and the authenticated upload-to-report journey passed; report overview and evidence images decoded with nonzero image dimensions)
-- Active blockers: Docker is not installed; cloud-only IAM create/pass-role access remains deferred by explicit user direction
+- Current phase: Phase 6 — PyTorch and ONNX evidence classifier
+- Current task: Define the narrow changed-region classification dataset contract and reproducible training baseline
+- Last verified command: `docker compose build`, `docker compose up -d`, Compose API/vision readiness probes, `pnpm verify:local-journey`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, and `pnpm test` on 2026-07-17 (API and vision healthy, exactly one worker running at concurrency one, authenticated containerized upload-to-report journey completed with one real CV/OCR change and seven artifacts, 23 vision tests, 19 API tests, and all root checks passed)
+- Active blockers: Cloud-only IAM create/pass-role access remains deferred by explicit user direction; no local implementation blocker
 - Last completed implementation commit: `2e69a3f feat(reports): build evidence-rich handoff`
-- Local app status: The non-containerized local product is verified from authenticated upload through worker, real CV/OCR, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; the managed stack is running at `http://localhost:3000/app`
+- Local app status: The product is verified from authenticated upload through worker, real CV/OCR, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Codex profile and CLI authentication verified for `abdullahahsen05`; `plandelta-ai` is available, no remote exists yet, and public repository creation waits for the Docker local release gate
 - Vercel status: CLI authentication verified; not deployed
@@ -167,7 +167,7 @@ Exit gate — local release:
 - [x] A clean local setup completes upload through report.
 - [x] Built-in sample works for a reviewer.
 - [x] Root lint, typecheck, test, E2E, and build pass.
-- [ ] Docker Compose services become healthy.
+- [x] Docker Compose services become healthy.
 - [x] README setup and troubleshooting are accurate.
 
 ## Phase 6 — PyTorch and ONNX evidence classifier

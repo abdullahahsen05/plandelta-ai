@@ -4,11 +4,21 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     PIP_NO_CACHE_DIR=1
 
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends libgl1 libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
 RUN groupadd --system plandelta && useradd --system --gid plandelta plandelta
 WORKDIR /app
 COPY pyproject.toml ./
 COPY plandelta_vision ./plandelta_vision
 RUN python -m pip install --upgrade pip && python -m pip install .
+RUN apt-get update \
+    && apt-get install --yes --no-install-recommends libgomp1 \
+    && rm -rf /var/lib/apt/lists/*
+RUN mkdir -p /data /home/plandelta/.paddlex \
+    && chown --recursive plandelta:plandelta /home/plandelta \
+    && chmod 0777 /data
 
 USER plandelta
 EXPOSE 8000

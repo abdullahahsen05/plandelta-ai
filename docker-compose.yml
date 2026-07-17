@@ -2,6 +2,7 @@ name: plandelta
 
 services:
   api:
+    image: plandelta-api:local
     build:
       context: .
       dockerfile: apps/api/Dockerfile
@@ -30,9 +31,8 @@ services:
       retries: 5
 
   worker:
-    build:
-      context: .
-      dockerfile: apps/api/Dockerfile
+    image: plandelta-api:local
+    pull_policy: never
     command: ["node", "apps/api/dist/worker.js"]
     env_file: .env.local
     environment:
@@ -46,6 +46,7 @@ services:
     restart: unless-stopped
 
   vision:
+    image: plandelta-vision:local
     build:
       context: apps/vision
       dockerfile: Dockerfile
@@ -56,6 +57,7 @@ services:
       - "8000:8000"
     volumes:
       - plandelta-data:/data
+      - plandelta-vision-models:/home/plandelta/.paddlex
     healthcheck:
       test:
         [
@@ -70,3 +72,4 @@ services:
 
 volumes:
   plandelta-data:
+  plandelta-vision-models:
