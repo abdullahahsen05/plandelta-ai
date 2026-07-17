@@ -1,0 +1,13 @@
+.next
+apps/web/next-env.d.ts
+dist
+coverage
+node_modules
+.venv
+pnpm-lock.yaml
+apps/api/src/generated
+AGENTS.md
+START_HERE.md
+PLAN.md
+PHASES.md
+docs/

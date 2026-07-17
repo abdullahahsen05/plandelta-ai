@@ -1,0 +1,43 @@
+# Local environment and credentials
+.env
+.env.*
+!.env.example
+
+# Dependencies and caches
+node_modules/
+.pnpm-store/
+.turbo/
+.next/
+dist/
+build/
+coverage/
+*.tsbuildinfo
+playwright-report/
+test-results/
+.vercel/
+*.log
+apps/api/src/generated/
+
+# Python environments and caches
+.venv/
+venv/
+__pycache__/
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+*.py[cod]
+*.egg-info/
+
+# Local runtime data and generated artifacts
+data/
+uploads/
+artifacts/
+models/
+tmp/
+*.onnx
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

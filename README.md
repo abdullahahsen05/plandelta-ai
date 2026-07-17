@@ -1,0 +1,91 @@
+# PlanDelta AI
+
+PlanDelta compares a baseline construction drawing with a revised drawing, aligns the sheets,
+detects visual and textual changes, and turns every finding into traceable review evidence.
+
+The product is being built as a serious construction-intelligence workspace—not an estimation claim,
+automatic takeoff, or generic analytics dashboard. User-uploaded results will come from a real
+deterministic OpenCV/OCR pipeline. The built-in sample is always identified as sample data.
+
+## Current status
+
+The repository foundation is in progress. The marketing entry, shared contracts, NestJS health
+surface, FastAPI health surface, strict tooling, and local runtime contracts are being verified. No
+AWS product resources have been created.
+
+Progress and evidence are recorded in [PHASES.md](./PHASES.md).
+
+## Architecture
+
+```mermaid
+flowchart LR
+    Browser["Next.js workspace"] --> API["NestJS API"]
+    API --> DB["Supabase PostgreSQL + Auth"]
+    Worker["NestJS worker"] --> DB
+    Worker --> Vision["FastAPI CV/OCR"]
+    API --> Storage["Storage provider"]
+    Vision --> Storage
+```
+
+- `apps/web`: Next.js App Router interface and blueprint workbench.
+- `apps/api`: NestJS HTTP API and separate durable worker entry point.
+- `apps/vision`: stateless FastAPI computer-vision and OCR service.
+- `packages/contracts`: shared Zod contracts and normalized geometry.
+- `packages/ui`: PlanDelta-specific reusable interface utilities.
+- `infrastructure`: deployment assets created only after the local release gate.
+
+Supabase PostgreSQL is the source of truth and durable queue. Local development uses a shared
+storage volume; production later swaps that provider for private S3. Bedrock summaries remain
+optional and never replace deterministic evidence.
+
+## Requirements
+
+- Node.js 22 or newer
+- pnpm 11
+- Python 3.12
+- Supabase project credentials in an ignored `.env.local`
+- Docker Desktop for the complete Compose verification path
+
+AWS is not required for local analysis. AWS deployment begins only after the local release gate.
+
+## Setup
+
+```powershell
+pnpm install
+python -m venv .venv
+pnpm vision:install
+pnpm db:generate
+pnpm dev
+```
+
+Copy `.env.example` to `.env.local` and configure values locally. Never commit or paste the
+resulting file. The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, and
+the vision service at `http://localhost:8000`.
+
+## Root commands
+
+```text
+pnpm dev           Start web, API, and vision development processes
+pnpm build         Build every application and shared package
+pnpm lint          Run TypeScript and Python lint checks
+pnpm typecheck     Run strict TypeScript and Python type checks
+pnpm test          Run unit and service tests
+pnpm test:e2e      Run browser and service-boundary smoke tests
+pnpm format        Format supported source and documentation
+pnpm db:generate   Generate the Prisma client
+pnpm db:migrate    Apply committed database migrations
+pnpm db:seed       Run the idempotent development seed
+pnpm docker:up     Build and start local service containers
+pnpm docker:down   Stop local service containers
+```
+
+## Safety and limitations
+
+- PlanDelta supports revision review; it does not guarantee quantities, cost, constructability, or
+  code compliance.
+- Uploaded drawings are private runtime data and never training material.
+- Low-confidence alignment or OCR remains visibly uncertain.
+- Public demos use labelled sample evidence when temporary backend compute is unavailable.
+
+See [PLAN.md](./PLAN.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and
+[docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract.

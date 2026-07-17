@@ -1,0 +1,39 @@
+{
+  "name": "plandelta-ai",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Evidence-based construction blueprint revision analysis.",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=11.0.0"
+  },
+  "scripts": {
+    "dev": "turbo run dev --parallel",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "test:e2e": "turbo run test:e2e",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "db:generate": "pnpm --filter @plandelta/api db:generate",
+    "db:migrate": "pnpm --filter @plandelta/api db:migrate",
+    "db:seed": "pnpm --filter @plandelta/api db:seed",
+    "vision:install": "node scripts/python.mjs -m pip install -e ./apps/vision[dev]",
+    "docker:up": "docker compose up --build -d",
+    "docker:down": "docker compose down"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.1",
+    "@types/node": "^24.10.1",
+    "eslint": "^9.39.1",
+    "globals": "^16.5.0",
+    "prettier": "^3.8.2",
+    "prettier-plugin-tailwindcss": "^0.7.2",
+    "turbo": "2.10.5",
+    "typescript": "5.9.3",
+    "typescript-eslint": "^8.48.1",
+    "vitest": "4.1.10"
+  }
+}
