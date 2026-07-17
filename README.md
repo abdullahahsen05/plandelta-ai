@@ -3,16 +3,19 @@
 PlanDelta compares a baseline construction drawing with a revised drawing, aligns the sheets,
 detects visual and textual changes, and turns every finding into traceable review evidence.
 
-The product is being built as a serious construction-intelligence workspace—not an estimation claim,
-automatic takeoff, or generic analytics dashboard. User-uploaded results will come from a real
-deterministic OpenCV/OCR pipeline. The built-in sample is always identified as sample data.
+The product is a serious construction-intelligence workspace—not an estimation claim, automatic
+takeoff, or generic analytics dashboard. User-uploaded results come from a real deterministic
+OpenCV/OCR pipeline. The built-in sample is always identified as sample data.
 
 ## Current status
 
 The authenticated local product now works from two validated blueprint uploads through durable job
 processing, OpenCV alignment and directional differencing, PaddleOCR, normalized evidence regions,
 private artifacts, and a deterministic printable report. A clearly labelled precomputed sample
-remains available without backend compute. No AWS product resources have been created.
+remains available without backend compute. The
+[public Vercel workspace](https://plandelta-ai.vercel.app) currently runs in truthful portfolio
+mode: the sample works, while live uploads remain visibly offline until the AWS service is verified.
+No AWS product resources have been created.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 
@@ -124,7 +127,7 @@ checks cross-user RLS and concurrent queue leasing, and cleans up its records.
 
 In Supabase Auth URL settings, allow `http://localhost:3000/auth/callback` for local passwordless
 sign-in. Set `NEXT_PUBLIC_APP_URL` to the matching application origin; add the final Vercel callback
-only during deployment.
+`https://plandelta-ai.vercel.app/auth/callback` during deployment.
 
 ## Root commands
 

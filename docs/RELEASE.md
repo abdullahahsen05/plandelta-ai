@@ -70,3 +70,34 @@ Debian publishes one.
   accuracy.
 - The precomputed public sample is labelled and remains available when
   temporary live compute is stopped.
+
+## Vercel portfolio deployment
+
+The public frontend is verified at
+[`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app). Deployment
+`dpl_G4C1fCMMBS1TZWwKioCN7EtUyoyY` built commit `81b533f` with the `apps/web`
+monorepo root, Next.js preset, Node.js 22, and external workspace dependency
+access.
+
+The production project contains only the five required public configuration
+names: Supabase URL, Supabase anonymous key, application URL, API URL, and the
+live-processing availability flag. Values were not printed or committed.
+Portfolio mode uses a reserved non-routable API origin and disables sign-in and
+uploads until verified AWS compute is available.
+
+Verified remote evidence:
+
+- Landing, labelled sample, side-by-side workbench, offline sign-in boundary,
+  and offline upload boundary returned successfully.
+- The 390 × 844 layout had no horizontal overflow and retained the evidence
+  ledger.
+- A fresh browser tab recorded no warnings or errors.
+- CSP, HSTS, cross-origin opener, content-type, framing, referrer, permissions,
+  and cross-domain-policy headers were present; production CSP excludes
+  `unsafe-eval`.
+- Thirteen public JavaScript assets contained none of the checked server-only
+  environment names.
+
+The Supabase project owner must add
+`https://plandelta-ai.vercel.app/auth/callback` to the Auth redirect allowlist
+before live authentication is enabled.

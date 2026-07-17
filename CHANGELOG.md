@@ -4,6 +4,21 @@ All notable PlanDelta changes are documented here. The project follows
 [Semantic Versioning](https://semver.org/) and uses release-candidate tags before its first stable
 release.
 
+## [Unreleased]
+
+### Added
+
+- A verified public Vercel portfolio deployment with an always-available, clearly labelled sample.
+- Explicit portfolio mode that disables live uploads and passwordless sign-in while temporary
+  backend compute is offline.
+
+### Security
+
+- Production CSP, framing, content-type, referrer, permissions, opener, and cross-domain-policy
+  headers.
+- Same-origin drawing delivery with no remote Next.js image allowlist and a reserved non-routable
+  API origin until the AWS service is verified.
+
 ## [0.1.0-rc.1] - 2026-07-18
 
 ### Added
