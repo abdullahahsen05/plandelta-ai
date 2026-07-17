@@ -1,4 +1,5 @@
 import { ArrowRight, Check, ScanSearch } from "lucide-react";
+import Image from "next/image";
 
 import { changeKindMeta, type ChangeKind, type SampleChange } from "../lib/sample-data";
 
@@ -120,10 +121,24 @@ export function ChangeLedger({
               {changeKindMeta[selected.kind].label}
             </span>
           </div>
-          <div className="crop-pair">
-            <EvidenceCrop label="Baseline crop" variant="old" />
-            <EvidenceCrop label="Candidate crop" variant="new" />
-          </div>
+          {selected.evidenceUrl ? (
+            <figure className="live-evidence-crop">
+              {/* The API authorizes this private artifact through the same user session. */}
+              <Image
+                alt={`Baseline and candidate evidence for region ${selected.sequence}`}
+                height={220}
+                src={selected.evidenceUrl}
+                unoptimized
+                width={640}
+              />
+              <figcaption>Baseline · Candidate</figcaption>
+            </figure>
+          ) : (
+            <div className="crop-pair">
+              <EvidenceCrop label="Baseline crop" variant="old" />
+              <EvidenceCrop label="Candidate crop" variant="new" />
+            </div>
+          )}
           <dl className="detail-data">
             <div>
               <dt>Baseline text</dt>

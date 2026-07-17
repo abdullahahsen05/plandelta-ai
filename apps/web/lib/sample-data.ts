@@ -19,6 +19,7 @@ export type SampleChange = {
   newText: string | null;
   impact: string;
   box: NormalizedBox;
+  evidenceUrl?: string | undefined;
 };
 
 export const changeKindMeta: Record<

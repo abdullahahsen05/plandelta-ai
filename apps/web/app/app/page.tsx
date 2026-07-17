@@ -1,9 +1,19 @@
 import { ArrowRight, FileSearch, Plus } from "lucide-react";
 import Link from "next/link";
 
+import { apiRequest } from "../../lib/api/client";
+import { projectListSchema } from "../../lib/api/contracts";
+import { optionalServerAccessToken } from "../../lib/api/server";
 import { changeKindMeta, sampleChanges, sampleProject } from "../../lib/sample-data";
 
-export default function ProjectsPage() {
+export default async function ProjectsPage() {
+  const token = await optionalServerAccessToken();
+  const liveProjects = token
+    ? await apiRequest("/projects?limit=20", token, projectListSchema).then(
+        (result) => result.items,
+        () => [],
+      )
+    : [];
   const counts = sampleChanges.reduce(
     (result, change) => ({ ...result, [change.kind]: result[change.kind] + 1 }),
     { added: 0, modified: 0, removed: 0 },
@@ -59,12 +69,51 @@ export default function ProjectsPage() {
             <ArrowRight aria-hidden="true" size={19} />
           </Link>
         </article>
+        {liveProjects.map((project) => (
+          <article className="project-table-row project-table-live" key={project.id}>
+            <div>
+              <div className="mb-2 flex items-center gap-2">
+                <span className="live-flag">LIVE PROJECT</span>
+                {project.projectCode ? (
+                  <span className="technical text-[10px] text-[#646762]">
+                    {project.projectCode}
+                  </span>
+                ) : null}
+              </div>
+              <h2>{project.name}</h2>
+              <p>{project.description ?? "Private revision comparison"}</p>
+            </div>
+            <div>
+              <span className="technical text-[11px] text-[#646762]">
+                {project._count?.revisions ?? 0} REVISION FILES
+              </span>
+              <p className="mt-1 font-medium">{project._count?.analyses ?? 0} analyses</p>
+              <p>Updated {new Date(project.updatedAt).toLocaleDateString()}</p>
+            </div>
+            <div className="change-counts">
+              <span className="border-[#17845B]">
+                <b className="text-[#17845B]">PRIVATE</b> evidence
+              </span>
+            </div>
+            <Link
+              aria-label={`Open ${project.name}`}
+              className="row-action"
+              href={`/app/projects/${project.id}`}
+            >
+              <ArrowRight aria-hidden="true" size={19} />
+            </Link>
+          </article>
+        ))}
       </section>
 
       <section className="empty-projects" aria-labelledby="first-comparison-heading">
         <FileSearch aria-hidden="true" size={28} strokeWidth={1.5} />
         <div>
-          <h2 id="first-comparison-heading">Add your first live comparison</h2>
+          <h2 id="first-comparison-heading">
+            {liveProjects.length > 0
+              ? "Start another comparison"
+              : "Add your first live comparison"}
+          </h2>
           <p>
             Upload a baseline and candidate revision. Results will remain separate from the labelled
             sample above.

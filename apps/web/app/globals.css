@@ -117,6 +117,10 @@ button {
     @apply technical inline-flex border border-[#E6532F] bg-[#FFF4EF] px-2 py-0.5 text-[9px] font-semibold tracking-[0.1em] text-[#C94325];
   }
 
+  .live-flag {
+    @apply technical inline-flex border border-[#17845B] bg-[#EDF7F1] px-2 py-0.5 text-[9px] font-semibold tracking-[0.1em] text-[#126B4A];
+  }
+
   .project-table-shell {
     @apply border border-[#D8D4CA] bg-[#FBFAF6];
   }
@@ -127,6 +131,10 @@ button {
 
   .project-table-row {
     @apply grid gap-6 p-5 md:grid-cols-[1.5fr_1fr_1fr_44px] md:items-center;
+  }
+
+  .project-table-live {
+    @apply border-t border-[#D8D4CA];
   }
 
   .project-table-row h2 {
@@ -169,6 +177,26 @@ button {
     @apply grid gap-px border border-[#D8D4CA] bg-[#D8D4CA] md:grid-cols-2;
   }
 
+  .comparison-metadata {
+    @apply mb-5 grid gap-px border border-[#D8D4CA] bg-[#D8D4CA] sm:grid-cols-2;
+  }
+
+  .comparison-metadata label {
+    @apply bg-[#FBFAF6] p-5;
+  }
+
+  .comparison-metadata label > span {
+    @apply mb-2 flex items-baseline justify-between text-xs font-semibold;
+  }
+
+  .comparison-metadata label small {
+    @apply font-normal text-[#777A75];
+  }
+
+  .comparison-metadata input {
+    @apply min-h-11 w-full border border-[#AAA79F] bg-white px-3 text-sm outline-none focus:border-[#E6532F] focus:ring-2 focus:ring-[#E6532F]/20 disabled:bg-[#ECE9E1];
+  }
+
   .upload-field {
     @apply bg-[#FBFAF6] p-5 sm:p-7;
   }
@@ -202,7 +230,51 @@ button {
   }
 
   .submission-bar button {
-    @apply min-h-11 shrink-0 cursor-not-allowed border border-[#B9B6AE] bg-[#E4E1D9] px-5 font-semibold text-[#777A75];
+    @apply inline-flex min-h-11 shrink-0 items-center justify-center gap-2 border border-[#171A1C] bg-[#171A1C] px-5 font-semibold text-white transition-colors hover:bg-[#313538] disabled:cursor-not-allowed disabled:border-[#B9B6AE] disabled:bg-[#E4E1D9] disabled:text-[#777A75];
+  }
+
+  .submission-bar .form-error {
+    @apply font-semibold text-[#A63232];
+  }
+
+  .analysis-progress-page {
+    @apply grid min-h-[calc(100dvh-56px)] place-items-center p-5;
+  }
+
+  .analysis-progress-panel {
+    @apply w-full max-w-2xl border border-[#C7C3BA] bg-[#FBFAF6] p-7 sm:p-10;
+  }
+
+  .analysis-progress-panel h1 {
+    @apply mt-2 text-3xl font-semibold tracking-[-0.03em];
+  }
+
+  .analysis-progress-panel > p:not(.eyebrow, .form-error) {
+    @apply mt-3 max-w-xl text-sm leading-6 text-[#646762];
+  }
+
+  .progress-symbol {
+    @apply mb-6 grid h-14 w-14 place-items-center border border-[#17845B] bg-[#EDF7F1] text-[#17845B];
+  }
+
+  .progress-symbol-error {
+    @apply border-[#C53F3F] bg-[#FFF1F1] text-[#C53F3F];
+  }
+
+  .progress-track {
+    @apply mt-8 h-2 overflow-hidden bg-[#D8D4CA];
+  }
+
+  .progress-track span {
+    @apply block h-full bg-[#E6532F] transition-[width];
+  }
+
+  .progress-meta {
+    @apply technical mt-2 flex justify-between text-[10px] tracking-[0.08em] text-[#646762] uppercase;
+  }
+
+  .progress-actions {
+    @apply mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[#D8D4CA] pt-5;
   }
 
   .project-heading {
@@ -647,6 +719,18 @@ button {
 
   .evidence-crop svg {
     @apply block w-full;
+  }
+
+  .live-evidence-crop {
+    @apply mt-3 overflow-hidden border border-[#D8D4CA] bg-[#10263B];
+  }
+
+  .live-evidence-crop img {
+    @apply block min-h-20 w-full object-contain;
+  }
+
+  .live-evidence-crop figcaption {
+    @apply technical bg-[#ECE9E1] px-2 py-1 text-center text-[8px] text-[#646762];
   }
 
   .detail-data {

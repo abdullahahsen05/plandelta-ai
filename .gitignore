@@ -34,6 +34,8 @@ uploads/
 artifacts/
 !apps/api/src/artifacts/
 !apps/api/src/artifacts/**
+!apps/web/app/api/artifacts/
+!apps/web/app/api/artifacts/**
 models/
 tmp/
 *.onnx

@@ -2,7 +2,7 @@
 
 import Konva from "konva";
 import { useEffect, useMemo, useRef, useState } from "react";
-import { Group, Layer, Line, Rect, Stage, Text } from "react-konva";
+import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text } from "react-konva";
 
 import { changeKindMeta, type SampleChange } from "../lib/sample-data";
 
@@ -12,6 +12,23 @@ type CanvasSize = { width: number; height: number };
 
 const planWidth = 1000;
 const planHeight = 700;
+
+function useBlueprintImage(source?: string) {
+  const [image, setImage] = useState<HTMLImageElement | null>(null);
+  useEffect(() => {
+    if (!source) {
+      return;
+    }
+    const nextImage = new window.Image();
+    nextImage.decoding = "async";
+    nextImage.onload = () => setImage(nextImage);
+    nextImage.src = source;
+    return () => {
+      nextImage.onload = null;
+    };
+  }, [source]);
+  return image;
+}
 
 const baselineLines = [
   [90, 90, 910, 90, 910, 610, 90, 610, 90, 90],
@@ -117,6 +134,10 @@ export function BlueprintCanvas({
   fitToken,
   onSelect,
   onZoomChange,
+  baselineImageUrl,
+  candidateImageUrl,
+  documentWidth = planWidth,
+  documentHeight = planHeight,
 }: {
   changes: SampleChange[];
   selectedId: string;
@@ -127,12 +148,19 @@ export function BlueprintCanvas({
   fitToken: number;
   onSelect: (id: string) => void;
   onZoomChange: (zoom: number) => void;
+  baselineImageUrl?: string | undefined;
+  candidateImageUrl?: string | undefined;
+  documentWidth?: number | undefined;
+  documentHeight?: number | undefined;
 }) {
   const hostRef = useRef<HTMLDivElement>(null);
   const stageRef = useRef<Konva.Stage>(null);
   const [size, setSize] = useState<CanvasSize>({ width: 960, height: 640 });
   const [blinkVisible, setBlinkVisible] = useState(true);
   const [reducedMotion, setReducedMotion] = useState(false);
+  const baselineImage = useBlueprintImage(baselineImageUrl);
+  const candidateImage = useBlueprintImage(candidateImageUrl);
+  const usesArtifacts = Boolean(baselineImageUrl && candidateImageUrl);
 
   useEffect(() => {
     const host = hostRef.current;
@@ -166,20 +194,20 @@ export function BlueprintCanvas({
   }, [fitToken, size]);
 
   const fitScale = useMemo(
-    () => Math.min((size.width - 40) / planWidth, (size.height - 40) / planHeight),
-    [size],
+    () => Math.min((size.width - 40) / documentWidth, (size.height - 40) / documentHeight),
+    [documentHeight, documentWidth, size],
   );
   const drawingScale = fitScale * zoom;
-  const drawingX = (size.width - planWidth * drawingScale) / 2;
-  const drawingY = (size.height - planHeight * drawingScale) / 2;
+  const drawingX = (size.width - documentWidth * drawingScale) / 2;
+  const drawingY = (size.height - documentHeight * drawingScale) / 2;
   const showBaseline = mode !== "candidate";
   const showCandidate = mode !== "baseline" && (mode !== "blink" || reducedMotion || blinkVisible);
   const candidateClip =
     mode === "split"
-      ? { x: planWidth / 2, y: 0, width: planWidth / 2, height: planHeight }
+      ? { x: documentWidth / 2, y: 0, width: documentWidth / 2, height: documentHeight }
       : mode === "swipe"
-        ? { x: 0, y: 0, width: planWidth * (swipe / 100), height: planHeight }
-        : { x: 0, y: 0, width: planWidth, height: planHeight };
+        ? { x: 0, y: 0, width: documentWidth * (swipe / 100), height: documentHeight }
+        : { x: 0, y: 0, width: documentWidth, height: documentHeight };
 
   return (
     <div
@@ -201,25 +229,36 @@ export function BlueprintCanvas({
         <Layer>
           <Rect fill="#10263B" height={size.height} width={size.width} />
           <Group scaleX={drawingScale} scaleY={drawingScale} x={drawingX} y={drawingY}>
-            {Array.from({ length: 36 }, (_, index) => (
-              <Line
-                key={`grid-v-${index}`}
-                opacity={index % 5 === 0 ? 0.09 : 0.035}
-                points={[index * 30, 0, index * 30, planHeight]}
-                stroke="#FFFFFF"
-                strokeWidth={1 / drawingScale}
+            {!usesArtifacts
+              ? Array.from({ length: 36 }, (_, index) => (
+                  <Line
+                    key={`grid-v-${index}`}
+                    opacity={index % 5 === 0 ? 0.09 : 0.035}
+                    points={[index * 30, 0, index * 30, documentHeight]}
+                    stroke="#FFFFFF"
+                    strokeWidth={1 / drawingScale}
+                  />
+                ))
+              : null}
+            {!usesArtifacts
+              ? Array.from({ length: 25 }, (_, index) => (
+                  <Line
+                    key={`grid-h-${index}`}
+                    opacity={index % 5 === 0 ? 0.09 : 0.035}
+                    points={[0, index * 30, documentWidth, index * 30]}
+                    stroke="#FFFFFF"
+                    strokeWidth={1 / drawingScale}
+                  />
+                ))
+              : null}
+            {usesArtifacts && showBaseline && baselineImage ? (
+              <KonvaImage
+                height={documentHeight}
+                image={baselineImage}
+                opacity={mode === "overlay" ? 0.62 : 1}
+                width={documentWidth}
               />
-            ))}
-            {Array.from({ length: 25 }, (_, index) => (
-              <Line
-                key={`grid-h-${index}`}
-                opacity={index % 5 === 0 ? 0.09 : 0.035}
-                points={[0, index * 30, planWidth, index * 30]}
-                stroke="#FFFFFF"
-                strokeWidth={1 / drawingScale}
-              />
-            ))}
-            {showBaseline ? (
+            ) : showBaseline ? (
               <BlueprintDrawing
                 labels="baseline"
                 lines={baselineLines}
@@ -227,7 +266,16 @@ export function BlueprintCanvas({
                 stroke="#8EA8B9"
               />
             ) : null}
-            {showCandidate ? (
+            {usesArtifacts && showCandidate && candidateImage ? (
+              <Group clip={candidateClip}>
+                <KonvaImage
+                  height={documentHeight}
+                  image={candidateImage}
+                  opacity={mode === "overlay" ? opacity / 100 : 1}
+                  width={documentWidth}
+                />
+              </Group>
+            ) : showCandidate ? (
               <Group clip={candidateClip}>
                 <BlueprintDrawing
                   labels="candidate"
@@ -252,21 +300,21 @@ export function BlueprintCanvas({
                               : []
                         }
                         fill={selected ? `${meta.color}24` : "transparent"}
-                        height={change.box.height * planHeight}
+                        height={change.box.height * documentHeight}
                         onClick={() => onSelect(change.id)}
                         onTap={() => onSelect(change.id)}
                         stroke={meta.color}
                         strokeWidth={selected ? 5 : 3}
-                        width={change.box.width * planWidth}
-                        x={change.box.x * planWidth}
-                        y={change.box.y * planHeight}
+                        width={change.box.width * documentWidth}
+                        x={change.box.x * documentWidth}
+                        y={change.box.y * documentHeight}
                       />
                       <Rect
                         fill={meta.color}
                         height={24}
                         width={40}
-                        x={change.box.x * planWidth}
-                        y={change.box.y * planHeight - 24}
+                        x={change.box.x * documentWidth}
+                        y={change.box.y * documentHeight - 24}
                       />
                       <Text
                         align="center"
@@ -275,8 +323,8 @@ export function BlueprintCanvas({
                         fontSize={12}
                         text={String(change.sequence).padStart(2, "0")}
                         width={40}
-                        x={change.box.x * planWidth}
-                        y={change.box.y * planHeight - 18}
+                        x={change.box.x * documentWidth}
+                        y={change.box.y * documentHeight - 18}
                       />
                     </Group>
                   );
@@ -288,7 +336,7 @@ export function BlueprintCanvas({
                   candidateClip.x + candidateClip.width,
                   0,
                   candidateClip.x + candidateClip.width,
-                  planHeight,
+                  documentHeight,
                 ]}
                 stroke="#E6532F"
                 strokeWidth={3}

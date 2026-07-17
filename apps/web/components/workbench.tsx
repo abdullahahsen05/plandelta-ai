@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useState } from "react";
 
 import { sampleChanges, sampleProject } from "../lib/sample-data";
+import type { SampleChange } from "../lib/sample-data";
 import { ChangeLedger, type ChangeFilter } from "./change-ledger";
 import type { CompareMode } from "./blueprint-canvas";
 
@@ -32,18 +33,54 @@ const BlueprintCanvas = dynamic(
   },
 );
 
-function RevisionRail() {
+export type WorkbenchData = {
+  sample: boolean;
+  projectId: string;
+  projectName: string;
+  comparisonLabel: string;
+  sheet: string;
+  sheetTitle: string;
+  baseline: { label: string; revision: string; issuedAt: string };
+  candidate: { label: string; revision: string; issuedAt: string };
+  engine: string;
+  alignment: string;
+  reprojectionError: string;
+  changes: SampleChange[];
+  baselineImageUrl?: string | undefined;
+  candidateImageUrl?: string | undefined;
+  documentWidth?: number | undefined;
+  documentHeight?: number | undefined;
+  reportSummary?: string | undefined;
+  reportUrl?: string | undefined;
+};
+
+const sampleWorkbench: WorkbenchData = {
+  sample: true,
+  projectId: sampleProject.id,
+  projectName: sampleProject.name,
+  comparisonLabel: "A2.14 · Rev 03 → 04",
+  sheet: sampleProject.baseline.sheet,
+  sheetTitle: sampleProject.baseline.title,
+  baseline: sampleProject.baseline,
+  candidate: sampleProject.candidate,
+  engine: sampleProject.analysis.engine,
+  alignment: sampleProject.analysis.alignment,
+  reprojectionError: sampleProject.analysis.reprojectionError,
+  changes: sampleChanges,
+};
+
+function RevisionRail({ data }: { data: WorkbenchData }) {
   return (
     <aside aria-label="Revision rail" className="revision-rail">
       <div className="revision-rail-heading">
         <p className="eyebrow">REVISION SET</p>
-        <h2>A2.14</h2>
-        <p>Level 02 floor plan</p>
+        <h2>{data.sheet}</h2>
+        <p>{data.sheetTitle}</p>
       </div>
-      {[sampleProject.baseline, sampleProject.candidate].map((revision, index) => (
+      {[data.baseline, data.candidate].map((revision, index) => (
         <article className="rail-revision" key={revision.label}>
           <div className="rail-sheet-preview" aria-hidden="true">
-            <span>{revision.sheet}</span>
+            <span>{data.sheet}</span>
             <i className={index === 1 ? "candidate-mark" : undefined} />
           </div>
           <div>
@@ -57,25 +94,29 @@ function RevisionRail() {
         <div>
           <dt>Alignment</dt>
           <dd>
-            <span className="status-dot" /> {sampleProject.analysis.alignment}
+            <span className="status-dot" /> {data.alignment}
           </dd>
         </div>
         <div>
           <dt>Reprojection</dt>
-          <dd>{sampleProject.analysis.reprojectionError}</dd>
+          <dd>{data.reprojectionError}</dd>
         </div>
         <div>
           <dt>Page pair</dt>
           <dd>01 / 01</dd>
         </div>
       </dl>
-      <p className="rail-note">This is committed sample evidence, not a live uploaded result.</p>
+      <p className="rail-note">
+        {data.sample
+          ? "This is committed sample evidence, not a live uploaded result."
+          : "Live deterministic evidence. Verify every region against the source drawings."}
+      </p>
     </aside>
   );
 }
 
-export function Workbench() {
-  const [selectedId, setSelectedId] = useState(sampleChanges[0]!.id);
+export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) {
+  const [selectedId, setSelectedId] = useState(data.changes[0]?.id ?? "");
   const [filter, setFilter] = useState<ChangeFilter>("all");
   const [mode, setMode] = useState<CompareMode>("overlay");
   const [opacity, setOpacity] = useState(72);
@@ -98,24 +139,27 @@ export function Workbench() {
     <main className="workbench-shell">
       <div className="workbench-toolbar">
         <div className="workbench-crumbs">
-          <Link href={`/app/projects/${sampleProject.id}`}>{sampleProject.name}</Link>
+          <Link href={`/app/projects/${data.projectId}`}>{data.projectName}</Link>
           <span>/</span>
-          <strong>A2.14 · Rev 03 → 04</strong>
-          <span className="sample-flag">PRECOMPUTED SAMPLE</span>
+          <strong>{data.comparisonLabel}</strong>
+          <span className={data.sample ? "sample-flag" : "live-flag"}>
+            {data.sample ? "PRECOMPUTED SAMPLE" : "LIVE ANALYSIS"}
+          </span>
         </div>
         <div className="analysis-state">
           <span className="status-dot" />
           <span>Complete</span>
-          <span className="technical">{sampleProject.analysis.engine}</span>
+          <span className="technical">{data.engine}</span>
         </div>
-        <button
-          className="export-button"
-          disabled
-          title="Report export arrives with the end-to-end report phase"
-          type="button"
-        >
-          <Download aria-hidden="true" size={15} /> Export
-        </button>
+        {data.reportUrl ? (
+          <a className="export-button" href={data.reportUrl} rel="noreferrer" target="_blank">
+            <Download aria-hidden="true" size={15} /> Print report
+          </a>
+        ) : (
+          <button className="export-button" disabled type="button">
+            <Download aria-hidden="true" size={15} /> Export
+          </button>
+        )}
       </div>
 
       <div className="workbench-controls" aria-label="Blueprint comparison controls">
@@ -199,10 +243,14 @@ export function Workbench() {
       </div>
 
       <div className="workbench-grid">
-        <RevisionRail />
+        <RevisionRail data={data} />
         <section className="canvas-panel" aria-label="Blueprint viewport">
           <BlueprintCanvas
-            changes={sampleChanges}
+            baselineImageUrl={data.baselineImageUrl}
+            candidateImageUrl={data.candidateImageUrl}
+            changes={data.changes}
+            documentHeight={data.documentHeight}
+            documentWidth={data.documentWidth}
             fitToken={fitToken}
             mode={mode}
             onSelect={selectChange}
@@ -214,15 +262,16 @@ export function Workbench() {
           />
           <div className="canvas-statusbar">
             <span>
-              <Focus aria-hidden="true" size={13} /> Alignment{" "}
-              {sampleProject.analysis.alignment.toLowerCase()}
+              <Focus aria-hidden="true" size={13} /> Alignment {data.alignment.toLowerCase()}
             </span>
             <span className="technical">NORMALIZED GEOMETRY · PAGE 01</span>
-            <span>Evidence regions are selectable in the canvas and ledger.</span>
+            <span>
+              {data.reportSummary ?? "Evidence regions are selectable in the canvas and ledger."}
+            </span>
           </div>
         </section>
         <ChangeLedger
-          changes={sampleChanges}
+          changes={data.changes}
           filter={filter}
           onFilterChange={setFilter}
           onSelect={selectChange}
