@@ -28,6 +28,10 @@ describe("LocalStorageProvider", () => {
       byteSize: bytes.byteLength,
     });
     await expect(readFile(join(root, "owner", "project", "revision.png"))).resolves.toEqual(bytes);
+    await expect(storage.createReadReference("owner/project/revision.png")).resolves.toEqual({
+      kind: "local",
+      path: "owner/project/revision.png",
+    });
   });
 
   it("rejects traversal and absolute keys", async () => {

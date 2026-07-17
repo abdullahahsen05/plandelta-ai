@@ -207,7 +207,7 @@ export class RevisionsService {
           mimeType: inspected.mimeType,
           byteSize: BigInt(file.size),
           checksumSha256: createHash("sha256").update(file.buffer).digest("hex"),
-          storageProvider: "LOCAL",
+          storageProvider: this.storage.provider,
           storageKey,
           pageCount: inspected.pageCount,
           selectedPage,

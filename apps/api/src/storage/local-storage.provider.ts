@@ -16,6 +16,7 @@ function defaultLocalRoot() {
 
 @Injectable()
 export class LocalStorageProvider implements ObjectStorage {
+  readonly provider = "LOCAL" as const;
   private readonly root = defaultLocalRoot();
 
   private resolveKey(key: string) {
@@ -70,5 +71,10 @@ export class LocalStorageProvider implements ObjectStorage {
     } catch {
       return false;
     }
+  }
+
+  createReadReference(key: string) {
+    this.resolveKey(key);
+    return Promise.resolve({ kind: "local" as const, path: key });
   }
 }

@@ -20,11 +20,13 @@ function databaseWithProject() {
 function storageMock() {
   const write = vi.fn().mockResolvedValue({ key: "stored", byteSize: 1 });
   return {
+    provider: "LOCAL",
     write,
     read: vi.fn(),
     delete: vi.fn().mockResolvedValue(undefined),
     deletePrefix: vi.fn().mockResolvedValue(undefined),
     exists: vi.fn(),
+    createReadReference: vi.fn(),
   } satisfies ObjectStorage;
 }
 

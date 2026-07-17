@@ -8,11 +8,13 @@ const baselineId = "00000000-0000-4000-8000-000000000031";
 const candidateId = "00000000-0000-4000-8000-000000000032";
 const projectId = "00000000-0000-4000-8000-000000000030";
 const storage = {
+  provider: "LOCAL" as const,
   write: vi.fn(),
   read: vi.fn(),
   delete: vi.fn(),
   deletePrefix: vi.fn().mockResolvedValue(undefined),
   exists: vi.fn(),
+  createReadReference: vi.fn(),
 };
 
 describe("AnalysesService", () => {
