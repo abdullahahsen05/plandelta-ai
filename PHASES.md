@@ -5,12 +5,12 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 6 — PyTorch and ONNX evidence classifier
-- Current task: Define the narrow changed-region classification dataset contract and reproducible training baseline
-- Last verified command: `docker compose build`, `docker compose up -d`, Compose API/vision readiness probes, `pnpm verify:local-journey`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, and `pnpm test` on 2026-07-17 (API and vision healthy, exactly one worker running at concurrency one, authenticated containerized upload-to-report journey completed with one real CV/OCR change and seven artifacts, 23 vision tests, 19 API tests, and all root checks passed)
+- Current phase: Phase 7 — Hardening, documentation, and local release candidate
+- Current task: Audit accessibility, responsiveness, performance, error copy, security limits, observability, CI, and release documentation
+- Last verified command: classifier reproduction, `docker compose build vision`, production-image ONNX inference, `pnpm format`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, and `pnpm build` on 2026-07-17 (changed-region-cnn-v1 measured 1.000 accuracy and macro-F1 versus rules at 0.750 accuracy and 0.667 macro-F1 on the 192-example synthetic validation split; PyTorch/ONNX max logit error 0.00001144; production container ONNX inference passed; 27 vision, 19 API, all web/contracts tests, five browser journeys, and all production builds passed)
 - Active blockers: Cloud-only IAM create/pass-role access remains deferred by explicit user direction; no local implementation blocker
-- Last completed implementation commit: `2e69a3f feat(reports): build evidence-rich handoff`
-- Local app status: The product is verified from authenticated upload through worker, real CV/OCR, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
+- Last completed implementation commit: `860e6db feat(vision): integrate ONNX classification`
+- Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Codex profile and CLI authentication verified for `abdullahahsen05`; `plandelta-ai` is available, no remote exists yet, and public repository creation waits for the Docker local release gate
 - Vercel status: CLI authentication verified; not deployed
@@ -172,21 +172,21 @@ Exit gate — local release:
 
 ## Phase 6 — PyTorch and ONNX evidence classifier
 
-- [ ] Define a narrow changed-region classification task and dataset contract.
-- [ ] Generate or curate non-sensitive labelled blueprint crops.
-- [ ] Train a small CPU-sensible PyTorch model with reproducible seed/config.
-- [ ] Export the selected checkpoint to ONNX.
-- [ ] Validate PyTorch and ONNX output parity.
-- [ ] Benchmark ONNX inference and integrate it behind a feature flag.
-- [ ] Compare it against deterministic rules on a committed validation set.
-- [ ] Use the model by default only if it improves measured classification.
-- [ ] Document dataset limits, metrics, model card, and reproduction commands.
+- [x] Define a narrow changed-region classification task and dataset contract.
+- [x] Generate or curate non-sensitive labelled blueprint crops.
+- [x] Train a small CPU-sensible PyTorch model with reproducible seed/config.
+- [x] Export the selected checkpoint to ONNX.
+- [x] Validate PyTorch and ONNX output parity.
+- [x] Benchmark ONNX inference and integrate it behind a feature flag.
+- [x] Compare it against deterministic rules on a committed validation set.
+- [x] Use the model by default only if it improves measured classification.
+- [x] Document dataset limits, metrics, model card, and reproduction commands.
 
 Exit gate:
 
-- [ ] Model artifacts are versioned appropriately without bloating Git.
-- [ ] ONNX inference is tested and failures fall back transparently to rules.
-- [ ] Claims in README match measured results.
+- [x] Model artifacts are versioned appropriately without bloating Git.
+- [x] ONNX inference is tested and failures fall back transparently to rules.
+- [x] Claims in README match measured results.
 
 ## Phase 7 — Hardening, documentation, and local release candidate
 
