@@ -76,6 +76,16 @@ pnpm --filter @plandelta/web dev
 The first OCR analysis may take longer while the configured mobile model initializes. Uploaded files
 and generated evidence are written beneath ignored `data/` paths and are never committed.
 
+After a production build, the same four-process stack can be started and stopped as one managed
+command:
+
+```powershell
+pnpm build
+pnpm start:local
+```
+
+Press `Ctrl+C` in that terminal to stop only the PlanDelta processes started by the command.
+
 ### Supabase database and authentication
 
 Use the pooled Supabase PostgreSQL URL for `DATABASE_URL` and the direct PostgreSQL URL for
@@ -108,6 +118,7 @@ pnpm test          Run unit and service tests
 pnpm test:e2e      Run browser and service-boundary smoke tests
 pnpm verify:local-stack  Run a disposable authenticated upload-to-report integration journey
 pnpm verify:local-e2e    Run Playwright against the real API, worker, vision, and Supabase stack
+pnpm start:local    Start the built web, API, worker, and vision stack until Ctrl+C
 pnpm format        Format supported source and documentation
 pnpm db:generate   Generate the Prisma client
 pnpm db:verify-clean  Verify migrations transactionally on a new empty project

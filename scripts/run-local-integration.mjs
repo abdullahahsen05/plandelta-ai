@@ -5,6 +5,8 @@ import { config as loadDotenv } from "dotenv";
 
 const repositoryRoot = resolve(import.meta.dirname, "..");
 loadDotenv({ path: resolve(repositoryRoot, ".env.local"), quiet: true });
+const serveMode = process.argv.includes("--serve");
+const webOrigin = serveMode ? "http://localhost:3000" : "http://127.0.0.1:3100";
 
 const environment = {
   ...process.env,
@@ -12,8 +14,10 @@ const environment = {
   VISION_SHARED_ROOT: "data",
   VISION_SERVICE_URL: "http://127.0.0.1:8000",
   NEXT_PUBLIC_API_URL: "http://127.0.0.1:4000",
-  NEXT_PUBLIC_APP_URL: "http://127.0.0.1:3100",
-  WEB_ORIGINS: "http://127.0.0.1:3100,http://localhost:3100",
+  NEXT_PUBLIC_APP_URL: webOrigin,
+  WEB_ORIGINS: serveMode
+    ? "http://localhost:3000,http://127.0.0.1:3000"
+    : "http://127.0.0.1:3100,http://localhost:3100",
 };
 const python = resolve(repositoryRoot, ".venv", "Scripts", "python.exe");
 const services = [];
@@ -106,11 +110,27 @@ try {
   ]);
   start("api", process.execPath, ["apps/api/dist/main.js"]);
   start("worker", process.execPath, ["apps/api/dist/worker.js"]);
+  if (serveMode) {
+    start("web", process.execPath, [
+      resolve(repositoryRoot, "apps/web/node_modules/next/dist/bin/next"),
+      "start",
+      "apps/web",
+      "--port",
+      "3000",
+    ]);
+  }
   await Promise.all([
     waitFor("http://127.0.0.1:8000/health/live", "vision"),
     waitFor("http://127.0.0.1:4000/health/live", "api"),
+    ...(serveMode ? [waitFor("http://127.0.0.1:3000/app", "web")] : []),
   ]);
-  if (process.argv.includes("--playwright")) await runPlaywright();
+  if (serveMode) {
+    console.log("PlanDelta local stack ready: http://localhost:3000/app");
+    await new Promise((resolvePromise) => {
+      process.once("SIGINT", resolvePromise);
+      process.once("SIGTERM", resolvePromise);
+    });
+  } else if (process.argv.includes("--playwright")) await runPlaywright();
   else await runVerification();
 } catch (error) {
   for (const service of services) {
