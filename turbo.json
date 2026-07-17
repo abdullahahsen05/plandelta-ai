@@ -11,7 +11,7 @@
       "outputs": [".next/**", "!.next/cache/**", "dist/**"]
     },
     "lint": {
-      "dependsOn": ["^lint"]
+      "dependsOn": ["^build", "^lint"]
     },
     "typecheck": {
       "dependsOn": ["^build", "^typecheck"]
@@ -20,7 +20,7 @@
       "dependsOn": ["^build"]
     },
     "test:e2e": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "cache": false
     },
     "@plandelta/vision#build": {

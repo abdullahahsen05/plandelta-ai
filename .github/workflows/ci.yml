@@ -14,6 +14,8 @@ env:
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-public-placeholder
   NEXT_PUBLIC_API_URL: http://127.0.0.1:4000
   NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+  DATABASE_URL: postgresql://prisma:prisma@127.0.0.1:5432/plandelta
+  DIRECT_DATABASE_URL: postgresql://prisma:prisma@127.0.0.1:5432/plandelta
 
 jobs:
   web:
@@ -50,6 +52,7 @@ jobs:
       - run: pnpm --filter @plandelta/contracts typecheck
       - run: pnpm --filter @plandelta/contracts test
       - run: pnpm --filter @plandelta/contracts build
+      - run: pnpm --filter @plandelta/api db:generate
       - run: pnpm --filter @plandelta/api lint
       - run: pnpm --filter @plandelta/api typecheck
       - run: pnpm --filter @plandelta/api test
