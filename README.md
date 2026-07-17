@@ -9,10 +9,10 @@ deterministic OpenCV/OCR pipeline. The built-in sample is always identified as s
 
 ## Current status
 
-The responsive product shell, labelled Konva sample workbench, Supabase Auth boundary, versioned
-PostgreSQL schema, ownership RLS, and durable queue lease functions are implemented and verified.
-The genuine CV/OCR and end-to-end upload workflow remain in progress. No AWS product resources have
-been created.
+The authenticated local product now works from two validated blueprint uploads through durable job
+processing, OpenCV alignment and directional differencing, PaddleOCR, normalized evidence regions,
+private artifacts, and a deterministic printable report. A clearly labelled precomputed sample
+remains available without backend compute. No AWS product resources have been created.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 
@@ -56,12 +56,25 @@ pnpm install
 python -m venv .venv
 pnpm vision:install
 pnpm db:generate
-pnpm dev
+pnpm db:verify-clean
+pnpm db:migrate
+pnpm db:seed
 ```
 
 Copy `.env.example` to `.env.local` and configure values locally. Never commit or paste the
 resulting file. The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, and
-the vision service at `http://localhost:8000`.
+the vision service at `http://localhost:8000`. Start the complete non-containerized stack in four
+terminals so the API and durable worker remain separate:
+
+```powershell
+pnpm --filter @plandelta/vision dev
+pnpm --filter @plandelta/api dev
+pnpm --filter @plandelta/api dev:worker
+pnpm --filter @plandelta/web dev
+```
+
+The first OCR analysis may take longer while the configured mobile model initializes. Uploaded files
+and generated evidence are written beneath ignored `data/` paths and are never committed.
 
 ### Supabase database and authentication
 
@@ -93,6 +106,8 @@ pnpm lint          Run TypeScript and Python lint checks
 pnpm typecheck     Run strict TypeScript and Python type checks
 pnpm test          Run unit and service tests
 pnpm test:e2e      Run browser and service-boundary smoke tests
+pnpm verify:local-stack  Run a disposable authenticated upload-to-report integration journey
+pnpm verify:local-e2e    Run Playwright against the real API, worker, vision, and Supabase stack
 pnpm format        Format supported source and documentation
 pnpm db:generate   Generate the Prisma client
 pnpm db:verify-clean  Verify migrations transactionally on a new empty project
@@ -102,6 +117,19 @@ pnpm db:verify-behavior  Verify RLS and durable queue behavior
 pnpm docker:up     Build and start local service containers
 pnpm docker:down   Stop local service containers
 ```
+
+### Troubleshooting
+
+- If an app port is busy, stop only the process you own or configure another port; PlanDelta's
+  browser tests intentionally use port 3100 and do not reuse an existing server.
+- `NEXT_PUBLIC_API_URL` may be the API origin (`http://localhost:4000`) or include `/v1`; the web
+  client normalizes it once.
+- A failed analysis remains visible with its safe error message and can be retried from the progress
+  screen. Polling continues when Supabase Realtime is unavailable.
+- On Windows, container-style `/data` configuration is normalized to the repository's ignored
+  `data/` directory for local processes.
+- Docker Compose verification requires Docker Desktop. The non-containerized integration and live
+  Playwright harnesses exercise the same API, worker, vision, database, Auth, and storage workflow.
 
 ## Safety and limitations
 
