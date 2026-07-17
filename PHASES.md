@@ -6,14 +6,14 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 8 — Vercel frontend deployment
-- Current task: Connect the verified GitHub repository to Vercel, configure the production environment, and test the public frontend
-- Last verified command: GitHub Actions run `29619641074` passed all six default-branch jobs for commit `ca80500` on 2026-07-18; Gitleaks `v8.30.1` also scanned all 62 commits with no leaks, and annotated prerelease `v0.1.0-rc.1` was published from the green commit
+- Current task: Deploy and test the truthful portfolio-mode frontend on Vercel
+- Last verified command: Vercel CLI and dashboard verified GitHub connection, `apps/web` monorepo root with external dependency access, Next.js preset, Node.js 22, and four named production variables without exposing their values; GitHub Actions run `29619778932` passed all six default-branch jobs for commit `f8cbc3c` on 2026-07-18
 - Active blockers: None; AWS resource creation remains intentionally gated behind Phase 7 rather than blocked by authority
 - Last completed implementation commit: `fe8627f fix(test): isolate browser build output`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed and annotated prerelease `v0.1.0-rc.1` is published
-- Vercel status: CLI authentication verified; not deployed
+- Vercel status: Authenticated project `plandelta-ai` is connected to `abdullahahsen05/plandelta-ai`; production monorepo/framework/runtime settings and initial public environment names are verified, deployment pending
 - AWS status: MFA-protected non-root IAM user, temporary browser-authenticated `plandelta` profile, `us-east-1`, billing visibility, required service reads, scoped permissions boundary, bounded role/instance-profile creation, EC2 pass-role, and GitHub OIDC verified; no billable project resources created
 - AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
@@ -210,7 +210,7 @@ Exit gate:
 
 ## Phase 8 — Vercel frontend deployment
 
-- [ ] Connect the GitHub repository to Vercel.
+- [x] Connect the GitHub repository to Vercel.
 - [ ] Configure non-secret and secret environment variables.
 - [ ] Configure production API URL, allowed image sources, and CORS contract.
 - [ ] Deploy and inspect build logs.
