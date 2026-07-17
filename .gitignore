@@ -32,6 +32,8 @@ __pycache__/
 data/
 uploads/
 artifacts/
+!apps/api/src/artifacts/
+!apps/api/src/artifacts/**
 models/
 tmp/
 *.onnx
