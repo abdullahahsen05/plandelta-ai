@@ -13,6 +13,7 @@ const projectSelect = {
   status: true,
   createdAt: true,
   updatedAt: true,
+  _count: { select: { revisions: true, analyses: true } },
 } as const;
 
 @Injectable()

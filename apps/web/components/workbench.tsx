@@ -10,6 +10,7 @@ import {
   Maximize2,
   Minus,
   Plus,
+  RotateCcw,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
@@ -155,6 +156,10 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           <a className="export-button" href={data.reportUrl} rel="noreferrer" target="_blank">
             <Download aria-hidden="true" size={15} /> Print report
           </a>
+        ) : data.sample ? (
+          <Link className="export-button" href="/app/projects/new">
+            <RotateCcw aria-hidden="true" size={15} /> Run fresh analysis
+          </Link>
         ) : (
           <button className="export-button" disabled type="button">
             <Download aria-hidden="true" size={15} /> Export
