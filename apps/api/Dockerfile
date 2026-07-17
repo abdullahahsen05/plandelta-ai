@@ -1,4 +1,4 @@
-FROM node:22-trixie-slim AS build
+FROM node:26-trixie-slim AS build
 WORKDIR /app
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends ca-certificates openssl \
@@ -18,7 +18,7 @@ RUN DIRECT_DATABASE_URL=postgresql://prisma:prisma@127.0.0.1:5432/plandelta \
 RUN pnpm --filter @plandelta/api... build
 RUN CI=true pnpm install --prod --offline --frozen-lockfile --filter . --filter @plandelta/api...
 
-FROM node:22-trixie-slim AS runtime
+FROM node:26-trixie-slim AS runtime
 ENV NODE_ENV=production
 WORKDIR /app
 RUN apt-get update \
