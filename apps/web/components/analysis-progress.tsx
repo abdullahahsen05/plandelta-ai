@@ -19,6 +19,40 @@ export function AnalysisProgress({ initial }: { initial: Analysis }) {
 
   useEffect(() => {
     if (terminalStatuses.has(analysis.status)) return;
+    const supabase = createBrowserSupabaseClient();
+    const channel = supabase
+      .channel(`analysis-progress-${analysis.id}`)
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "analyses",
+          filter: `id=eq.${analysis.id}`,
+        },
+        (payload) => {
+          const update = payload.new as Record<string, unknown>;
+          const status = typeof update.status === "string" ? update.status : analysis.status;
+          setAnalysis((current) => ({
+            ...current,
+            status: status as Analysis["status"],
+            progress: typeof update.progress === "number" ? update.progress : current.progress,
+            currentStage:
+              typeof update.current_stage === "string"
+                ? update.current_stage
+                : current.currentStage,
+          }));
+          if (status === "COMPLETED") router.refresh();
+        },
+      )
+      .subscribe();
+    return () => {
+      void supabase.removeChannel(channel);
+    };
+  }, [analysis.id, analysis.status, router]);
+
+  useEffect(() => {
+    if (terminalStatuses.has(analysis.status)) return;
     let active = true;
     const poll = async () => {
       try {
