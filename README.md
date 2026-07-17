@@ -9,9 +9,10 @@ deterministic OpenCV/OCR pipeline. The built-in sample is always identified as s
 
 ## Current status
 
-The repository foundation is in progress. The marketing entry, shared contracts, NestJS health
-surface, FastAPI health surface, strict tooling, and local runtime contracts are being verified. No
-AWS product resources have been created.
+The responsive product shell, labelled Konva sample workbench, Supabase Auth boundary, versioned
+PostgreSQL schema, ownership RLS, and durable queue lease functions are implemented and verified.
+The genuine CV/OCR and end-to-end upload workflow remain in progress. No AWS product resources have
+been created.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 
@@ -62,6 +63,27 @@ Copy `.env.example` to `.env.local` and configure values locally. Never commit o
 resulting file. The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, and
 the vision service at `http://localhost:8000`.
 
+### Supabase database and authentication
+
+Use the pooled Supabase PostgreSQL URL for `DATABASE_URL` and the direct PostgreSQL URL for
+`DIRECT_DATABASE_URL`. For a new empty project, verify and apply the migration chain, then run the
+idempotent sample seed:
+
+```powershell
+pnpm db:verify-clean
+pnpm db:migrate
+pnpm db:seed
+pnpm db:verify-behavior
+```
+
+`db:verify-clean` intentionally refuses to run after PlanDelta tables exist. It executes every
+migration inside a rolled-back transaction. `db:verify-behavior` uses temporary synthetic users,
+checks cross-user RLS and concurrent queue leasing, and cleans up its records.
+
+In Supabase Auth URL settings, allow `http://localhost:3000/auth/callback` for local passwordless
+sign-in. Set `NEXT_PUBLIC_APP_URL` to the matching application origin; add the final Vercel callback
+only during deployment.
+
 ## Root commands
 
 ```text
@@ -73,8 +95,10 @@ pnpm test          Run unit and service tests
 pnpm test:e2e      Run browser and service-boundary smoke tests
 pnpm format        Format supported source and documentation
 pnpm db:generate   Generate the Prisma client
+pnpm db:verify-clean  Verify migrations transactionally on a new empty project
 pnpm db:migrate    Apply committed database migrations
 pnpm db:seed       Run the idempotent development seed
+pnpm db:verify-behavior  Verify RLS and durable queue behavior
 pnpm docker:up     Build and start local service containers
 pnpm docker:down   Stop local service containers
 ```
