@@ -1,0 +1,47 @@
+[build-system]
+requires = ["hatchling>=1.27"]
+build-backend = "hatchling.build"
+
+[project]
+name = "plandelta-vision"
+version = "0.1.0"
+description = "Stateless blueprint alignment, CV difference, and OCR service."
+requires-python = ">=3.12,<3.14"
+dependencies = [
+  "fastapi>=0.124,<1",
+  "pydantic>=2.12,<3",
+  "uvicorn[standard]>=0.38,<1"
+]
+
+[project.optional-dependencies]
+dev = [
+  "hatchling>=1.27",
+  "httpx>=0.28,<1",
+  "mypy>=1.19,<2",
+  "pytest>=9.0,<10",
+  "ruff>=0.14,<1"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["plandelta_vision"]
+
+[tool.pytest.ini_options]
+addopts = "-ra --strict-markers"
+markers = ["e2e: service-boundary smoke tests"]
+testpaths = ["test"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "N", "UP", "B", "SIM", "RUF"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["pydantic.mypy"]
+
+[[tool.mypy.overrides]]
+module = "uvicorn.*"
+ignore_missing_imports = true
