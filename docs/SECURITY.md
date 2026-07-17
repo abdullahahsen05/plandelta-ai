@@ -43,7 +43,10 @@
   security groups/firewall.
 - Public API uses HTTPS only in production.
 - Configure strict CORS for known Vercel/local origins.
-- Add request size limits, timeouts, and per-user rate limits.
+- The API applies security headers, a 30-second default request timeout,
+  separate per-IP read/write minute limits, and PostgreSQL-backed per-user
+  upload/analysis quotas. Defaults and multi-instance limitations are recorded
+  in [OPERATIONS.md](./OPERATIONS.md).
 - Containers run as non-root with read-only filesystem where feasible.
 
 ## AI safety
@@ -58,11 +61,17 @@
 
 ## Data lifecycle
 
-- Document retention for original uploads, derived artifacts, and logs.
-- S3 lifecycle removes demo and temporary artifacts.
-- Project deletion queues object cleanup.
-- Logs contain identifiers and metrics, not raw drawings.
-- Do not include user uploads in training data.
+- Originals and completed evidence remain until their owning revision or
+  analysis is deleted; there is no hidden local expiry.
+- Revision deletion removes the private original when no analysis references
+  it. Analysis deletion removes its complete derived-artifact prefix.
+- Failed database persistence after upload removes the newly written object.
+- The AWS phase adds S3 lifecycle cleanup for abandoned multipart uploads and
+  temporary/demo prefixes.
+- CloudWatch logs use finite retention; structured records contain identifiers
+  and metrics, not raw drawings, tokens, signed URLs, or OCR text.
+- User uploads are never training data. Full operational behavior is recorded
+  in [OPERATIONS.md](./OPERATIONS.md).
 
 ## Pre-release checks
 

@@ -16,6 +16,19 @@ remains available without backend compute. No AWS product resources have been cr
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 
+## Product
+
+![PlanDelta project workspace](./docs/images/projects-workspace.png)
+
+The workspace keeps the built-in example visibly separate from user uploads and shows the evidence
+count before a reviewer opens the comparison.
+
+![Side-by-side blueprint comparison with change ledger](./docs/images/comparison-workbench.png)
+
+The review surface presents the original baseline and revised drawings together, links change
+markers to the evidence ledger, and keeps confidence and affected work visible without presenting a
+result as automatic approval.
+
 ## Architecture
 
 ```mermaid
@@ -38,6 +51,12 @@ flowchart LR
 Supabase PostgreSQL is the source of truth and durable queue. Local development uses a shared
 storage volume; production later swaps that provider for private S3. Bedrock summaries remain
 optional and never replace deterministic evidence.
+
+The public API applies strict input validation, security headers, request timeouts, per-IP traffic
+limits, and database-backed per-user upload and analysis quotas. Readiness checks cover PostgreSQL
+and the vision service; structured logs use correlation IDs without recording tokens, drawing
+content, or OCR text. Defaults, cleanup behavior, and incident checks are documented in
+[docs/OPERATIONS.md](./docs/OPERATIONS.md).
 
 ## Requirements
 
@@ -154,6 +173,7 @@ pnpm docker:down   Stop local service containers
 - Public demos use labelled sample evidence when temporary backend compute is unavailable.
 
 See [PLAN.md](./PLAN.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and
-[docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract. Classifier scope,
+[docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract. API examples and
+operational limits are documented in [docs/OPERATIONS.md](./docs/OPERATIONS.md). Classifier scope,
 reproduction, measured metrics, and limitations are recorded in
 [docs/MODEL_CARD.md](./docs/MODEL_CARD.md).
