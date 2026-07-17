@@ -3,25 +3,17 @@ import "reflect-metadata";
 import { Logger } from "@nestjs/common";
 import { NestFactory } from "@nestjs/core";
 
-import { AppModule } from "./app.module.js";
 import { loadEnvironment } from "./config/environment.js";
+import { WorkerModule } from "./worker/worker.module.js";
 
-async function bootstrapWorker(): Promise<void> {
-  loadEnvironment();
-  const context = await NestFactory.createApplicationContext(AppModule, { logger: false });
-  const logger = new Logger("Worker");
-  const keepAlive = setInterval(() => undefined, 60_000);
-
-  logger.log("Worker process ready; durable queue modules load in Phase 3");
-
-  const shutdown = async (): Promise<void> => {
-    clearInterval(keepAlive);
-    await context.close();
-    process.exit(0);
-  };
-
-  process.once("SIGINT", () => void shutdown());
-  process.once("SIGTERM", () => void shutdown());
+async function bootstrap(): Promise<void> {
+  const environment = loadEnvironment();
+  if (environment.WORKER_CONCURRENCY !== 1)
+    throw new Error("PlanDelta local and initial AWS deployments require WORKER_CONCURRENCY=1.");
+  const context = await NestFactory.createApplicationContext(WorkerModule, { bufferLogs: true });
+  context.useLogger(new Logger("PlanDeltaWorker"));
+  context.enableShutdownHooks();
+  Logger.log(`PlanDelta worker context ready in ${environment.APP_ENV}.`, "Bootstrap");
 }
 
-void bootstrapWorker();
+void bootstrap();

@@ -41,6 +41,21 @@ async function setAuthenticatedUser(client: pg.Client, userId: string) {
   ]);
 }
 
+async function cleanupQueueFixtures(client: pg.Client) {
+  const owners = await client.query<{ owner_id: string }>(
+    `DELETE FROM public.projects
+     WHERE project_code = 'QUEUE-VERIFY' AND name = 'Queue verification'
+     RETURNING owner_id`,
+  );
+  for (const { owner_id: ownerId } of owners.rows) {
+    await client.query(
+      `DELETE FROM auth.users
+       WHERE id = $1 AND email LIKE 'plandelta-queue-%@example.invalid'`,
+      [ownerId],
+    );
+  }
+}
+
 async function verifyRlsIsolation() {
   const client = createClient();
   const ownerId = randomUUID();
@@ -133,6 +148,7 @@ async function verifyQueueLeasing() {
 
   await setupClient.connect();
   try {
+    await cleanupQueueFixtures(setupClient);
     await insertSyntheticAuthUser(setupClient, userId, "queue");
     await setupClient.query(
       "INSERT INTO public.projects (id, owner_id, name, project_code) VALUES ($1, $2, 'Queue verification', 'QUEUE-VERIFY')",
@@ -222,9 +238,8 @@ async function verifyQueueLeasing() {
     }
   } finally {
     await Promise.all([workerA.end().catch(() => undefined), workerB.end().catch(() => undefined)]);
-    await setupClient
-      .query("DELETE FROM auth.users WHERE id = $1", [userId])
-      .catch(() => undefined);
+    await setupClient.query("DELETE FROM public.projects WHERE id = $1", [projectId]);
+    await setupClient.query("DELETE FROM auth.users WHERE id = $1", [userId]);
     await setupClient.end();
   }
 }
