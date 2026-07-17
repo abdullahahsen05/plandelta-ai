@@ -5,12 +5,12 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 3 — NestJS API and worker
-- Current task: Implement project, revision, analysis, storage, report, and durable worker modules
-- Last verified command: `pnpm build`, `pnpm db:verify-behavior`, and `pnpm --filter @plandelta/web test:e2e` on 2026-07-17 (production build, database isolation/queue behavior, and all 5 Chromium journeys passed)
+- Current phase: Phase 4 — FastAPI vision pipeline
+- Current task: Implement typed vision contracts, secure input resolution, page rendering, normalization, and alignment
+- Last verified command: `pnpm db:verify-clean`, `pnpm db:verify-behavior`, `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm build`, and `pnpm --filter @plandelta/web test:e2e` on 2026-07-17 (isolated clean migration, database isolation/queue behavior, production builds, 21 unit tests, 3 vision health tests, and all 5 Chromium journeys passed)
 - Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: `3a118e7 docs(setup): document Supabase migration workflow`
-- Local app status: Phase 2 schema, RLS, queue functions, API JWT boundary, passwordless web auth, and seeded sample are verified; all local processes stopped cleanly
+- Last completed commit: `a05270e feat(api): wire validated application contract`
+- Local app status: Phase 3 API modules, safe multipart storage, consistent request boundaries, OpenAPI, and the durable single-concurrency worker are verified; all PlanDelta local processes stopped cleanly
 - Supabase status: Initial versioned migration applied; Auth/API, RLS isolation, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
@@ -106,23 +106,23 @@ Exit gate:
 
 ## Phase 3 — NestJS API and worker
 
-- [ ] Implement API modules for health, auth context, projects, revisions,
+- [x] Implement API modules for health, auth context, projects, revisions,
       analyses, changes, reports, and storage.
-- [ ] Implement validation, consistent errors, pagination, and correlation IDs.
-- [ ] Generate Swagger/OpenAPI docs.
-- [ ] Implement LocalStorageProvider with safe paths and atomic writes.
-- [ ] Implement multipart uploads with MIME, size, and ownership validation.
-- [ ] Implement durable PostgreSQL job queue, leasing, heartbeat, retry, and
+- [x] Implement validation, consistent errors, pagination, and correlation IDs.
+- [x] Generate Swagger/OpenAPI docs.
+- [x] Implement LocalStorageProvider with safe paths and atomic writes.
+- [x] Implement multipart uploads with MIME, size, and ownership validation.
+- [x] Implement durable PostgreSQL job queue, leasing, heartbeat, retry, and
       stale-job recovery.
-- [ ] Create a separate worker entry point from the API process.
-- [ ] Add service and integration tests.
+- [x] Create a separate worker entry point from the API process.
+- [x] Add service and integration tests.
 
 Exit gate:
 
-- [ ] API tests pass against a clean test database.
-- [ ] Two workers cannot process the same claimed job.
-- [ ] Restarting a worker does not silently lose queued work.
-- [ ] OpenAPI reflects the implemented contract.
+- [x] API tests pass against a clean test database.
+- [x] Two workers cannot process the same claimed job.
+- [x] Restarting a worker does not silently lose queued work.
+- [x] OpenAPI reflects the implemented contract.
 
 ## Phase 4 — FastAPI vision pipeline
 
