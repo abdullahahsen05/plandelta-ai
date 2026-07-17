@@ -18,8 +18,8 @@ RUN apt-get update \
     && apt-get install --yes --no-install-recommends libgomp1 \
     && rm -rf /var/lib/apt/lists/*
 RUN mkdir -p /data /home/plandelta/.paddlex \
-    && chown --recursive plandelta:plandelta /home/plandelta \
-    && chmod 0777 /data
+    && chown --recursive plandelta:plandelta /data /home/plandelta \
+    && chmod 0770 /data
 
 USER plandelta
 EXPOSE 8000
