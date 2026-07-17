@@ -26,12 +26,13 @@ def test_engine_contract() -> None:
     response = request("/internal/v1/engine")
 
     assert response.status_code == 200
-    assert response.json()["schema_version"] == "1.0"
-    assert "application/pdf" in response.json()["supported_formats"]
+    assert response.json()["schemaVersion"] == "1.0"
+    assert "application/pdf" in response.json()["supportedFormats"]
+
 
 @pytest.mark.e2e
 def test_readiness_boundary() -> None:
     response = request("/health/ready")
 
     assert response.status_code == 200
-    assert response.json()["writable_temporary_directory"] is True
+    assert response.json()["writableTemporaryDirectory"] is True

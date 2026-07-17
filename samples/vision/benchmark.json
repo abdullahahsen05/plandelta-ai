@@ -1,0 +1,12 @@
+{
+  "alignmentConfidence": 0.9624,
+  "alignmentMethod": "IDENTITY",
+  "changedAreaRatio": 0.00355,
+  "environment": "Windows 11 local CPU, Python 3.12.10, OpenCV 4.10.0, PaddleOCR 3.7.0",
+  "fixture": "added-wall",
+  "measuredAt": "2026-07-17",
+  "ocrEnabled": true,
+  "pipelineDurationMs": 4548,
+  "regionCount": 1,
+  "wallClockMs": 4549
+}
