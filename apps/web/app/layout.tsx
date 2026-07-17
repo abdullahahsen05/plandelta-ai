@@ -24,7 +24,11 @@ export const metadata: Metadata = {
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${hostGrotesk.variable} ${ibmPlexMono.variable}`}>
+    <html
+      className={`${hostGrotesk.variable} ${ibmPlexMono.variable}`}
+      data-scroll-behavior="smooth"
+      lang="en"
+    >
       <body>{children}</body>
     </html>
   );
