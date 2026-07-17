@@ -4,11 +4,16 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { getPublicAppOrigin } from "../../lib/app-origin";
+import { isLiveProcessingEnabled } from "../../lib/live-processing";
 import { createServerSupabaseClient } from "../../lib/supabase/server";
 
 const emailSchema = z.string().trim().email().max(254);
 
 export async function requestMagicLink(formData: FormData) {
+  if (!isLiveProcessingEnabled()) {
+    redirect("/auth/sign-in?error=Live+processing+is+temporarily+offline.");
+  }
+
   const email = emailSchema.safeParse(formData.get("email"));
   if (!email.success) {
     redirect("/auth/sign-in?error=Enter+a+valid+work+email.");

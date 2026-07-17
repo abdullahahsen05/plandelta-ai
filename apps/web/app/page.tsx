@@ -91,9 +91,15 @@ export default function Home() {
           <span className="technical hidden text-[10px] tracking-[0.1em] text-[#646762] sm:block">
             BLUEPRINT REVISION INTELLIGENCE
           </span>
-          <Link className="border-b border-[#171A1C] text-sm font-semibold" href="/auth/sign-in">
-            Sign in
-          </Link>
+          {liveProcessingEnabled ? (
+            <Link className="border-b border-[#171A1C] text-sm font-semibold" href="/auth/sign-in">
+              Sign in
+            </Link>
+          ) : (
+            <span className="technical text-[10px] tracking-[0.1em] text-[#646762]">
+              PORTFOLIO MODE
+            </span>
+          )}
         </div>
       </header>
 
