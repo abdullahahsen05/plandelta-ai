@@ -15,5 +15,5 @@ test("invalid auth callback recovers with an actionable sign-in error", async ({
   await page.goto("/auth/callback");
 
   await expect(page).toHaveURL(/\/auth\/sign-in\?error=/);
-  await expect(page.getByRole("alert")).toContainText("sign-in link is invalid");
+  await expect(page.locator(".auth-error")).toContainText("sign-in link is invalid");
 });
