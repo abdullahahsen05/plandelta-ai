@@ -1,0 +1,110 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  NEXT_PUBLIC_SUPABASE_URL: https://example.supabase.co
+  NEXT_PUBLIC_SUPABASE_ANON_KEY: ci-public-placeholder
+  NEXT_PUBLIC_API_URL: http://127.0.0.1:4000
+  NEXT_PUBLIC_APP_URL: http://127.0.0.1:3100
+
+jobs:
+  web:
+    name: Web
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm format:check
+      - run: pnpm --filter @plandelta/contracts build
+      - run: pnpm --filter @plandelta/ui build
+      - run: pnpm --filter @plandelta/web lint
+      - run: pnpm --filter @plandelta/web typecheck
+      - run: pnpm --filter @plandelta/web test
+      - run: pnpm --filter @plandelta/web build
+
+  api:
+    name: API and contracts
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @plandelta/contracts lint
+      - run: pnpm --filter @plandelta/contracts typecheck
+      - run: pnpm --filter @plandelta/contracts test
+      - run: pnpm --filter @plandelta/contracts build
+      - run: pnpm --filter @plandelta/api lint
+      - run: pnpm --filter @plandelta/api typecheck
+      - run: pnpm --filter @plandelta/api test
+      - run: pnpm --filter @plandelta/api build
+
+  vision:
+    name: Vision
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: apps/vision/pyproject.toml
+      - run: python -m venv .venv
+      - run: .venv/bin/python -m pip install --upgrade pip
+      - run: .venv/bin/python -m pip install -e './apps/vision[dev]'
+      - run:
+          .venv/bin/python -m ruff check apps/vision scripts/generate_vision_fixtures.py
+          scripts/benchmark_vision.py scripts/train_changed_region_classifier.py
+      - run: .venv/bin/python -m mypy apps/vision/plandelta_vision
+      - run: .venv/bin/python -m pytest apps/vision/test
+
+  browser-smoke:
+    name: Browser smoke
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @plandelta/contracts build
+      - run: pnpm --filter @plandelta/ui build
+      - run: pnpm --filter @plandelta/web exec playwright install --with-deps chromium
+      - run: pnpm --filter @plandelta/web test:e2e
+
+  docker-build:
+    name: Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: cp .env.example .env.local
+      - run: docker compose build api vision
+
+  secret-scan:
+    name: Secret scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: gitleaks/gitleaks-action@v2
