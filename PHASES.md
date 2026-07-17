@@ -9,7 +9,7 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 - Current task: Phase 5 UX correction verified; install/start Docker Desktop, then run `pnpm docker:up` and verify all Compose health checks before Phase 6
 - Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm build`, and `pnpm verify:local-e2e -- --live-only` on 2026-07-17 (23 vision tests, 18 API tests, all root checks, five standard browser journeys, and the authenticated upload-to-report journey passed; original drawings and private evidence decoded with nonzero image dimensions)
 - Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: `217d9ef docs(readme): document verified local workflow`
+- Last completed commit: `bfeab92 feat(web): clarify drawing comparison`
 - Local app status: The non-containerized local product is verified from authenticated upload through worker, real CV/OCR, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; the managed stack is running at `http://localhost:3000/app`
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - Vercel status: CLI authentication verified; not deployed
