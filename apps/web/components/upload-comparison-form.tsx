@@ -143,7 +143,9 @@ export function UploadComparisonForm() {
       const message =
         reason instanceof PlanDeltaApiError
           ? reason.message
-          : "The comparison could not be started. Check the files and try again.";
+          : reason instanceof Error && reason.message.startsWith("Missing required public")
+            ? "The application is missing required public configuration."
+            : "The comparison could not be started. Check the files and try again.";
       setError(message);
       if (projectId) {
         const supabase = createBrowserSupabaseClient();

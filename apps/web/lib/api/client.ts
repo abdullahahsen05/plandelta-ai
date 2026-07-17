@@ -4,7 +4,8 @@ import type { z } from "zod";
 function apiBaseUrl() {
   const value = process.env.NEXT_PUBLIC_API_URL;
   if (!value) throw new Error("Missing required public environment variable: NEXT_PUBLIC_API_URL");
-  return value.replace(/\/$/, "");
+  const base = value.replace(/\/$/, "");
+  return base.endsWith("/v1") ? base : `${base}/v1`;
 }
 
 export class PlanDeltaApiError extends Error {

@@ -1,12 +1,12 @@
-function requirePublicVariable(name: "NEXT_PUBLIC_SUPABASE_URL" | "NEXT_PUBLIC_SUPABASE_ANON_KEY") {
-  const value = process.env[name];
-  if (!value) throw new Error(`Missing required public environment variable: ${name}`);
-  return value;
-}
-
 export function publicSupabaseEnvironment() {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const publishableKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+  if (!url)
+    throw new Error("Missing required public environment variable: NEXT_PUBLIC_SUPABASE_URL");
+  if (!publishableKey)
+    throw new Error("Missing required public environment variable: NEXT_PUBLIC_SUPABASE_ANON_KEY");
   return {
-    url: requirePublicVariable("NEXT_PUBLIC_SUPABASE_URL"),
-    publishableKey: requirePublicVariable("NEXT_PUBLIC_SUPABASE_ANON_KEY"),
+    url,
+    publishableKey,
   };
 }
