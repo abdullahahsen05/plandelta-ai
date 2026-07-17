@@ -39,6 +39,10 @@ artifacts/
 models/
 tmp/
 *.onnx
+*.pt
+!apps/vision/models/
+!apps/vision/models/changed-region-classifier.onnx
+!apps/vision/models/changed-region-classifier.json
 
 # Editors and operating systems
 .idea/

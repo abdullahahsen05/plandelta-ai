@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "node ../../scripts/python.mjs -m uvicorn plandelta_vision.main:app --host 0.0.0.0 --port 8000 --reload --app-dir apps/vision --env-file .env.local",
     "build": "node ../../scripts/python.mjs -m compileall -q apps/vision/plandelta_vision",
-    "lint": "node ../../scripts/python.mjs -m ruff check apps/vision scripts/generate_vision_fixtures.py scripts/benchmark_vision.py",
+    "lint": "node ../../scripts/python.mjs -m ruff check apps/vision scripts/generate_vision_fixtures.py scripts/benchmark_vision.py scripts/train_changed_region_classifier.py",
     "typecheck": "node ../../scripts/python.mjs -m mypy apps/vision/plandelta_vision",
     "test": "node ../../scripts/python.mjs -m pytest apps/vision/test",
     "test:e2e": "node ../../scripts/python.mjs -m pytest apps/vision/test -m e2e"

@@ -10,6 +10,7 @@ requires-python = ">=3.12,<3.14"
 dependencies = [
   "fastapi>=0.124,<1",
   "numpy>=2.2,<3",
+  "onnxruntime>=1.22,<2",
   "opencv-contrib-python==4.10.0.84",
   "paddleocr>=3.0,<4",
   "paddlepaddle>=3.0,<4",
@@ -24,8 +25,10 @@ dev = [
   "hatchling>=1.27",
   "httpx>=0.28,<1",
   "mypy>=1.19,<2",
+  "onnx>=1.18,<2",
   "pytest>=9.0,<10",
-  "ruff>=0.14,<1"
+  "ruff>=0.14,<1",
+  "torch>=2.7,<3"
 ]
 
 [tool.hatch.build.targets.wheel]

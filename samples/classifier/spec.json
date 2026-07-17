@@ -1,0 +1,28 @@
+{
+  "schemaVersion": "1.0",
+  "datasetName": "plandelta-synthetic-changed-regions-v1",
+  "license": "CC0-1.0",
+  "inputSize": 64,
+  "labels": [
+    "WALL_LINEWORK",
+    "DOOR",
+    "WINDOW",
+    "FIXTURE_SYMBOL",
+    "DIMENSION",
+    "TEXT_NOTE",
+    "ROOM_LABEL",
+    "UNKNOWN"
+  ],
+  "generation": {
+    "trainPerClass": 64,
+    "validationPerClass": 24,
+    "trainSeed": 20260717,
+    "validationSeed": 20261717
+  },
+  "training": {
+    "seed": 260717,
+    "epochs": 24,
+    "batchSize": 32,
+    "learningRate": 0.003
+  }
+}
