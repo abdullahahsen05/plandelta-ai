@@ -8,14 +8,15 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 - Current phase: Phase 5 — End-to-end local product (Docker exit gate pending)
 - Current task: Phase 5 report and viewer UX corrections verified; install/start Docker Desktop, then run `pnpm docker:up` and verify all Compose health checks before Phase 6
 - Last verified command: `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, `pnpm test:e2e`, `pnpm build`, and `pnpm verify:local-e2e -- --live-only` on 2026-07-17 (23 vision tests, 19 API tests, all root checks, five standard browser journeys, and the authenticated upload-to-report journey passed; report overview and evidence images decoded with nonzero image dimensions)
-- Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: `2e69a3f feat(reports): build evidence-rich handoff`
+- Active blockers: Docker is not installed; cloud-only IAM create/pass-role access remains deferred by explicit user direction
+- Last completed implementation commit: `2e69a3f feat(reports): build evidence-rich handoff`
 - Local app status: The non-containerized local product is verified from authenticated upload through worker, real CV/OCR, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; the managed stack is running at `http://localhost:3000/app`
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
+- GitHub status: Codex profile and CLI authentication verified for `abdullahahsen05`; `plandelta-ai` is available, no remote exists yet, and public repository creation waits for the Docker local release gate
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
 - AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
-- Credential preflight: Supabase, Vercel, and non-root AWS service access passed; scoped IAM and GitHub remain intentionally deferred for local demo work
+- Credential preflight: Supabase, Vercel, GitHub, and non-root AWS service access passed; scoped IAM remains intentionally deferred for local demo work
 
 ## Credential preflight — blocking before Phase 0
 
@@ -32,7 +33,7 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
       printing values.
 - [x] Verify AWS access with STS, record only the account alias/role when safe,
       and never expose credentials.
-- [ ] Verify GitHub authentication already available to Codex.
+- [x] Verify GitHub authentication already available to Codex.
 - [x] Verify Vercel authentication without requesting a raw token in chat.
 - [ ] Record any unavailable optional deployment credentials, but obtain all
       Supabase/AWS access needed by the committed plan.
@@ -42,7 +43,7 @@ Exit gate:
 
 - [x] Supabase configuration is present and protected.
 - [x] AWS temporary CLI authentication works.
-- [ ] GitHub authentication works.
+- [x] GitHub authentication works.
 - [x] Vercel authentication works.
 - [x] No secret value appears in terminal output, Git, or documentation.
 
