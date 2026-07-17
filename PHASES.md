@@ -5,13 +5,13 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 2 — Supabase schema, migrations, and authentication
-- Current task: Implement the versioned PostgreSQL schema, RLS policies, and authenticated data boundaries
-- Last verified command: `pnpm build` and `pnpm --filter @plandelta/web test:e2e` on 2026-07-17 (production build passed; all 3 Chromium journeys passed)
+- Current phase: Phase 3 — NestJS API and worker
+- Current task: Implement project, revision, analysis, storage, report, and durable worker modules
+- Last verified command: `pnpm build`, `pnpm db:verify-behavior`, and `pnpm --filter @plandelta/web test:e2e` on 2026-07-17 (production build, database isolation/queue behavior, and all 5 Chromium journeys passed)
 - Active blockers: Docker is not installed; cloud-only IAM create/pass-role and GitHub CLI/plugin access are deferred by explicit user direction
-- Last completed commit: `2031843 test(web): cover fixture workbench journey`
-- Local app status: Phase 1 project shell and interactive sample workbench are responsive and verified; web, API, worker, and vision foundations build; processes stopped cleanly
-- Supabase status: Protected configuration, Auth/API, service role, REST database access, pooled runtime PostgreSQL, and direct migration PostgreSQL verified
+- Last completed commit: `3a118e7 docs(setup): document Supabase migration workflow`
+- Local app status: Phase 2 schema, RLS, queue functions, API JWT boundary, passwordless web auth, and seeded sample are verified; all local processes stopped cleanly
+- Supabase status: Initial versioned migration applied; Auth/API, RLS isolation, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - Vercel status: CLI authentication verified; not deployed
 - AWS status: Non-root IAM user, us-east-1 profile, STS, and required service read access verified; scoped PlanDelta IAM role permissions pending
 - AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
@@ -88,21 +88,21 @@ Exit gate:
 
 ## Phase 2 — Supabase schema, migrations, and authentication
 
-- [ ] Implement schema from docs/DATABASE.md with Prisma and SQL where RLS or
+- [x] Implement schema from docs/DATABASE.md with Prisma and SQL where RLS or
       database functions require it.
-- [ ] Add Supabase Auth integration and JWT verification boundaries.
-- [ ] Add clean-database migrations, indexes, constraints, and RLS policies.
-- [ ] Add seed data for one demo account/project without real credentials.
-- [ ] Add database client lifecycle and transaction helpers.
-- [ ] Add durable job claim/lease behavior using row locking.
-- [ ] Test migration up from an empty database and seed idempotency.
-- [ ] Document local and hosted Supabase setup.
+- [x] Add Supabase Auth integration and JWT verification boundaries.
+- [x] Add clean-database migrations, indexes, constraints, and RLS policies.
+- [x] Add seed data for one demo account/project without real credentials.
+- [x] Add database client lifecycle and transaction helpers.
+- [x] Add durable job claim/lease behavior using row locking.
+- [x] Test migration up from an empty database and seed idempotency.
+- [x] Document local and hosted Supabase setup.
 
 Exit gate:
 
-- [ ] Fresh migration and seed succeed when credentials are available.
-- [ ] Cross-user access tests fail safely.
-- [ ] No service-role key is exposed to the browser.
+- [x] Fresh migration and seed succeed when credentials are available.
+- [x] Cross-user access tests fail safely.
+- [x] No service-role key is exposed to the browser.
 
 ## Phase 3 — NestJS API and worker
 
