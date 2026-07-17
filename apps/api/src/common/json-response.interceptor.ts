@@ -1,5 +1,6 @@
 import {
   Injectable,
+  StreamableFile,
   type CallHandler,
   type ExecutionContext,
   type NestInterceptor,
@@ -11,6 +12,7 @@ function serializeJsonValue(value: unknown): unknown {
   if (Array.isArray(value)) return value.map(serializeJsonValue);
   if (
     value instanceof Date ||
+    value instanceof StreamableFile ||
     Buffer.isBuffer(value) ||
     value === null ||
     typeof value !== "object"

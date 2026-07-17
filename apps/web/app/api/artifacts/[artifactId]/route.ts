@@ -15,12 +15,17 @@ export async function GET(_request: Request, context: { params: Promise<{ artifa
     headers: { authorization: `Bearer ${sessionData.session.access_token}` },
     cache: "no-store",
   });
-  if (!upstream.ok || !upstream.body) {
+  if (!upstream.ok) {
     return Response.json({ error: "Artifact unavailable." }, { status: upstream.status });
   }
-  return new Response(upstream.body, {
+  const bytes = new Uint8Array(await upstream.arrayBuffer());
+  if (bytes.byteLength === 0) {
+    return Response.json({ error: "Artifact was empty." }, { status: 502 });
+  }
+  return new Response(bytes, {
     headers: {
       "content-type": upstream.headers.get("content-type") ?? "application/octet-stream",
+      "content-length": String(bytes.byteLength),
       "cache-control": "private, no-store",
       "x-content-type-options": "nosniff",
     },

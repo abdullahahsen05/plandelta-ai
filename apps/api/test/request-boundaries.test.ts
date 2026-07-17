@@ -1,4 +1,4 @@
-import type { CallHandler, ExecutionContext } from "@nestjs/common";
+import { StreamableFile, type CallHandler, type ExecutionContext } from "@nestjs/common";
 import { firstValueFrom, of } from "rxjs";
 import { describe, expect, it, vi } from "vitest";
 
@@ -26,5 +26,15 @@ describe("request boundaries", () => {
       interceptor.intercept({} as ExecutionContext, handler as CallHandler),
     );
     expect(result).toEqual({ byteSize: 2048, nested: [{ byteSize: 1024 }] });
+  });
+
+  it("preserves binary file responses instead of serializing their internals", async () => {
+    const interceptor = new JsonResponseInterceptor();
+    const file = new StreamableFile(Buffer.from("binary drawing"));
+    const handler = { handle: () => of(file) };
+    const result = await firstValueFrom(
+      interceptor.intercept({} as ExecutionContext, handler as CallHandler),
+    );
+    expect(result).toBe(file);
   });
 });
