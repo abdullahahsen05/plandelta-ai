@@ -109,9 +109,18 @@ test("authenticated upload reaches real evidence and printable report", async ({
     await page.getByRole("link", { name: "Print report" }).click();
     const reportPage = await reportPagePromise;
     await expect(
-      reportPage.getByRole("heading", { name: "Revision evidence report" }),
+      reportPage.getByRole("heading", { name: "Revision comparison report" }),
     ).toBeVisible();
-    await expect(reportPage.getByText(/evidence-based revision region/)).toBeVisible();
+    await expect(reportPage.getByRole("heading", { name: "Change register" })).toBeVisible();
+    await expect(reportPage.locator(".result-label")).toHaveText("change identified");
+    await expect(reportPage.locator(".evidence img")).toHaveJSProperty("complete", true);
+    await expect
+      .poll(() =>
+        reportPage
+          .locator(".evidence img")
+          .evaluate((image: HTMLImageElement) => image.naturalWidth),
+      )
+      .toBeGreaterThan(0);
   } finally {
     if (projectId) await admin.from("projects").delete().eq("id", projectId);
     if (userId) await admin.auth.admin.deleteUser(userId);
