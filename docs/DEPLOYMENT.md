@@ -136,6 +136,8 @@ their values.
 ## Cost controls
 
 - Hard available credit is $100; target total project AWS spend is $25.
+- The verified price inputs, credit-product eligibility, and conservative
+  projection are recorded in [AWS_COSTS.md](./AWS_COSTS.md).
 - Configure AWS Budgets notifications at $10, $15, $20, and $25 before
   persistent resources. Alerts do not replace manual monitoring or teardown.
 - At $15 actual/forecast, inspect costs immediately. At $25, tear down

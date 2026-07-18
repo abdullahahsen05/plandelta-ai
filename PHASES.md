@@ -6,16 +6,16 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 9 — AWS storage and AI providers
-- Current task: Establish AWS budget controls, then verify the new private S3 provider against a real development bucket and add the bounded Bedrock summary path
-- Last verified command: The configurable S3 path and bounded Bedrock summary path passed API/web typecheck and lint, 40 API tests, 9 web tests, and both production builds; authenticated AWS discovery confirmed active on-demand Amazon Nova Micro in `us-east-1` without invoking the model on 2026-07-18
+- Current task: Obtain the non-secret budget notification email, deploy the validated cost/storage stacks, then run the opt-in live S3 and Bedrock provider checks
+- Last verified command: AWS validated both Phase 9 CloudFormation templates; the account credit detail explicitly includes EC2, S3, ECR, Bedrock, CloudWatch, data transfer, Budgets, CloudFormation, and Systems Manager; price-list inputs and a USD 22.94 conservative monthly ceiling were recorded; read-only inventory confirmed zero prohibited resources on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 enables live authentication; this does not block Phase 9
-- Last completed implementation commit: `cb14690 feat(worker): promote vision artifacts to S3`
+- Last completed implementation commit: `b83d0fc feat(web): attribute analysis summary source`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed and annotated prerelease `v0.1.0-rc.1` is published
 - Vercel status: `https://plandelta-ai.vercel.app` is a verified production deployment in truthful portfolio mode with live processing and authentication visibly offline until AWS and the Supabase callback are ready
 - AWS status: MFA-protected non-root IAM user, temporary browser-authenticated `plandelta` profile, `us-east-1`, billing visibility, required service reads, scoped permissions boundary, bounded role/instance-profile creation, EC2 pass-role, and GitHub OIDC verified; no billable project resources created
-- AWS credit budget: $100 remaining and 173 days verified on 2026-07-17; expires 2027-01-04 unless depleted; $25 project-spend target
+- AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
 ## Credential preflight — blocking before Phase 0
@@ -235,15 +235,15 @@ Begin only after the local release gate passes.
 - [ ] Provision development bucket, lifecycle rules, CORS, encryption, public
       access block, and IAM role.
 - [ ] Verify upload, analysis read, artifact write, report read, and cleanup.
-- [ ] Record actual service-region availability and credit eligibility.
+- [x] Record actual service-region availability and credit eligibility.
 - [ ] Create AWS Budget notifications at $10, $15, $20, and $25.
-- [ ] Confirm there is no NAT Gateway, load balancer, RDS, ElastiCache,
+- [x] Confirm there is no NAT Gateway, load balancer, RDS, ElastiCache,
       OpenSearch, SageMaker endpoint, EKS, ECS/Fargate, or provisioned Bedrock.
 
 Exit gate:
 
 - [ ] AWS providers pass integration checks without public objects.
-- [ ] Bedrock failure does not prevent an analysis report.
+- [x] Bedrock failure does not prevent an analysis report.
 - [ ] No long-lived AWS key is committed or sent to the browser.
 
 ## Phase 10 — AWS container deployment
