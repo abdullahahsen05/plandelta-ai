@@ -117,7 +117,7 @@ $commandId = (
   aws ssm send-command `
     --instance-ids $instanceId `
     --document-name AWS-RunShellScript `
-    --parameters 'commands=["cd /opt/plandelta && docker compose --env-file .env.runtime -f docker-compose.prod.yml ps --services --status running | sort | tr \"\n\" \",\""]' `
+    --parameters 'commands=["cd /opt/plandelta && docker compose --env-file .env.runtime -f docker-compose.prod.yml ps --services --status running"]' `
     --profile $Profile `
     --region $Region `
     --query "Command.CommandId" `
@@ -138,8 +138,9 @@ $containerStatus = aws ssm get-command-invocation `
   --region $Region `
   --query "StandardOutputContent" `
   --output text
+$runningServices = @($containerStatus -split "\s+" | Where-Object { $_ })
 foreach ($serviceName in @("api", "worker", "vision", "proxy")) {
-  if ($containerStatus -notmatch "(^|,)$serviceName(,|$)") {
+  if ($serviceName -notin $runningServices) {
     throw "The remote $serviceName container is not confirmed running."
   }
 }

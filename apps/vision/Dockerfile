@@ -8,7 +8,14 @@ RUN apt-get update \
     && apt-get install --yes --no-install-recommends libgl1 libglib2.0-0 \
     && rm -rf /var/lib/apt/lists/*
 
-RUN groupadd --system plandelta && useradd --system --gid plandelta plandelta
+RUN groupadd --gid 1000 plandelta \
+    && useradd \
+      --uid 1000 \
+      --gid plandelta \
+      --no-create-home \
+      --home-dir /home/plandelta \
+      --shell /usr/sbin/nologin \
+      plandelta
 WORKDIR /app
 COPY pyproject.toml ./
 COPY plandelta_vision ./plandelta_vision

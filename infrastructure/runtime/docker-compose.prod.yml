@@ -14,6 +14,28 @@ x-app-environment: &app-environment
   restart: unless-stopped
 
 services:
+  volume-init:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-vision:${IMAGE_TAG}
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      [
+        "chown 1000:1000 /data /home/plandelta/.paddlex && chmod 0770 /data /home/plandelta/.paddlex",
+      ]
+    user: "0:0"
+    volumes:
+      - vision-data:/data
+      - vision-models:/home/plandelta/.paddlex
+    network_mode: none
+    restart: "no"
+    read_only: true
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    cap_add:
+      - CHOWN
+      - FOWNER
+
   api:
     <<: *app-environment
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-api:${IMAGE_TAG}
@@ -78,6 +100,9 @@ services:
     networks:
       - private
     restart: unless-stopped
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
     healthcheck:
       test:
         [
