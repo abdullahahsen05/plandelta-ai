@@ -5,20 +5,19 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 ## Current execution state
 
-- Current phase: Phase 11 — final portfolio handoff and resource review
-- Current task: Publish the verified cloud release as `v0.1.0`, then record the final tag and
-  release status
-- Last verified command: All six GitHub CI jobs passed in run `29641467713`; the replacement
-  full-history Gitleaks container, Vercel production deployment, public app HTTP check, and AWS
-  Phase 10 verifier all passed
+- Current phase: Complete — stable cloud portfolio release `v0.1.0`
+- Current task: Handoff complete; keep the intentionally retained AWS runtime within the
+  documented USD 15 review point and USD 25 teardown gate
+- Last verified command: All six GitHub CI jobs passed for release commit `11bdca3` in run
+  `29641919744`; its Vercel production deployment reached Ready and the annotated `v0.1.0`
+  GitHub release was published
 - Active blockers: None
-- Last completed implementation checkpoint: External-origin Playwright support and API-driven
-  production cleanup passed against the live deployment
+- Last completed implementation checkpoint: `11bdca3 docs: record live runtime retention`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six
-  default-branch CI jobs passed in run `29641467713`, and annotated prerelease `v0.1.0-rc.1` is
-  published
+  default-branch CI jobs passed in run `29641919744`, annotated stable release `v0.1.0` is
+  published, and prerelease `v0.1.0-rc.1` remains available for history
 - Vercel status: `https://plandelta-ai.vercel.app` points to the verified Ready `main`
   deployment; the exact production callback passed, live processing is enabled, the sign-in page
   is error-free, and the authenticated public journey passed
@@ -302,13 +301,13 @@ Exit gate:
 - [x] Verify the Vercel app presents the labelled precomputed sample and
       truthfully reflects whether live processing is available.
 - [x] Record resource status and final actual/forecast AWS spend.
-- [ ] Create final small commits and release tag.
+- [x] Create final small commits and release tag.
 - [x] Record live URLs, test results, cloud resources, spend guardrails, and
       teardown procedure.
 
 Final gate:
 
-- [ ] All required phases pass or external blockers are explicitly documented.
+- [x] All required phases pass or external blockers are explicitly documented.
 - [x] Repository and Vercel sample are usable; AWS deployment verification is
       documented even if temporary compute has been torn down.
 - [x] The product never overstates estimation accuracy or hides uncertainty.

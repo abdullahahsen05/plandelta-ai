@@ -3,7 +3,9 @@
 This record began with the local `v0.1.0-rc.1` candidate and now includes the
 verified Vercel production deployment and AWS runtime evidence captured on
 2026-07-18. Passwordless authentication, live uploads, deterministic analysis,
-and report generation have passed as one public production journey.
+and report generation have passed as one public production journey. Annotated
+stable release [`v0.1.0`](https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0)
+was published from release commit `11bdca3` after all six CI jobs passed.
 
 ## Local release gate
 
