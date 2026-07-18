@@ -6,8 +6,8 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Push the verified recovery harness and 2 GB swap association, wait for CI, add swap to the existing instance without replacement, then finish the Vercel/Supabase production path
-- Last verified command: `https://100.57.94.173` passed the full Phase 10 verifier and authenticated deployed journey with one real CV/OCR change, seven private artifacts, a Bedrock report, and cleanup; API restart recovered publicly, a 3/3-attempt failed job completed through the real retry endpoint after vision recovery, S3 returned to zero objects, and AWS Billing reported USD 0.00 actual spend on 2026-07-18
+- Current task: Use Amazon Linux 2023's supported `swapon --show=SIZE` syntax with the 4 KB metadata allowance, redeploy only the swap association, then finish the Vercel/Supabase production path
+- Last verified command: The reviewed change set added only `RuntimeSwapAssociation`; it allocated a 2 GB file and activated 2,147,479,552 usable swap bytes, then its unsupported `swapon --output SIZE` inspection command failed. CloudFormation rolled back only the association, retained the healthy instance, and the swap remains active
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
 - Last completed implementation commit: `99abe18 fix(infra): provision verified runtime swap`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one

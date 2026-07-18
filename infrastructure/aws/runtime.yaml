@@ -241,8 +241,8 @@ Resources:
             /swapfile; mkswap /swapfile; swapon /swapfile; fi
           - grep -qF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >>
             /etc/fstab
-          - test "$(swapon --show --bytes --noheadings --output SIZE | awk '{sum+=$1} END {print
-            sum+0}')" -ge 2147483648
+          - test "$(swapon --show=SIZE --bytes --noheadings | awk '{sum+=$1} END {print sum+0}')"
+            -ge 2146435072
       WaitForSuccessTimeoutSeconds: 300
 
   StatusCheckAlarm:

@@ -149,7 +149,7 @@ $swapCommandId = (
   aws ssm send-command `
     --instance-ids $instanceId `
     --document-name AWS-RunShellScript `
-    --parameters 'commands=["swapon --show --bytes --noheadings --output SIZE"]' `
+    --parameters 'commands=["swapon --show=SIZE --bytes --noheadings"]' `
     --profile $Profile `
     --region $Region `
     --query "Command.CommandId" `
@@ -174,7 +174,7 @@ $swapBytes = @($swapOutput -split "\s+" | Where-Object { $_ }) |
   ForEach-Object { [long]$_ } |
   Measure-Object -Sum |
   Select-Object -ExpandProperty Sum
-if ($swapBytes -lt 2GB) {
+if ($swapBytes -lt (2GB - 1MB)) {
   throw "The runtime does not have the required 2 GB swap."
 }
 
