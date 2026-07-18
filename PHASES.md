@@ -6,10 +6,10 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Push the validated Amazon Linux bootstrap fix, reuse the two verified immutable images, and retry the fully rolled-back one-instance stack
-- Last verified command: Both immutable release images were pushed, then the first EC2 bootstrap failed before Docker installation because the AMI's existing `curl-minimal` conflicts with an unnecessary full `curl` package request; CloudFormation reached `ROLLBACK_COMPLETE`, removed the instance, volume, profile, security group, log group, and alarms, and AWS reported zero PlanDelta instances on 2026-07-18
+- Current task: Push the verified shared-volume ownership repair, wait for default-branch CI, then build a new immutable release and retry the cleanly rolled-back one-instance stack
+- Last verified command: UID 1000 is now shared by API/worker and vision, and a real root-owned named-volume reproduction passed with the one-shot initializer restricted to `CHOWN` and `FOWNER`; production Compose validation, CloudFormation validation, formatting, typecheck, lint, 80 tests, production build, and full-history secret scan all passed on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
-- Last completed implementation commit: `e0c4780 fix(deploy): avoid Amazon Linux curl conflict`
+- Last completed implementation commit: `59e1b8b fix(vision): initialize production volumes safely`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29622896562` and annotated prerelease `v0.1.0-rc.1` is published
