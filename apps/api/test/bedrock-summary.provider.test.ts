@@ -69,7 +69,7 @@ describe("BedrockSummaryProvider", () => {
     expect(summary).toMatchObject({
       provider: "BEDROCK",
       modelId: "provider.model-version",
-      promptVersion: "bedrock-evidence-v1",
+      promptVersion: "bedrock-evidence-v2",
     });
     expect(summary.structuredSummary).toMatchObject({
       aiGenerated: true,
@@ -89,6 +89,22 @@ describe("BedrockSummaryProvider", () => {
       throw new Error("Expected an abort signal.");
     }
     expect(options.abortSignal).toBeInstanceOf(AbortSignal);
+  });
+
+  it("uses prompt-constrained JSON with strict local validation for Nova Micro", async () => {
+    process.env.BEDROCK_MODEL_ID = "amazon.nova-micro-v1:0";
+    const send = vi.fn<(command: unknown, options?: unknown) => Promise<unknown>>();
+    send.mockResolvedValue(response());
+    const provider = new BedrockSummaryProvider({ send } as never);
+
+    await provider.summarizeAnalysis(changes);
+
+    const command = send.mock.calls[0]?.[0];
+    expect(command).toBeInstanceOf(ConverseCommand);
+    if (!(command instanceof ConverseCommand)) throw new Error("Expected ConverseCommand.");
+    expect(command.input.outputConfig).toBeUndefined();
+    expect(JSON.stringify(command.input.messages)).toContain("Required JSON schema");
+    expect(JSON.stringify(command.input.messages)).toContain("additionalProperties");
   });
 
   it("rejects invented evidence sequence numbers", async () => {
