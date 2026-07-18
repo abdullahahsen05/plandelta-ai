@@ -1,0 +1,173 @@
+[CmdletBinding()]
+param(
+  [string]$Profile = "plandelta",
+  [string]$Region = "us-east-1",
+  [string]$WebOrigin = "https://plandelta-ai.vercel.app",
+  [string]$EnvironmentParameterName = "/plandelta/production/env",
+  [string]$VpcId,
+  [string]$SubnetId
+)
+
+$ErrorActionPreference = "Stop"
+$repositoryRoot = Resolve-Path (Join-Path $PSScriptRoot "..\..")
+$identity = aws sts get-caller-identity --profile $Profile --region $Region --output json |
+  ConvertFrom-Json
+if (-not $identity.Account -or $identity.Arn -like "*:root") {
+  throw "A non-root authenticated AWS profile is required."
+}
+
+$accountId = [string]$identity.Account
+$bucketName = "plandelta-$accountId-$Region"
+$boundaryArn = "arn:aws:iam::$accountId`:policy/plandelta-runtime-boundary"
+$headCommit = (git -C $repositoryRoot rev-parse HEAD).Trim()
+$remoteCommit = (
+  git -C $repositoryRoot ls-remote origin refs/heads/main |
+    ForEach-Object { ($_ -split "\s+")[0] }
+).Trim()
+if ($headCommit -notmatch "^[0-9a-f]{40}$" -or $remoteCommit -ne $headCommit) {
+  throw "Deploy only a full commit that is already present on origin/main."
+}
+if (git -C $repositoryRoot status --porcelain) {
+  throw "Deploy only from a clean working tree."
+}
+
+& (Join-Path $PSScriptRoot "verify-phase9.ps1") -Profile $Profile -Region $Region
+
+if (-not $VpcId) {
+  $VpcId = (
+    aws ec2 describe-vpcs `
+      --profile $Profile `
+      --region $Region `
+      --filters Name=is-default,Values=true `
+      --query "Vpcs[0].VpcId" `
+      --output text
+  ).Trim()
+}
+if (-not $SubnetId) {
+  $SubnetId = (
+    aws ec2 describe-subnets `
+      --profile $Profile `
+      --region $Region `
+      --filters "Name=vpc-id,Values=$VpcId" Name=map-public-ip-on-launch,Values=true `
+      --query "sort_by(Subnets,&AvailabilityZone)[0].SubnetId" `
+      --output text
+  ).Trim()
+}
+if ($VpcId -notmatch "^vpc-[0-9a-f]+$" -or $SubnetId -notmatch "^subnet-[0-9a-f]+$") {
+  throw "A valid default VPC and public subnet are required."
+}
+
+Write-Output "Updating the bounded runtime role before creating compute."
+aws cloudformation deploy `
+  --stack-name plandelta-storage `
+  --template-file (Join-Path $PSScriptRoot "storage.yaml") `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --parameter-overrides `
+    "BucketName=$bucketName" `
+    "PermissionsBoundaryArn=$boundaryArn" `
+    "WebOrigin=$WebOrigin" `
+    "BedrockModelId=amazon.nova-micro-v1:0" `
+    "EnvironmentParameterName=$EnvironmentParameterName" `
+  --profile $Profile `
+  --region $Region `
+  --no-fail-on-empty-changeset
+if ($LASTEXITCODE -ne 0) {
+  throw "The bounded runtime role update failed."
+}
+
+Write-Output "Creating immutable PlanDelta ECR repositories."
+aws cloudformation deploy `
+  --stack-name plandelta-ecr `
+  --template-file (Join-Path $PSScriptRoot "ecr.yaml") `
+  --profile $Profile `
+  --region $Region `
+  --no-fail-on-empty-changeset
+if ($LASTEXITCODE -ne 0) {
+  throw "The PlanDelta ECR stack failed."
+}
+
+$env:PLANDELTA_AWS_REGION = $Region
+$env:PLANDELTA_S3_BUCKET = $bucketName
+$env:PLANDELTA_WEB_ORIGIN = $WebOrigin
+$encodedEnvironment = node (Join-Path $repositoryRoot "scripts\encode-production-env.mjs")
+if ($LASTEXITCODE -ne 0 -or -not $encodedEnvironment) {
+  throw "The allowlisted production environment could not be encoded."
+}
+aws ssm put-parameter `
+  --name $EnvironmentParameterName `
+  --description "Encrypted allowlisted PlanDelta production environment" `
+  --type SecureString `
+  --tier Standard `
+  --value $encodedEnvironment `
+  --overwrite `
+  --profile $Profile `
+  --region $Region `
+  --query Version `
+  --output text | Out-Null
+if ($LASTEXITCODE -ne 0) {
+  throw "The encrypted production environment could not be stored."
+}
+Remove-Variable encodedEnvironment
+
+$apiExists = $true
+$visionExists = $true
+aws ecr describe-images `
+  --repository-name plandelta-api `
+  --image-ids "imageTag=$headCommit" `
+  --profile $Profile `
+  --region $Region `
+  --query "imageDetails[0].imageDigest" `
+  --output text *> $null
+if ($LASTEXITCODE -ne 0) { $apiExists = $false }
+aws ecr describe-images `
+  --repository-name plandelta-vision `
+  --image-ids "imageTag=$headCommit" `
+  --profile $Profile `
+  --region $Region `
+  --query "imageDetails[0].imageDigest" `
+  --output text *> $null
+if ($LASTEXITCODE -ne 0) { $visionExists = $false }
+if ($apiExists -ne $visionExists) {
+  throw "The immutable release tag is present in only one repository."
+}
+
+$registry = "$accountId.dkr.ecr.$Region.amazonaws.com"
+if (-not $apiExists) {
+  Write-Output "Building the two production images from the verified commit."
+  docker compose -f (Join-Path $repositoryRoot "docker-compose.yml") build api vision
+  if ($LASTEXITCODE -ne 0) { throw "The production image build failed." }
+
+  aws ecr get-login-password --profile $Profile --region $Region |
+    docker login --username AWS --password-stdin $registry
+  if ($LASTEXITCODE -ne 0) { throw "The ECR login failed." }
+
+  docker tag plandelta-api:local "$registry/plandelta-api`:$headCommit"
+  docker tag plandelta-vision:local "$registry/plandelta-vision`:$headCommit"
+  docker push "$registry/plandelta-api`:$headCommit"
+  if ($LASTEXITCODE -ne 0) { throw "The API image push failed." }
+  docker push "$registry/plandelta-vision`:$headCommit"
+  if ($LASTEXITCODE -ne 0) { throw "The vision image push failed." }
+} else {
+  Write-Output "The immutable release tag already exists in both repositories."
+}
+
+Write-Output "Creating the one-instance PlanDelta runtime."
+aws cloudformation deploy `
+  --stack-name plandelta-runtime `
+  --template-file (Join-Path $PSScriptRoot "runtime.yaml") `
+  --capabilities CAPABILITY_NAMED_IAM `
+  --parameter-overrides `
+    "VpcId=$VpcId" `
+    "SubnetId=$SubnetId" `
+    "RuntimeRoleName=plandelta-runtime-$Region" `
+    "EnvironmentParameterName=$EnvironmentParameterName" `
+    "ReleaseCommit=$headCommit" `
+    "ImageTag=$headCommit" `
+  --profile $Profile `
+  --region $Region `
+  --no-fail-on-empty-changeset
+if ($LASTEXITCODE -ne 0) {
+  throw "The one-instance PlanDelta runtime stack failed."
+}
+
+Write-Output "Phase 10 resources deployed. Run verify-phase10.ps1 before claiming availability."
