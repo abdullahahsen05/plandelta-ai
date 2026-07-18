@@ -6,10 +6,10 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Move the seven-day CloudWatch log group into the persistent control stack so API startup evidence survives compute rollback, validate the diagnostic change, and retry only after the root cause can be observed
-- Last verified command: CI run `29626234285` passed all six jobs and the new immutable images deployed; the bounded volume initializer exited successfully and vision became healthy on t3.small, but API readiness did not pass before the stack signaled failure. CloudFormation returned to `ROLLBACK_COMPLETE`, terminated the instance and volume, and AWS reports zero PlanDelta compute on 2026-07-18; the same production-mode API image and environment shape pass readiness locally
+- Current task: Route the bootstrap's on-instance public-TLS probe through loopback while preserving public-IP certificate validation, verify the targeted fix, and reuse the already-verified images for the next clean retry
+- Last verified command: Persistent CloudWatch evidence proved API readiness returned 200 against Supabase and vision, the worker started at concurrency one, vision stayed healthy, and Caddy started normally; no public probe reached Caddy before the failure signal, isolating the remaining failure to the instance calling its own public NAT address. CloudFormation again reached `ROLLBACK_COMPLETE`, deleted EC2/EBS, and AWS reports zero PlanDelta compute on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
-- Last completed implementation commit: `667b9d5 fix(infra): retain runtime diagnostics across rollback`
+- Last completed implementation commit: `8702419 fix(deploy): probe public TLS through loopback`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29622896562` and annotated prerelease `v0.1.0-rc.1` is published
