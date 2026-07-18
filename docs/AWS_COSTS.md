@@ -96,3 +96,20 @@ Nova Micro does not support Bedrock's native `outputConfig` structured-output fi
 therefore supplies the exact JSON schema in its evidence-only Micro prompt, parses the response with
 a strict local schema and evidence-sequence allowlist, and falls back to the deterministic report
 on any invalid response. Compatible future models retain native Bedrock structured output.
+
+## Phase 10 live evidence
+
+Verified on 2026-07-18:
+
+- One `t3.small`, one encrypted 20 GB `gp3` root volume, one automatically assigned public IPv4,
+  and one worker are live; no size increase was required.
+- Public HTTPS readiness, all four long-running containers, SSM-only administration, standard T3
+  credits, ports 80/443 only, seven-day CloudWatch retention, and immutable ECR repositories passed
+  the automated Phase 10 verifier.
+- The deployed authenticated journey completed with real CV/OCR, seven private artifacts, a Bedrock
+  report, protected download, and cleanup. A deliberate 3/3-attempt failure then completed through
+  the real retry endpoint after vision recovery.
+- S3 contained zero project objects and zero incomplete multipart uploads after cleanup.
+- AWS Budgets reported USD 0.00 actual spend and Cost Explorer reported an estimated USD 0.00
+  unblended July total at the verification time. Billing data can lag usage, so the gross-cost
+  alerts and USD 25 teardown gate remain authoritative.

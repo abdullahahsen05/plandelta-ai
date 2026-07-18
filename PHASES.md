@@ -6,15 +6,15 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Push the validated default IP-certificate fix, wait for CI, and retry the fully rolled-back stack with the existing immutable images
-- Last verified command: The production Caddyfile adapted successfully and a real no-SNI IP-literal TLS test returned API readiness 200 while an invalid Host header returned 421; the failed AWS attempt reached `ROLLBACK_COMPLETE`, deleted EC2/EBS, and left zero PlanDelta compute on 2026-07-18
+- Current task: Push the verified recovery harness and 2 GB swap association, wait for CI, add swap to the existing instance without replacement, then finish the Vercel/Supabase production path
+- Last verified command: `https://100.57.94.173` passed the full Phase 10 verifier and authenticated deployed journey with one real CV/OCR change, seven private artifacts, a Bedrock report, and cleanup; API restart recovered publicly, a 3/3-attempt failed job completed through the real retry endpoint after vision recovery, S3 returned to zero objects, and AWS Billing reported USD 0.00 actual spend on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
-- Last completed implementation commit: `41ea9cc fix(proxy): serve IP certificate without SNI`
+- Last completed implementation commit: `99abe18 fix(infra): provision verified runtime swap`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
-- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29622896562` and annotated prerelease `v0.1.0-rc.1` is published
+- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29627896576` and annotated prerelease `v0.1.0-rc.1` is published
 - Vercel status: `https://plandelta-ai.vercel.app` points to verified Ready deployment `dpl_HzXL9oCj5LVUa5mVRFh847F8ac67` in truthful portfolio mode with live processing and authentication visibly offline until AWS and the Supabase callback are ready
-- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, one private encrypted lifecycle-controlled S3 bucket, one permissions-boundary-constrained runtime role, two immutable ECR images, and one encrypted Standard SSM parameter are deployed; no compute is running
+- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, private encrypted lifecycle-controlled S3, a permissions-boundary-constrained runtime role, two immutable ECR images, one encrypted Standard SSM parameter, and one public-HTTPS t3.small runtime are deployed; the 2 GB swap association is validated locally and pending its no-replacement stack update
 - AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
@@ -248,31 +248,31 @@ Exit gate:
 
 ## Phase 10 — AWS container deployment
 
-- [ ] Build production images for Nest API/worker and FastAPI vision service.
-- [ ] Push images to ECR with immutable version tags.
+- [x] Build production images for Nest API/worker and FastAPI vision service.
+- [x] Push images to ECR with immutable version tags.
 - [ ] Provision one t3.small with 20 GB gp3, T3 CPU credit mode standard, one
       worker, 2 GB swap, and an IAM instance role.
-- [ ] Use lightweight OCR models, lazy loading, container memory limits, and
+- [x] Use lightweight OCR models, lazy loading, container memory limits, and
       worker concurrency one.
-- [ ] Resize temporarily to t3.medium only after a recorded t3.small memory
+- [x] Resize temporarily to t3.medium only after a recorded t3.small memory
       failure; record the reason and reverse when no longer needed.
-- [ ] Deploy API, worker, vision, and reverse proxy with Docker Compose.
-- [ ] Add TLS, health checks, restart policies, resource limits, and shared
+- [x] Deploy API, worker, vision, and reverse proxy with Docker Compose.
+- [x] Add TLS, health checks, restart policies, resource limits, and shared
       configuration.
-- [ ] Send structured logs to CloudWatch with retention limits.
-- [ ] Restrict security groups and administrative access.
+- [x] Send structured logs to CloudWatch with retention limits.
+- [x] Restrict security groups and administrative access.
 - [ ] Configure Vercel production origin and Supabase production settings.
-- [ ] Run a complete deployed sample analysis.
-- [ ] Configure AWS budget alerts and document expected spend.
-- [ ] Capture actual Cost Explorer/Billing totals without exposing account
+- [x] Run a complete deployed sample analysis.
+- [x] Configure AWS budget alerts and document expected spend.
+- [x] Capture actual Cost Explorer/Billing totals without exposing account
       identifiers.
 
 Exit gate:
 
-- [ ] Public API health endpoint passes over HTTPS.
+- [x] Public API health endpoint passes over HTTPS.
 - [ ] Full Vercel-to-AWS-to-Supabase-to-S3 flow is verified.
-- [ ] Container restart and failed-job recovery are verified.
-- [ ] Actual spend remains below the $25 target or is explicitly explained.
+- [x] Container restart and failed-job recovery are verified.
+- [x] Actual spend remains below the $25 target or is explicitly explained.
 
 ## Phase 11 — Final portfolio handoff and resource review
 
