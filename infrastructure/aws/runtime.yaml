@@ -27,17 +27,6 @@ Parameters:
     AllowedPattern: "^[0-9a-f]{40}$"
 
 Resources:
-  RuntimeLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: /plandelta/production
-      RetentionInDays: 7
-      Tags:
-        - Key: Project
-          Value: PlanDelta
-        - Key: Environment
-          Value: production
-
   RuntimeInstanceProfile:
     Type: AWS::IAM::InstanceProfile
     Properties:
@@ -74,7 +63,6 @@ Resources:
   RuntimeInstance:
     Type: AWS::EC2::Instance
     DependsOn:
-      - RuntimeLogGroup
       - RuntimeInstanceProfile
     CreationPolicy:
       ResourceSignal:
@@ -278,4 +266,4 @@ Outputs:
   ApiUrl:
     Value: !Sub https://${RuntimeInstance.PublicIp}
   RuntimeLogGroup:
-    Value: !Ref RuntimeLogGroup
+    Value: /plandelta/production

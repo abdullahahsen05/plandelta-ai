@@ -27,6 +27,17 @@ Parameters:
     AllowedPattern: "^/plandelta/[a-z0-9/-]+$"
 
 Resources:
+  RuntimeLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /plandelta/production
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: production
+
   PrivateArtifactsBucket:
     Type: AWS::S3::Bucket
     DeletionPolicy: Retain
@@ -224,6 +235,9 @@ Resources:
           Value: development
 
 Outputs:
+  RuntimeLogGroup:
+    Description: Seven-day runtime log group retained independently of temporary compute.
+    Value: !Ref RuntimeLogGroup
   BucketName:
     Description: Private S3 bucket for PlanDelta inputs and artifacts.
     Value: !Ref PrivateArtifactsBucket
