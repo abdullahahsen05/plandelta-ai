@@ -14,8 +14,9 @@ processing, OpenCV alignment and directional differencing, PaddleOCR, normalized
 private artifacts, and a deterministic printable report. A clearly labelled precomputed sample
 remains available without backend compute. The
 [public Vercel workspace](https://plandelta-ai.vercel.app) currently runs in truthful portfolio
-mode: the sample works, while live uploads remain visibly offline until the AWS service is verified.
-No AWS product resources have been created.
+mode: the sample works, while live uploads remain visibly offline until the AWS compute service is
+deployed. The cost guardrail, private encrypted S3 storage, bounded runtime role, and on-demand
+Bedrock provider are deployed and verified; no EC2 compute is running yet.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 
@@ -41,7 +42,7 @@ flowchart LR
     Worker["NestJS worker"] --> DB
     Worker --> Vision["FastAPI CV/OCR"]
     API --> Storage["Storage provider"]
-    Vision --> Storage
+    Worker --> Storage
 ```
 
 - `apps/web`: Next.js App Router interface and blueprint workbench.
@@ -52,8 +53,8 @@ flowchart LR
 - `infrastructure`: deployment assets created only after the local release gate.
 
 Supabase PostgreSQL is the source of truth and durable queue. Local development uses a shared
-storage volume; production later swaps that provider for private S3. Bedrock summaries remain
-optional and never replace deterministic evidence.
+storage volume; the verified production provider uses private S3. Bedrock summaries remain optional
+and never replace deterministic evidence.
 
 The public API applies strict input validation, security headers, request timeouts, per-IP traffic
 limits, and database-backed per-user upload and analysis quotas. Readiness checks cover PostgreSQL

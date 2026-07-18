@@ -73,3 +73,26 @@ therefore treats live compute as a temporary portfolio environment:
 
 Budget notifications at USD 10, 15, 20, and 25 are deployed before the first persistent project
 resource.
+
+## Phase 9 deployment evidence
+
+Verified on 2026-07-18:
+
+- CloudFormation stacks `plandelta-cost-guard` and `plandelta-storage` reached
+  `CREATE_COMPLETE`.
+- The monthly gross-cost budget is USD 25 with actual-spend notifications at USD 10, 15, 20,
+  and 25.
+- The S3 bucket uses SSE-S3, bucket-owner-enforced ownership, all four public-access blocks, a
+  non-public TLS-only policy, exact production-origin read-only CORS, and bounded lifecycle rules.
+- The EC2 runtime role has the required `plandelta-runtime-boundary` permissions boundary and is
+  limited to the PlanDelta S3 prefix, the configured on-demand model, PlanDelta logs, and PlanDelta
+  metrics.
+- A real provider check passed encrypted write/read, a signed read, an unsigned public `403`, a
+  Nova Micro summary, and cleanup.
+- The complete application journey passed upload, deterministic CV/OCR, seven private artifacts,
+  a Bedrock report, protected reads, and API-driven deletion. The bucket was empty afterward.
+
+Nova Micro does not support Bedrock's native `outputConfig` structured-output field. PlanDelta
+therefore supplies the exact JSON schema in its evidence-only Micro prompt, parses the response with
+a strict local schema and evidence-sequence allowlist, and falls back to the deterministic report
+on any invalid response. Compatible future models retain native Bedrock structured output.
