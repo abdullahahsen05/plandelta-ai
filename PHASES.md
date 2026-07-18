@@ -6,15 +6,15 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Push the validated empty-ECR probe fix, rerun CI, then resume the idempotent image and one-instance deployment
-- Last verified command: The first Phase 10 execution updated the bounded role, created both empty immutable ECR repositories, and stored the encrypted allowlisted parameter, then stopped before image or EC2 creation when PowerShell treated an expected missing-image response as fatal; the replacement non-erroring tag probe passed and AWS still reported zero PlanDelta instances on 2026-07-18
+- Current task: Push the validated Amazon Linux bootstrap fix, reuse the two verified immutable images, and retry the fully rolled-back one-instance stack
+- Last verified command: Both immutable release images were pushed, then the first EC2 bootstrap failed before Docker installation because the AMI's existing `curl-minimal` conflicts with an unnecessary full `curl` package request; CloudFormation reached `ROLLBACK_COMPLETE`, removed the instance, volume, profile, security group, log group, and alarms, and AWS reported zero PlanDelta instances on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
-- Last completed implementation commit: `af7b3aa fix(deploy): handle empty ECR repositories`
+- Last completed implementation commit: `e0c4780 fix(deploy): avoid Amazon Linux curl conflict`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29622896562` and annotated prerelease `v0.1.0-rc.1` is published
 - Vercel status: `https://plandelta-ai.vercel.app` points to verified Ready deployment `dpl_HzXL9oCj5LVUa5mVRFh847F8ac67` in truthful portfolio mode with live processing and authentication visibly offline until AWS and the Supabase callback are ready
-- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, one private encrypted lifecycle-controlled S3 bucket, one permissions-boundary-constrained runtime role, two empty immutable ECR repositories, and one encrypted Standard SSM parameter are deployed; no image or compute is running
+- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, one private encrypted lifecycle-controlled S3 bucket, one permissions-boundary-constrained runtime role, two immutable ECR images, and one encrypted Standard SSM parameter are deployed; no compute is running
 - AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
