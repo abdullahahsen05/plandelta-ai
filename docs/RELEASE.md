@@ -80,6 +80,14 @@ The public frontend is verified at
 monorepo root, Next.js preset, Node.js 22, and external workspace dependency
 access.
 
+After the portfolio-state copy checkpoint, GitHub-connected deployment
+`dpl_EUa1EnQHBEsR6DmRo5p4sTAdBDeW` reached Ready and kept the production alias.
+All six jobs in GitHub Actions run `29630186107` passed. The public landing,
+sign-in boundary, upload boundary, and labelled sample were rechecked with no
+browser warnings or errors; the drawing canvas loaded without horizontal
+overflow. All tracked Markdown relative links resolved locally, and the
+Vercel, Semantic Versioning, and release links returned HTTP 200.
+
 The production project contains only the five required public configuration
 names: Supabase URL, Supabase anonymous key, application URL, API URL, and the
 live-processing availability flag. Values were not printed or committed.
