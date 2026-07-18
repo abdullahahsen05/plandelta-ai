@@ -109,24 +109,24 @@ if ($LASTEXITCODE -ne 0) {
 }
 Remove-Variable encodedEnvironment
 
-$apiExists = $true
-$visionExists = $true
-aws ecr describe-images `
+$apiExists = (
+  aws ecr list-images `
   --repository-name plandelta-api `
-  --image-ids "imageTag=$headCommit" `
+  --filter tagStatus=TAGGED `
   --profile $Profile `
   --region $Region `
-  --query "imageDetails[0].imageDigest" `
-  --output text *> $null
-if ($LASTEXITCODE -ne 0) { $apiExists = $false }
-aws ecr describe-images `
+  --query "contains(imageIds[].imageTag, '$headCommit')" `
+  --output text
+).Trim() -eq "True"
+$visionExists = (
+  aws ecr list-images `
   --repository-name plandelta-vision `
-  --image-ids "imageTag=$headCommit" `
+  --filter tagStatus=TAGGED `
   --profile $Profile `
   --region $Region `
-  --query "imageDetails[0].imageDigest" `
-  --output text *> $null
-if ($LASTEXITCODE -ne 0) { $visionExists = $false }
+  --query "contains(imageIds[].imageTag, '$headCommit')" `
+  --output text
+).Trim() -eq "True"
 if ($apiExists -ne $visionExists) {
   throw "The immutable release tag is present in only one repository."
 }
