@@ -15,10 +15,11 @@ normalized evidence regions, private S3 artifacts, an evidence-constrained Bedro
 printable report. One `t3.small`, one worker, and the public HTTPS API are live with budget alerts
 and a USD 25 teardown gate.
 
-The [public Vercel workspace](https://plandelta-ai.vercel.app) remains in truthful portfolio mode:
-the labelled sample works without backend compute, while live sign-in and uploads stay visibly
-disabled until the production callback is allowlisted in Supabase. The verified API origin and all
-five required Vercel variable names are already configured.
+The [public Vercel workspace](https://plandelta-ai.vercel.app) has verified passwordless sign-in and
+live uploads connected to the AWS runtime. The production journey has completed from two uploaded
+drawings through private storage, deterministic analysis, evidence review, and report generation.
+The clearly labelled sample remains available without signing in and will remain useful if the
+temporary AWS compute is later stopped.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 

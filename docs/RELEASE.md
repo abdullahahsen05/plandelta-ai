@@ -1,9 +1,9 @@
 # Release evidence
 
 This record began with the local `v0.1.0-rc.1` candidate and now includes the
-verified Vercel portfolio deployment and AWS runtime evidence captured on
-2026-07-18. The final public live-processing gate remains open until the
-production callback is allowlisted in Supabase.
+verified Vercel production deployment and AWS runtime evidence captured on
+2026-07-18. Passwordless authentication, live uploads, deterministic analysis,
+and report generation have passed as one public production journey.
 
 ## Local release gate
 
@@ -72,7 +72,7 @@ Debian publishes one.
 - The precomputed public sample is labelled and remains available when
   temporary live compute is stopped.
 
-## Vercel portfolio deployment
+## Vercel production deployment
 
 The public frontend is verified at
 [`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app). Deployment
@@ -80,25 +80,33 @@ The public frontend is verified at
 monorepo root, Next.js preset, Node.js 22, and external workspace dependency
 access.
 
-After the portfolio-state copy checkpoint, GitHub-connected deployment
-`dpl_EUa1EnQHBEsR6DmRo5p4sTAdBDeW` reached Ready and kept the production alias.
-All six jobs in GitHub Actions run `29630186107` passed. The public landing,
-sign-in boundary, upload boundary, and labelled sample were rechecked with no
-browser warnings or errors; the drawing canvas loaded without horizontal
-overflow. All tracked Markdown relative links resolved locally, and the
-Vercel, Semantic Versioning, and release links returned HTTP 200.
+After the portfolio-state checkpoint, live-enabled deployment
+`dpl_FaXVm5FXYF16DJucLD6zRdCj2mVw` reached Ready and kept the production alias.
+The public landing, passwordless sign-in page, authenticated upload flow,
+comparison workspace, and labelled sample were rechecked without browser
+warnings or errors; the drawing canvas loaded without horizontal overflow.
+All tracked Markdown relative links resolved locally, and the Vercel, Semantic
+Versioning, and release links returned HTTP 200.
 
 The production project contains only the five required public configuration
 names: Supabase URL, Supabase anonymous key, application URL, API URL, and the
 live-processing availability flag. Values were not printed or committed.
-The verified AWS API origin is configured. Portfolio mode disables sign-in and
-uploads until the Supabase production callback is saved, so the public UI does
-not expose a known-broken authentication action.
+The verified AWS API origin is configured and live processing is enabled.
+Supabase accepts the exact
+`https://plandelta-ai.vercel.app/auth/callback` redirect; a disposable
+passwordless-link verification returned to that origin and the test user was
+removed.
 
 Verified remote evidence:
 
-- Landing, labelled sample, side-by-side workbench, offline sign-in boundary,
-  and offline upload boundary returned successfully.
+- The seven-case public browser suite passed, including landing, labelled
+  sample, responsive layout, reduced motion, and the authenticated live
+  journey.
+- Two real uploaded drawings passed from Vercel through the AWS API, Supabase,
+  private S3 storage, worker, vision service, comparison canvas, evidence crop,
+  and printable report.
+- The focused live rerun passed in 32 seconds and removed its analysis,
+  revisions, project, and disposable user through production APIs.
 - The 390 × 844 layout had no horizontal overflow and retained the evidence
   ledger.
 - A fresh browser tab recorded no warnings or errors.
@@ -108,12 +116,10 @@ Verified remote evidence:
 - Thirteen public JavaScript assets contained none of the checked server-only
   environment names.
 
-The Supabase project owner must set the Site URL to
-`https://plandelta-ai.vercel.app` and add
-`https://plandelta-ai.vercel.app/auth/callback` to the Auth redirect allowlist
-before live authentication is enabled. A disposable magic-link test proved
-the current configuration falls back to `http://localhost:3000`; both
-disposable test users were removed.
+The remaining storage review is a direct S3 zero-object/multipart audit after
+refreshing the temporary AWS CLI browser session. The latest passing journey
+uses API-driven cleanup; any confirmed synthetic artifact from earlier test
+runs will be removed during that audit.
 
 ## AWS runtime evidence
 

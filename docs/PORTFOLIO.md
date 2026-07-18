@@ -86,5 +86,6 @@ without replacing the healthy instance unnecessarily.
 - The classifier dataset is synthetic and cannot establish field accuracy.
 - The public IPv4 TLS certificate is short-lived and tied to the current
   instance address; replacing or stop/starting the instance changes the URL.
-- The public Vercel app remains in labelled-sample portfolio mode until its
-  Supabase callback is allowlisted.
+- Live processing depends on the temporary single-instance AWS runtime. The
+  labelled sample remains available if that compute is intentionally torn
+  down.
