@@ -177,7 +177,8 @@ Resources:
 
           echo "Starting one API, one worker, one vision service, and the TLS proxy."
           docker compose --env-file .env.runtime -f docker-compose.prod.yml up --detach --wait --wait-timeout 300
-          curl --fail --silent --show-error --retry 20 --retry-delay 5 \
+          curl --fail --silent --show-error --retry 20 --retry-delay 5 --retry-all-errors \
+            --resolve "$PUBLIC_IP:443:127.0.0.1" \
             "https://$PUBLIC_IP/health/ready" > /dev/null
 
           cat > /opt/plandelta/renew-certificate.sh <<'RENEW_SCRIPT'
