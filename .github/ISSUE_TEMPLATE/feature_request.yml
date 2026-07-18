@@ -1,0 +1,36 @@
+name: Feature request
+description: Propose an evidence-first revision-review improvement.
+title: "feat: "
+labels:
+  - enhancement
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: Review problem
+      description: What construction revision-review problem needs solving?
+    validations:
+      required: true
+  - type: textarea
+    id: outcome
+    attributes:
+      label: Desired outcome
+      description: Describe the reviewer outcome without prescribing unnecessary infrastructure.
+    validations:
+      required: true
+  - type: textarea
+    id: evidence
+    attributes:
+      label: Evidence and uncertainty
+      description: How should the feature remain traceable and avoid overstating confidence?
+    validations:
+      required: true
+  - type: checkboxes
+    id: boundaries
+    attributes:
+      label: Product boundaries
+      options:
+        - label:
+            This request is about blueprint revision review, not payments, chat, teams, or unrelated
+            SaaS features.
+          required: true

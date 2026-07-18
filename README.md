@@ -9,14 +9,16 @@ OpenCV/OCR pipeline. The built-in sample is always identified as sample data.
 
 ## Current status
 
-The authenticated local product now works from two validated blueprint uploads through durable job
-processing, OpenCV alignment and directional differencing, PaddleOCR, normalized evidence regions,
-private artifacts, and a deterministic printable report. A clearly labelled precomputed sample
-remains available without backend compute. The
-[public Vercel workspace](https://plandelta-ai.vercel.app) currently runs in truthful portfolio
-mode: the sample works, while live uploads remain visibly offline until the AWS compute service is
-deployed. The cost guardrail, private encrypted S3 storage, bounded runtime role, and on-demand
-Bedrock provider are deployed and verified; no EC2 compute is running yet.
+The product is verified locally and on its cost-controlled AWS runtime from two validated blueprint
+uploads through durable job processing, OpenCV alignment and directional differencing, PaddleOCR,
+normalized evidence regions, private S3 artifacts, an evidence-constrained Bedrock summary, and a
+printable report. One `t3.small`, one worker, and the public HTTPS API are live with budget alerts
+and a USD 25 teardown gate.
+
+The [public Vercel workspace](https://plandelta-ai.vercel.app) remains in truthful portfolio mode:
+the labelled sample works without backend compute, while live sign-in and uploads stay visibly
+disabled until the production callback is allowlisted in Supabase. The verified API origin and all
+five required Vercel variable names are already configured.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 
@@ -43,6 +45,8 @@ flowchart LR
     Worker --> Vision["FastAPI CV/OCR"]
     API --> Storage["Storage provider"]
     Worker --> Storage
+    Worker --> Bedrock["Bedrock Nova Micro"]
+    API --> Logs["CloudWatch"]
 ```
 
 - `apps/web`: Next.js App Router interface and blueprint workbench.
@@ -56,11 +60,30 @@ Supabase PostgreSQL is the source of truth and durable queue. Local development 
 storage volume; the verified production provider uses private S3. Bedrock summaries remain optional
 and never replace deterministic evidence.
 
+Production uses one encrypted 20 GB `t3.small` with 2 GB swap, IMDSv2, standard T3 credits, SSM-only
+administration, ports 80/443, one concurrency-one worker, and seven-day logs. It does not use a NAT
+Gateway, load balancer, RDS, cache, cluster, or provisioned Bedrock capacity.
+
 The public API applies strict input validation, security headers, request timeouts, per-IP traffic
 limits, and database-backed per-user upload and analysis quotas. Readiness checks cover PostgreSQL
 and the vision service; structured logs use correlation IDs without recording tokens, drawing
 content, or OCR text. Defaults, cleanup behavior, and incident checks are documented in
 [docs/OPERATIONS.md](./docs/OPERATIONS.md).
+
+## Verified evidence
+
+| Gate                     | Recorded result                                                                      |
+| ------------------------ | ------------------------------------------------------------------------------------ |
+| Unit suites              | 3 contract, 9 web, 41 API, and 27 vision tests                                       |
+| Deployed analysis        | 1 real CV/OCR change, 7 private artifacts, Bedrock report, cleanup passed            |
+| Recovery                 | API restart recovered; natural 3/3 job failure completed through the real retry path |
+| ONNX synthetic benchmark | 1.000 macro-F1 versus 0.667 rules; 0.1697 ms single-crop CPU p95                     |
+| AWS billing snapshot     | USD 0.00 actual/estimated at capture; alerts at USD 10/15/20/25                      |
+
+The ONNX numbers use a seed-generated synthetic validation set and are not field-accuracy claims.
+Billing data can lag resource use. Full commands, caveats, and evidence are recorded in
+[docs/RELEASE.md](./docs/RELEASE.md), [docs/MODEL_CARD.md](./docs/MODEL_CARD.md), and
+[docs/AWS_COSTS.md](./docs/AWS_COSTS.md).
 
 ## Requirements
 
@@ -182,4 +205,5 @@ See [PLAN.md](./PLAN.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and
 operational limits are documented in [docs/OPERATIONS.md](./docs/OPERATIONS.md). Classifier scope,
 reproduction, measured metrics, and limitations are recorded in
 [docs/MODEL_CARD.md](./docs/MODEL_CARD.md). The current local gate and accepted base-image findings
-are recorded in [docs/RELEASE.md](./docs/RELEASE.md).
+are recorded in [docs/RELEASE.md](./docs/RELEASE.md). Portfolio-ready resume bullets, interview
+talking points, and the verified cloud story are in [docs/PORTFOLIO.md](./docs/PORTFOLIO.md).

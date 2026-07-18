@@ -11,6 +11,10 @@ release.
 - A verified public Vercel portfolio deployment with an always-available, clearly labelled sample.
 - Explicit portfolio mode that disables live uploads and passwordless sign-in while temporary
   backend compute is offline.
+- A cost-controlled AWS runtime with one `t3.small`, encrypted 20 GB gp3, CloudFormation-managed 2
+  GB swap, SSM-only administration, public IP TLS, one concurrency-one worker, and seven-day logs.
+- Private S3 artifacts, evidence-constrained on-demand Bedrock summaries, immutable ECR images,
+  gross-cost budget alerts, and automated deployed-journey/recovery verification.
 
 ### Security
 
@@ -18,6 +22,15 @@ release.
   headers.
 - Same-origin drawing delivery with no remote Next.js image allowlist and a reserved non-routable
   API origin until the AWS service is verified.
+- IMDSv2, standard T3 credits, ports 80/443 only, encrypted configuration in SSM, and no SSH, load
+  balancer, NAT Gateway, managed database, cache, or container cluster.
+
+### Known limitations
+
+- Vercel remains in portfolio mode until the Supabase project owner allowlists
+  `https://plandelta-ai.vercel.app/auth/callback`.
+- ECR scan-on-push is configured, but AWS Basic scanning does not accept the current OCI image-index
+  media type; application dependencies and local container images were scanned before deployment.
 
 ## [0.1.0-rc.1] - 2026-07-18
 

@@ -1,8 +1,9 @@
-# Release Candidate Evidence
+# Release evidence
 
-This record covers the local `v0.1.0-rc.1` candidate verified on 2026-07-18.
-It does not treat GitHub, Vercel, or AWS deployment as complete; those phases
-require their own remote checks.
+This record began with the local `v0.1.0-rc.1` candidate and now includes the
+verified Vercel portfolio deployment and AWS runtime evidence captured on
+2026-07-18. The final public live-processing gate remains open until the
+production callback is allowlisted in Supabase.
 
 ## Local release gate
 
@@ -11,8 +12,8 @@ require their own remote checks.
 | `pnpm format:check` | Passed |
 | `pnpm lint` | Passed across all TypeScript and Python workspaces |
 | `pnpm typecheck` | Passed with strict TypeScript and typed Python |
-| `pnpm test` | 3 contract, 5 web, 26 API, and 27 vision tests passed |
-| `pnpm test:e2e` | 3 contract, 26 API, 1 vision, and 6 browser checks passed; the credentialed live browser journey was intentionally skipped in the fixture suite |
+| `pnpm test` | 3 contract, 9 web, 41 API, and 27 vision tests passed |
+| `pnpm test:e2e` | Contract, API, vision, browser, authenticated local, and deployed service-boundary checks passed |
 | `pnpm build` | Contracts, UI, API, web, and vision production builds passed |
 | Fresh-clone rehearsal | Install, Prisma generation, format, lint, typecheck, unit tests, E2E, and production builds passed from the committed candidate |
 | Authenticated Compose journey | Upload, durable queue, worker, real vision processing, evidence, artifacts, and deterministic report completed |
@@ -75,15 +76,16 @@ Debian publishes one.
 
 The public frontend is verified at
 [`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app). Deployment
-`dpl_G4C1fCMMBS1TZWwKioCN7EtUyoyY` built commit `81b533f` with the `apps/web`
+`dpl_Dk9zWj3pcr2WU38yhZZcUYHBRNGP` rebuilt the current `main` state with the `apps/web`
 monorepo root, Next.js preset, Node.js 22, and external workspace dependency
 access.
 
 The production project contains only the five required public configuration
 names: Supabase URL, Supabase anonymous key, application URL, API URL, and the
 live-processing availability flag. Values were not printed or committed.
-Portfolio mode uses a reserved non-routable API origin and disables sign-in and
-uploads until verified AWS compute is available.
+The verified AWS API origin is configured. Portfolio mode disables sign-in and
+uploads until the Supabase production callback is saved, so the public UI does
+not expose a known-broken authentication action.
 
 Verified remote evidence:
 
@@ -98,6 +100,28 @@ Verified remote evidence:
 - Thirteen public JavaScript assets contained none of the checked server-only
   environment names.
 
-The Supabase project owner must add
+The Supabase project owner must set the Site URL to
+`https://plandelta-ai.vercel.app` and add
 `https://plandelta-ai.vercel.app/auth/callback` to the Auth redirect allowlist
-before live authentication is enabled.
+before live authentication is enabled. A disposable magic-link test proved
+the current configuration falls back to `http://localhost:3000`; both
+disposable test users were removed.
+
+## AWS runtime evidence
+
+- `plandelta-cost-guard`, `plandelta-storage`, `plandelta-ecr`, and
+  `plandelta-runtime` are complete in `us-east-1`.
+- Exactly one `t3.small` runs with an encrypted 20 GB gp3 root volume, standard
+  CPU credits, IMDSv2, 2 GB swap, one worker, and concurrency one.
+- The public API passed HTTPS readiness, an authenticated upload-to-report
+  journey, API restart recovery, and a natural three-attempt failure followed
+  by recovery through the real retry endpoint.
+- The deployed result contained one real CV/OCR change, seven private
+  artifacts, and an evidence-constrained Bedrock report. Test data and
+  incomplete multipart uploads were removed afterward.
+- Billing and Cost Explorer both reported USD 0.00 at verification time.
+  Billing can lag, so USD 10/15/20/25 gross-cost alerts remain authoritative.
+- ECR scan-on-push is enabled, but a manual AWS Basic scan rejects the OCI
+  image-index media type. The application dependencies and locally built
+  images were scanned before deployment; future images should be built with
+  provenance disabled if AWS Basic scan output is required.

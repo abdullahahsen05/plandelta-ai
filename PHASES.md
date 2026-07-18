@@ -6,15 +6,15 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Use Amazon Linux 2023's supported `swapon --show=SIZE` syntax with the 4 KB metadata allowance, redeploy only the swap association, then finish the Vercel/Supabase production path
-- Last verified command: The reviewed change set added only `RuntimeSwapAssociation`; it allocated a 2 GB file and activated 2,147,479,552 usable swap bytes, then its unsupported `swapon --output SIZE` inspection command failed. CloudFormation rolled back only the association, retained the healthy instance, and the swap remains active
-- Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
-- Last completed implementation commit: `99abe18 fix(infra): provision verified runtime swap`
+- Current task: Wait for the Supabase project owner to allow the production callback, then enable Vercel live processing and verify the complete browser journey
+- Last verified command: A disposable Supabase magic-link test requested the Vercel callback but Supabase redirected it to `http://localhost:3000`, proving the production callback is not allowlisted; both disposable users were deleted and Vercel was restored to truthful portfolio mode
+- Active blockers: In the Supabase project that owns the configured PlanDelta credentials, set Site URL to `https://plandelta-ai.vercel.app` and allow `https://plandelta-ai.vercel.app/auth/callback`; the currently signed-in Supabase browser organization does not contain that project
+- Last completed implementation commit: `65c4d73 fix(infra): support Amazon Linux swap output`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29627896576` and annotated prerelease `v0.1.0-rc.1` is published
-- Vercel status: `https://plandelta-ai.vercel.app` points to verified Ready deployment `dpl_HzXL9oCj5LVUa5mVRFh847F8ac67` in truthful portfolio mode with live processing and authentication visibly offline until AWS and the Supabase callback are ready
-- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, private encrypted lifecycle-controlled S3, a permissions-boundary-constrained runtime role, two immutable ECR images, one encrypted Standard SSM parameter, and one public-HTTPS t3.small runtime are deployed; the 2 GB swap association is validated locally and pending its no-replacement stack update
+- Vercel status: `https://plandelta-ai.vercel.app` points to verified Ready deployment `dpl_Dk9zWj3pcr2WU38yhZZcUYHBRNGP` in truthful portfolio mode; all five production variable names are configured and the verified AWS API origin is ready, but live processing remains disabled until the Supabase callback is saved
+- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, private encrypted lifecycle-controlled S3, a permissions-boundary-constrained runtime role, two immutable ECR images, one encrypted Standard SSM parameter, and one public-HTTPS t3.small runtime are deployed; the CloudFormation-managed 2 GB swap association and recovery checks pass without replacing the instance
 - AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
@@ -250,7 +250,7 @@ Exit gate:
 
 - [x] Build production images for Nest API/worker and FastAPI vision service.
 - [x] Push images to ECR with immutable version tags.
-- [ ] Provision one t3.small with 20 GB gp3, T3 CPU credit mode standard, one
+- [x] Provision one t3.small with 20 GB gp3, T3 CPU credit mode standard, one
       worker, 2 GB swap, and an IAM instance role.
 - [x] Use lightweight OCR models, lazy loading, container memory limits, and
       worker concurrency one.
@@ -276,11 +276,11 @@ Exit gate:
 
 ## Phase 11 — Final portfolio handoff and resource review
 
-- [ ] Polish README headline, feature media, architecture, live demo, stack,
+- [x] Polish README headline, feature media, architecture, live demo, stack,
       technical decisions, benchmarks, limitations, and setup.
-- [ ] Add concise resume bullets and interview talking points.
+- [x] Add concise resume bullets and interview talking points.
 - [ ] Verify every documented command and link.
-- [ ] Ensure issue templates, license, changelog, and release notes exist.
+- [x] Ensure issue templates, license, changelog, and release notes exist.
 - [ ] Ask the user whether live AWS processing should remain available. If not,
       terminate EC2 and its attached EBS volume, release paid IPv4 allocation,
       remove temporary CloudWatch logs, and clean unused ECR images.
