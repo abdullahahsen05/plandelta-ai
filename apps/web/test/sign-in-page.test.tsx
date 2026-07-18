@@ -20,7 +20,7 @@ describe("sign-in boundary", () => {
     render(await SignInPage({ searchParams: Promise.resolve({}) }));
 
     expect(
-      screen.getByRole("heading", { name: "Live projects are temporarily offline" }),
+      screen.getByRole("heading", { name: "Live project access is temporarily offline" }),
     ).toBeInTheDocument();
     expect(screen.queryByRole("textbox", { name: "Work email" })).not.toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Open the labelled sample" })).toBeInTheDocument();

@@ -89,10 +89,10 @@ export default async function SignInPage({
             <LockKeyhole aria-hidden="true" size={26} strokeWidth={1.5} />
             <div>
               <p className="eyebrow">PORTFOLIO MODE</p>
-              <h2>Live projects are temporarily offline</h2>
+              <h2>Live project access is temporarily offline</h2>
               <p>
-                Sign-in and uploads remain disabled until the cost-controlled processing service is
-                online. The labelled sample is fully available without an account.
+                Sign-in and uploads remain disabled until production access is enabled. The labelled
+                sample is fully available without an account.
               </p>
             </div>
             <Link className="text-action" href="/app/analyses/sample">

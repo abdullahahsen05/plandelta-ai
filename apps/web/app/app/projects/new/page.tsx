@@ -31,8 +31,8 @@ export default function NewProjectPage() {
             Live processing is temporarily offline
           </h2>
           <p className="mt-3 max-w-2xl text-sm leading-6 text-[#646762]">
-            No upload will be accepted until the cost-controlled processing service is online.
-            Review the labelled, precomputed sample in the meantime.
+            No upload will be accepted until production access is enabled. Review the labelled,
+            precomputed sample while live projects are unavailable.
           </p>
           <Link
             className="signal-button mt-6 inline-flex min-h-11 items-center justify-center px-5"
