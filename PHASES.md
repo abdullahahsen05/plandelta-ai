@@ -7,13 +7,13 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 - Current phase: Phase 9 — AWS storage and AI providers
 - Current task: Obtain the non-secret budget notification email, deploy the validated cost/storage stacks, then run the opt-in live S3 and Bedrock provider checks
-- Last verified command: AWS validated both Phase 9 CloudFormation templates; the account credit detail explicitly includes EC2, S3, ECR, Bedrock, CloudWatch, data transfer, Budgets, CloudFormation, and Systems Manager; price-list inputs and a USD 22.94 conservative monthly ceiling were recorded; read-only inventory confirmed zero prohibited resources on 2026-07-18
-- Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 enables live authentication; this does not block Phase 9
-- Last completed implementation commit: `b83d0fc feat(web): attribute analysis summary source`
+- Last verified command: GitHub Actions run `29622896562` passed all six default-branch jobs for commit `1370835`; Vercel production deployment `dpl_HzXL9oCj5LVUa5mVRFh847F8ac67` is Ready on the canonical alias; AWS validated both Phase 9 templates, required credit products, cost projection, and zero prohibited resources on 2026-07-18
+- Active blockers: A notification email is required to create the mandatory USD 10/15/20/25 AWS budget alerts before persistent Phase 9 resources; the Supabase project owner must separately allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 enables live authentication
+- Last completed implementation commit: `7410f2f feat(infra): add Phase 9 AWS controls`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
-- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed and annotated prerelease `v0.1.0-rc.1` is published
-- Vercel status: `https://plandelta-ai.vercel.app` is a verified production deployment in truthful portfolio mode with live processing and authentication visibly offline until AWS and the Supabase callback are ready
+- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29622896562` and annotated prerelease `v0.1.0-rc.1` is published
+- Vercel status: `https://plandelta-ai.vercel.app` points to verified Ready deployment `dpl_HzXL9oCj5LVUa5mVRFh847F8ac67` in truthful portfolio mode with live processing and authentication visibly offline until AWS and the Supabase callback are ready
 - AWS status: MFA-protected non-root IAM user, temporary browser-authenticated `plandelta` profile, `us-east-1`, billing visibility, required service reads, scoped permissions boundary, bounded role/instance-profile creation, EC2 pass-role, and GitHub OIDC verified; no billable project resources created
 - AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
