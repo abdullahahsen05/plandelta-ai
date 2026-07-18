@@ -78,6 +78,8 @@ SageMaker endpoint, EKS, ECS/Fargate, or a second environment.
 The implemented portfolio runtime uses the default public subnet, one automatically assigned
 public IPv4 address, and no SSH ingress. Systems Manager is the only administrative path. The
 instance runs one API container, one worker, one private vision container, and one Caddy proxy.
+An idempotent State Manager association creates and persists the required 2 GB swap after the
+managed instance becomes available, without requiring SSH or embedding a key.
 The runtime configuration is an allowlisted SSM `SecureString` bundle; API/worker and vision receive
 separate environment files so the vision service does not receive database credentials.
 

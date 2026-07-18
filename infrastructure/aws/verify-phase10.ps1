@@ -145,6 +145,39 @@ foreach ($serviceName in @("api", "worker", "vision", "proxy")) {
   }
 }
 
+$swapCommandId = (
+  aws ssm send-command `
+    --instance-ids $instanceId `
+    --document-name AWS-RunShellScript `
+    --parameters 'commands=["swapon --show --bytes --noheadings --output SIZE"]' `
+    --profile $Profile `
+    --region $Region `
+    --query "Command.CommandId" `
+    --output text
+).Trim()
+aws ssm wait command-executed `
+  --command-id $swapCommandId `
+  --instance-id $instanceId `
+  --profile $Profile `
+  --region $Region
+if ($LASTEXITCODE -ne 0) {
+  throw "The remote swap verification command failed."
+}
+$swapOutput = aws ssm get-command-invocation `
+  --command-id $swapCommandId `
+  --instance-id $instanceId `
+  --profile $Profile `
+  --region $Region `
+  --query "StandardOutputContent" `
+  --output text
+$swapBytes = @($swapOutput -split "\s+" | Where-Object { $_ }) |
+  ForEach-Object { [long]$_ } |
+  Measure-Object -Sum |
+  Select-Object -ExpandProperty Sum
+if ($swapBytes -lt 2GB) {
+  throw "The runtime does not have the required 2 GB swap."
+}
+
 $healthy = $false
 for ($attempt = 0; $attempt -lt 30; $attempt++) {
   try {

@@ -223,6 +223,28 @@ Resources:
           /opt/aws/bin/cfn-signal --exit-code 0 --stack ${AWS::StackName} --resource RuntimeInstance --region ${AWS::Region}
           trap - ERR
 
+  RuntimeSwapAssociation:
+    Type: AWS::SSM::Association
+    DependsOn:
+      - RuntimeInstance
+    Properties:
+      AssociationName: plandelta-runtime-swap
+      Name: AWS-RunShellScript
+      Targets:
+        - Key: InstanceIds
+          Values:
+            - !Ref RuntimeInstance
+      Parameters:
+        commands:
+          - set -Eeuo pipefail
+          - if ! swapon --show --noheadings | grep -q .; then fallocate -l 2G /swapfile; chmod 0600
+            /swapfile; mkswap /swapfile; swapon /swapfile; fi
+          - grep -qF "/swapfile none swap sw 0 0" /etc/fstab || echo "/swapfile none swap sw 0 0" >>
+            /etc/fstab
+          - test "$(swapon --show --bytes --noheadings --output SIZE | awk '{sum+=$1} END {print
+            sum+0}')" -ge 2147483648
+      WaitForSuccessTimeoutSeconds: 300
+
   StatusCheckAlarm:
     Type: AWS::CloudWatch::Alarm
     Properties:
