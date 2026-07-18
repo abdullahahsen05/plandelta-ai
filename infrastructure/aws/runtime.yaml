@@ -128,7 +128,7 @@ Resources:
           trap signal_failure ERR
 
           echo "Installing bounded PlanDelta runtime dependencies."
-          dnf install -y docker curl jq
+          dnf install -y docker jq
           systemctl enable --now docker
           systemctl enable --now amazon-ssm-agent
           mkdir -p /usr/local/lib/docker/cli-plugins /opt/plandelta/certbot

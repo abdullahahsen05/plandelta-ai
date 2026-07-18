@@ -4,6 +4,8 @@ param(
   [string]$Region = "us-east-1",
   [string]$WebOrigin = "https://plandelta-ai.vercel.app",
   [string]$EnvironmentParameterName = "/plandelta/production/env",
+  [ValidatePattern("^[0-9a-f]{40}$")]
+  [string]$ImageTag,
   [string]$VpcId,
   [string]$SubnetId
 )
@@ -26,6 +28,9 @@ $remoteCommit = (
 ).Trim()
 if ($headCommit -notmatch "^[0-9a-f]{40}$" -or $remoteCommit -ne $headCommit) {
   throw "Deploy only a full commit that is already present on origin/main."
+}
+if (-not $ImageTag) {
+  $ImageTag = $headCommit
 }
 if (git -C $repositoryRoot status --porcelain) {
   throw "Deploy only from a clean working tree."
@@ -115,7 +120,7 @@ $apiExists = (
   --filter tagStatus=TAGGED `
   --profile $Profile `
   --region $Region `
-  --query "contains(imageIds[].imageTag, '$headCommit')" `
+  --query "contains(imageIds[].imageTag, '$ImageTag')" `
   --output text
 ).Trim() -eq "True"
 $visionExists = (
@@ -124,7 +129,7 @@ $visionExists = (
   --filter tagStatus=TAGGED `
   --profile $Profile `
   --region $Region `
-  --query "contains(imageIds[].imageTag, '$headCommit')" `
+  --query "contains(imageIds[].imageTag, '$ImageTag')" `
   --output text
 ).Trim() -eq "True"
 if ($apiExists -ne $visionExists) {
@@ -141,14 +146,35 @@ if (-not $apiExists) {
     docker login --username AWS --password-stdin $registry
   if ($LASTEXITCODE -ne 0) { throw "The ECR login failed." }
 
-  docker tag plandelta-api:local "$registry/plandelta-api`:$headCommit"
-  docker tag plandelta-vision:local "$registry/plandelta-vision`:$headCommit"
-  docker push "$registry/plandelta-api`:$headCommit"
+  docker tag plandelta-api:local "$registry/plandelta-api`:$ImageTag"
+  docker tag plandelta-vision:local "$registry/plandelta-vision`:$ImageTag"
+  docker push "$registry/plandelta-api`:$ImageTag"
   if ($LASTEXITCODE -ne 0) { throw "The API image push failed." }
-  docker push "$registry/plandelta-vision`:$headCommit"
+  docker push "$registry/plandelta-vision`:$ImageTag"
   if ($LASTEXITCODE -ne 0) { throw "The vision image push failed." }
 } else {
   Write-Output "The immutable release tag already exists in both repositories."
+}
+
+$rollbackStack = aws cloudformation list-stacks `
+  --stack-status-filter ROLLBACK_COMPLETE `
+  --profile $Profile `
+  --region $Region `
+  --query "contains(StackSummaries[].StackName, 'plandelta-runtime')" `
+  --output text
+if ($rollbackStack.Trim() -eq "True") {
+  Write-Output "Removing the fully rolled-back runtime stack before retry."
+  aws cloudformation delete-stack `
+    --stack-name plandelta-runtime `
+    --profile $Profile `
+    --region $Region
+  aws cloudformation wait stack-delete-complete `
+    --stack-name plandelta-runtime `
+    --profile $Profile `
+    --region $Region
+  if ($LASTEXITCODE -ne 0) {
+    throw "The rolled-back runtime stack could not be removed."
+  }
 }
 
 Write-Output "Creating the one-instance PlanDelta runtime."
@@ -162,7 +188,7 @@ aws cloudformation deploy `
     "RuntimeRoleName=plandelta-runtime-$Region" `
     "EnvironmentParameterName=$EnvironmentParameterName" `
     "ReleaseCommit=$headCommit" `
-    "ImageTag=$headCommit" `
+    "ImageTag=$ImageTag" `
   --profile $Profile `
   --region $Region `
   --no-fail-on-empty-changeset
