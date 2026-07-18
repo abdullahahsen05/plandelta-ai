@@ -16,7 +16,10 @@ $budget = aws budgets describe-budget `
   --profile $Profile `
   --region $Region `
   --output json | ConvertFrom-Json
-if ($budget.Budget.BudgetLimit.Amount -ne "25") {
+if (
+  [decimal]$budget.Budget.BudgetLimit.Amount -ne [decimal]25 -or
+  $budget.Budget.BudgetLimit.Unit -ne "USD"
+) {
   throw "The PlanDelta budget limit is not USD 25."
 }
 
@@ -27,8 +30,23 @@ $notifications = aws budgets describe-notifications-for-budget `
   --region $Region `
   --output json | ConvertFrom-Json
 $thresholds = @($notifications.Notifications | ForEach-Object { [decimal]$_.Threshold } | Sort-Object)
-if (($thresholds -join ",") -ne "10,15,20,25") {
+$expectedThresholds = @([decimal]10, [decimal]15, [decimal]20, [decimal]25)
+if (
+  $thresholds.Count -ne $expectedThresholds.Count -or
+  (Compare-Object -ReferenceObject $expectedThresholds -DifferenceObject $thresholds)
+) {
   throw "The required budget thresholds are not configured."
+}
+if (
+  @(
+    $notifications.Notifications |
+      Where-Object {
+        $_.NotificationType -ne "ACTUAL" -or
+        $_.ComparisonOperator -ne "GREATER_THAN"
+      }
+  ).Count -ne 0
+) {
+  throw "Every PlanDelta budget notification must use actual spend and a greater-than threshold."
 }
 
 $publicBlock = aws s3api get-public-access-block `

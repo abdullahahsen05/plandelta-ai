@@ -38,6 +38,9 @@ const browser = createClient(
 let userId;
 let projectId;
 let analysisId;
+let baselineRevisionId;
+let candidateRevisionId;
+let accessToken;
 
 async function api(path, token, init = {}) {
   const response = await fetch(`${apiUrl}${path}`, {
@@ -75,6 +78,7 @@ async function verify() {
   if (signedIn.error || !signedIn.data.session)
     throw signedIn.error ?? new Error("Synthetic sign-in failed.");
   const token = signedIn.data.session.access_token;
+  accessToken = token;
 
   const project = await api("/projects", token, {
     method: "POST",
@@ -84,6 +88,8 @@ async function verify() {
   projectId = project.id;
   const baseline = await upload(token, "BASELINE", "baseline.png");
   const candidate = await upload(token, "CANDIDATE", "added-wall.png");
+  baselineRevisionId = baseline.id;
+  candidateRevisionId = candidate.id;
   const analysis = await api(`/projects/${projectId}/analyses`, token, {
     method: "POST",
     headers: { "content-type": "application/json" },
@@ -122,8 +128,19 @@ async function verify() {
   });
   if (!download.ok || !download.headers.get("content-type")?.startsWith("image/png"))
     throw new Error("Protected evidence download failed.");
-  if (!report.executiveSummary.includes("evidence-based revision"))
-    throw new Error("Deterministic report was not generated from evidence.");
+  if (
+    !["DETERMINISTIC", "BEDROCK"].includes(report.provider) ||
+    typeof report.executiveSummary !== "string" ||
+    report.executiveSummary.length < 40
+  )
+    throw new Error("A valid evidence-grounded report was not generated.");
+
+  await api(`/analyses/${analysisId}`, token, { method: "DELETE" });
+  analysisId = undefined;
+  await api(`/revisions/${baselineRevisionId}`, token, { method: "DELETE" });
+  baselineRevisionId = undefined;
+  await api(`/revisions/${candidateRevisionId}`, token, { method: "DELETE" });
+  candidateRevisionId = undefined;
 
   console.log(
     JSON.stringify({
@@ -133,6 +150,7 @@ async function verify() {
       artifacts: artifacts.length,
       reportProvider: report.provider,
       engineVersion: completed.engineVersion,
+      cleanup: "passed",
     }),
   );
 }
@@ -140,6 +158,19 @@ async function verify() {
 try {
   await verify();
 } finally {
+  if (accessToken && analysisId) {
+    await api(`/analyses/${analysisId}`, accessToken, { method: "DELETE" }).catch(() => undefined);
+  }
+  if (accessToken && baselineRevisionId) {
+    await api(`/revisions/${baselineRevisionId}`, accessToken, { method: "DELETE" }).catch(
+      () => undefined,
+    );
+  }
+  if (accessToken && candidateRevisionId) {
+    await api(`/revisions/${candidateRevisionId}`, accessToken, { method: "DELETE" }).catch(
+      () => undefined,
+    );
+  }
   if (projectId) await admin.from("projects").delete().eq("id", projectId);
   if (userId) await admin.auth.admin.deleteUser(userId);
   if (userId && projectId) {
