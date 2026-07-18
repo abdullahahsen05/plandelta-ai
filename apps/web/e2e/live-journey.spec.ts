@@ -18,6 +18,12 @@ test("authenticated upload reaches real evidence and printable report", async ({
   const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !anonKey || !serviceRoleKey)
     throw new Error("Live E2E Supabase variables are missing.");
+  const browserOrigin = new URL(process.env.PLANDELTA_E2E_BASE_URL ?? "http://127.0.0.1:3100");
+  const configuredApiUrl =
+    process.env.PLANDELTA_E2E_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
+  const apiUrl = configuredApiUrl.replace(/\/$/, "").endsWith("/v1")
+    ? configuredApiUrl.replace(/\/$/, "")
+    : `${configuredApiUrl.replace(/\/$/, "")}/v1`;
 
   const email = `plandelta-playwright-${randomUUID()}@example.invalid`;
   const password = `Browser-${randomUUID()}-7z!`;
@@ -30,6 +36,19 @@ test("authenticated upload reaches real evidence and printable report", async ({
   let userId: string | undefined;
   let projectId: string | undefined;
   let analysisId: string | undefined;
+  let accessToken: string | undefined;
+  let revisionIds: string[] = [];
+
+  async function deleteApiResource(path: string) {
+    if (!accessToken) return;
+    const response = await fetch(`${apiUrl}${path}`, {
+      method: "DELETE",
+      headers: { authorization: `Bearer ${accessToken}` },
+    });
+    if (!response.ok && response.status !== 404) {
+      throw new Error(`Production cleanup failed for ${path} (${response.status}).`);
+    }
+  }
 
   try {
     const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
@@ -38,6 +57,7 @@ test("authenticated upload reaches real evidence and printable report", async ({
     const signedIn = await browserAuth.auth.signInWithPassword({ email, password });
     if (signedIn.error || !signedIn.data.session)
       throw signedIn.error ?? new Error("Sign-in failed.");
+    accessToken = signedIn.data.session.access_token;
 
     const cookieValues: Array<{
       name: string;
@@ -58,9 +78,10 @@ test("authenticated upload reaches real evidence and printable report", async ({
       cookieValues.map((cookie) => ({
         name: cookie.name,
         value: cookie.value,
-        domain: "127.0.0.1",
+        domain: browserOrigin.hostname,
         path: cookie.options.path ?? "/",
         expires: cookie.options.maxAge ? Math.floor(Date.now() / 1000) + cookie.options.maxAge : -1,
+        secure: browserOrigin.protocol === "https:",
         sameSite:
           cookie.options.sameSite === "strict"
             ? "Strict"
@@ -121,7 +142,30 @@ test("authenticated upload reaches real evidence and printable report", async ({
           .evaluate((image: HTMLImageElement) => image.naturalWidth),
       )
       .toBeGreaterThan(0);
+
+    const revisions = await admin.from("plan_revisions").select("id").eq("project_id", projectId);
+    if (revisions.error) throw revisions.error;
+    revisionIds = revisions.data.map((revision) => revision.id);
+    await deleteApiResource(`/analyses/${analysisId}`);
+    analysisId = undefined;
+    for (const revisionId of revisionIds) {
+      await deleteApiResource(`/revisions/${revisionId}`);
+    }
+    revisionIds = [];
+    const deletedProject = await admin.from("projects").delete().eq("id", projectId);
+    if (deletedProject.error) throw deletedProject.error;
+    projectId = undefined;
   } finally {
+    if (analysisId) {
+      await deleteApiResource(`/analyses/${analysisId}`).catch(() => undefined);
+    }
+    if (projectId && revisionIds.length === 0) {
+      const revisions = await admin.from("plan_revisions").select("id").eq("project_id", projectId);
+      if (!revisions.error) revisionIds = revisions.data.map((revision) => revision.id);
+    }
+    for (const revisionId of revisionIds) {
+      await deleteApiResource(`/revisions/${revisionId}`).catch(() => undefined);
+    }
     if (projectId) await admin.from("projects").delete().eq("id", projectId);
     if (userId) await admin.auth.admin.deleteUser(userId);
     const repositoryRoot = resolve(process.cwd(), "../..");
