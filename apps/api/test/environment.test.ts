@@ -26,4 +26,17 @@ describe("loadEnvironment", () => {
       }).S3_BUCKET,
     ).toBe("plandelta-private-test");
   });
+
+  it("requires an explicit model for Bedrock summaries", () => {
+    expect(() => loadEnvironment({ ...baseEnvironment, SUMMARY_PROVIDER: "bedrock" })).toThrow(
+      "BEDROCK_MODEL_ID",
+    );
+    expect(
+      loadEnvironment({
+        ...baseEnvironment,
+        SUMMARY_PROVIDER: "bedrock",
+        BEDROCK_MODEL_ID: "provider.model-version",
+      }).SUMMARY_PROVIDER,
+    ).toBe("bedrock");
+  });
 });

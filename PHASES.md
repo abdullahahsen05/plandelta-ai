@@ -7,9 +7,9 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 
 - Current phase: Phase 9 — AWS storage and AI providers
 - Current task: Establish AWS budget controls, then verify the new private S3 provider against a real development bucket and add the bounded Bedrock summary path
-- Last verified command: Authenticated non-root AWS identity and empty PlanDelta EC2/S3/Budgets baseline passed; the configurable S3 provider, encrypted and bounded object operations, short-lived read references, private scratch artifact promotion, environment validation, and cleanup behavior passed API typecheck, lint, and 35 tests on 2026-07-18
+- Last verified command: The configurable S3 path and bounded Bedrock summary path passed API/web typecheck and lint, 40 API tests, 9 web tests, and both production builds; authenticated AWS discovery confirmed active on-demand Amazon Nova Micro in `us-east-1` without invoking the model on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 enables live authentication; this does not block Phase 9
-- Last completed implementation commit: `fe8627f fix(test): isolate browser build output`
+- Last completed implementation commit: `cb14690 feat(worker): promote vision artifacts to S3`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed and annotated prerelease `v0.1.0-rc.1` is published
@@ -228,10 +228,10 @@ Begin only after the local release gate passes.
 
 - [ ] Implement S3StorageProvider using presigned operations and least
       privilege.
-- [ ] Implement BedrockSummaryProvider with a strict JSON schema, evidence-only
+- [x] Implement BedrockSummaryProvider with a strict JSON schema, evidence-only
       prompt, timeouts, cost limits, and deterministic fallback.
-- [ ] Keep model ID and region configurable.
-- [ ] Add provider contract tests with mocked AWS calls.
+- [x] Keep model ID and region configurable.
+- [x] Add provider contract tests with mocked AWS calls.
 - [ ] Provision development bucket, lifecycle rules, CORS, encryption, public
       access block, and IAM role.
 - [ ] Verify upload, analysis read, artifact write, report read, and cleanup.

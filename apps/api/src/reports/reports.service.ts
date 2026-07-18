@@ -1,12 +1,16 @@
-import { HttpStatus, Injectable } from "@nestjs/common";
+import { HttpStatus, Inject, Injectable } from "@nestjs/common";
 
 import { ApiException } from "../common/api.exception.js";
 import { DatabaseService } from "../database/database.service.js";
-import { buildDeterministicReport } from "./deterministic-report.js";
+import { Prisma } from "../generated/prisma/client.js";
+import { SUMMARY_PROVIDER, type SummaryProvider } from "../summary/summary.types.js";
 
 @Injectable()
 export class ReportsService {
-  constructor(private readonly database: DatabaseService) {}
+  constructor(
+    private readonly database: DatabaseService,
+    @Inject(SUMMARY_PROVIDER) private readonly summary: SummaryProvider,
+  ) {}
 
   private async requireOwnedAnalysis(ownerId: string, analysisId: string) {
     const analysis = await this.database.analysis.findFirst({
@@ -123,22 +127,23 @@ export class ReportsService {
       where: { analysisId },
       orderBy: { sequence: "asc" },
     });
-    const { executiveSummary, structuredSummary } = buildDeterministicReport(changes);
+    const summary = await this.summary.summarizeAnalysis(changes);
     return this.database.analysisReport.upsert({
       where: { analysisId },
       create: {
         analysisId,
-        executiveSummary,
-        structuredSummary,
-        provider: "DETERMINISTIC",
-        promptVersion: "deterministic-v1",
+        executiveSummary: summary.executiveSummary,
+        structuredSummary: summary.structuredSummary as Prisma.InputJsonValue,
+        provider: summary.provider,
+        modelId: summary.modelId,
+        promptVersion: summary.promptVersion,
       },
       update: {
-        executiveSummary,
-        structuredSummary,
-        provider: "DETERMINISTIC",
-        modelId: null,
-        promptVersion: "deterministic-v1",
+        executiveSummary: summary.executiveSummary,
+        structuredSummary: summary.structuredSummary as Prisma.InputJsonValue,
+        provider: summary.provider,
+        modelId: summary.modelId,
+        promptVersion: summary.promptVersion,
       },
     });
   }

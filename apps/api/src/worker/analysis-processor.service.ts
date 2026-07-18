@@ -4,9 +4,9 @@ import { Inject, Injectable, Logger } from "@nestjs/common";
 
 import { DatabaseService } from "../database/database.service.js";
 import { Prisma, type Analysis } from "../generated/prisma/client.js";
-import { buildDeterministicReport } from "../reports/deterministic-report.js";
 import { LocalStorageProvider } from "../storage/local-storage.provider.js";
 import { OBJECT_STORAGE, type ObjectStorage } from "../storage/storage.types.js";
+import { SUMMARY_PROVIDER, type SummaryProvider } from "../summary/summary.types.js";
 import { persistVisionArtifacts } from "./artifact-persistence.js";
 import { JobQueueService } from "./job-queue.service.js";
 import { VisionClient } from "./vision-client.js";
@@ -21,6 +21,7 @@ export class AnalysisProcessorService {
     private readonly vision: VisionClient,
     @Inject(OBJECT_STORAGE) private readonly storage: ObjectStorage,
     private readonly localStorage: LocalStorageProvider,
+    @Inject(SUMMARY_PROVIDER) private readonly summary: SummaryProvider,
   ) {}
 
   async process(claimed: Analysis, workerId: string, leaseSeconds: number) {
@@ -131,25 +132,42 @@ export class AnalysisProcessorService {
             })),
           });
         }
-        const persistedChanges = await transaction.detectedChange.findMany({
-          where: { analysisId: analysis.id },
-          orderBy: { sequence: "asc" },
-          select: { id: true, changeType: true },
-        });
-        const report = buildDeterministicReport(persistedChanges);
+      });
+      await this.queue.advance(analysis.id, workerId, "SUMMARIZING", "summary", 90);
+      const persistedChanges = await this.database.detectedChange.findMany({
+        where: { analysisId: analysis.id },
+        orderBy: { sequence: "asc" },
+        select: {
+          id: true,
+          sequence: true,
+          changeType: true,
+          category: true,
+          confidence: true,
+          oldText: true,
+          newText: true,
+          affectedTrades: true,
+          impact: true,
+        },
+      });
+      const summary = await this.summary.summarizeAnalysis(persistedChanges);
+
+      await this.database.inTransaction(async (transaction) => {
         await transaction.analysisReport.upsert({
           where: { analysisId: analysis.id },
           create: {
             analysisId: analysis.id,
-            ...report,
-            provider: "DETERMINISTIC",
-            promptVersion: "deterministic-v1",
+            executiveSummary: summary.executiveSummary,
+            structuredSummary: summary.structuredSummary as Prisma.InputJsonValue,
+            provider: summary.provider,
+            modelId: summary.modelId,
+            promptVersion: summary.promptVersion,
           },
           update: {
-            ...report,
-            provider: "DETERMINISTIC",
-            modelId: null,
-            promptVersion: "deterministic-v1",
+            executiveSummary: summary.executiveSummary,
+            structuredSummary: summary.structuredSummary as Prisma.InputJsonValue,
+            provider: summary.provider,
+            modelId: summary.modelId,
+            promptVersion: summary.promptVersion,
           },
         });
         const completion = await transaction.analysis.updateMany({
@@ -161,7 +179,8 @@ export class AnalysisProcessorService {
             schemaVersion: result.schemaVersion,
             engineVersion: result.engineVersion,
             metrics: { ...result.metrics, alignment: result.alignment },
-            warnings: result.warnings,
+            warnings: summary.warning ? [...result.warnings, summary.warning] : result.warnings,
+            summaryProvider: summary.provider,
             completedAt: new Date(),
             leaseOwner: null,
             leaseExpiresAt: null,

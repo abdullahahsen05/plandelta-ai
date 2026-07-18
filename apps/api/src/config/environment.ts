@@ -29,6 +29,13 @@ const environmentSchema = z
       .positive()
       .max(100 * 1024 * 1024)
       .default(50 * 1024 * 1024),
+    SUMMARY_PROVIDER: z.enum(["deterministic", "bedrock"]).default("deterministic"),
+    BEDROCK_REGION: z.string().min(1).optional(),
+    BEDROCK_MODEL_ID: z.string().min(1).optional(),
+    BEDROCK_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(100).max(1_200).default(600),
+    BEDROCK_MAX_INPUT_CHARACTERS: z.coerce.number().int().min(4_000).max(30_000).default(12_000),
+    BEDROCK_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).default(15_000),
+    BEDROCK_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(2).default(2),
     MAX_UPLOAD_BYTES: z.coerce
       .number()
       .int()
@@ -61,6 +68,13 @@ const environmentSchema = z
         code: "custom",
         path: ["S3_BUCKET"],
         message: "S3_BUCKET is required when STORAGE_PROVIDER=s3.",
+      });
+    }
+    if (environment.SUMMARY_PROVIDER === "bedrock" && !environment.BEDROCK_MODEL_ID) {
+      context.addIssue({
+        code: "custom",
+        path: ["BEDROCK_MODEL_ID"],
+        message: "BEDROCK_MODEL_ID is required when SUMMARY_PROVIDER=bedrock.",
       });
     }
   });
