@@ -1,8 +1,8 @@
 # AWS cost and credit record
 
-Verified 2026-07-18 for account `472888337670` in `us-east-1`. Prices were read from the AWS Price
-List API through the authenticated non-root `plandelta` profile. They are estimates, not a promise
-of the final bill; AWS pricing and free-tier treatment can change.
+Verified 2026-07-18 for the authenticated PlanDelta account in `us-east-1`. Prices were read from
+the AWS Price List API through the authenticated non-root `plandelta` profile. They are estimates,
+not a promise of the final bill; AWS pricing and free-tier treatment can change.
 
 ## Credit eligibility
 
@@ -110,6 +110,13 @@ Verified on 2026-07-18:
   report, protected download, and cleanup. A deliberate 3/3-attempt failure then completed through
   the real retry endpoint after vision recovery.
 - S3 contained zero project objects and zero incomplete multipart uploads after cleanup.
-- AWS Budgets reported USD 0.00 actual spend and Cost Explorer reported an estimated USD 0.00
-  unblended July total at the verification time. Billing data can lag usage, so the gross-cost
-  alerts and USD 25 teardown gate remain authoritative.
+- AWS Budgets reported USD 0.01 gross actual spend and Cost Explorer reported an estimated USD
+  0.00 unblended July total at the final review. AWS did not yet return a forecast. Billing data
+  can lag usage, so the USD 22.94 conservative monthly ceiling, gross-cost alerts, and USD 25
+  teardown gate remain authoritative.
+- The final storage audit removed 11 exact synthetic E2E objects only after confirming zero
+  database references, four fixture-matching originals, and seven artifacts for a deleted test
+  analysis. S3 then contained zero objects and zero incomplete multipart uploads.
+- The retained live footprint was one `t3.small`, encrypted 20 GB gp3, approximately 3.2 GB in
+  two ECR repositories, one encrypted SSM parameter, two healthy alarms, seven-day logs, and an
+  empty S3 bucket.

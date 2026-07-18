@@ -6,16 +6,27 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 11 — final portfolio handoff and resource review
-- Current task: Refresh the expired AWS `plandelta` browser session, audit and clean synthetic E2E storage artifacts, capture final resource/cost state, and obtain the explicit keep-or-teardown decision
-- Last verified command: The authenticated public Playwright journey passed against `https://plandelta-ai.vercel.app`, including real upload, AWS processing, comparison canvas, evidence crop, report, and API-driven cleanup
-- Active blockers: The temporary AWS CLI session expired; the user must complete the browser approval opened by `aws login --profile plandelta` before the final S3, resource, and cost audit can run
+- Current task: Obtain the explicit keep-or-teardown decision for the verified live AWS runtime,
+  then record the chosen retained-resource state and publish the final release tag
+- Last verified command: `infrastructure/aws/verify-phase10.ps1` passed after the private S3
+  bucket was verified at zero objects and zero multipart uploads
+- Active blockers: Phase 11 requires the user to choose whether temporary live AWS processing
+  should remain available or be torn down
 - Last completed implementation checkpoint: External-origin Playwright support and API-driven
   production cleanup passed against the live deployment
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
-- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29630186107` and annotated prerelease `v0.1.0-rc.1` is published
-- Vercel status: `https://plandelta-ai.vercel.app` points to verified Ready deployment `dpl_FaXVm5FXYF16DJucLD6zRdCj2mVw`; the exact production callback passed, live processing is enabled, the sign-in page is error-free, and the authenticated public journey passed
-- AWS status: MFA-protected non-root IAM user and temporary browser-authenticated `plandelta` profile in `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, private encrypted lifecycle-controlled S3, a permissions-boundary-constrained runtime role, two immutable ECR images, one encrypted Standard SSM parameter, and one public-HTTPS t3.small runtime are deployed; the CloudFormation-managed 2 GB swap association and recovery checks pass without replacing the instance
+- GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six
+  default-branch CI jobs passed for production-verification commit `cb04cdc` in run `29640866570`,
+  and annotated prerelease `v0.1.0-rc.1` is published
+- Vercel status: `https://plandelta-ai.vercel.app` points to the verified Ready `main`
+  deployment; the exact production callback passed, live processing is enabled, the sign-in page
+  is error-free, and the authenticated public journey passed
+- AWS status: MFA-protected non-root IAM user and browser-authenticated `plandelta` profile in
+  `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, empty private encrypted
+  lifecycle-controlled S3, a permissions-boundary-constrained runtime role, two immutable ECR
+  release tags, one encrypted Standard SSM parameter, and one public-HTTPS t3.small runtime are
+  deployed; the complete Phase 10 verifier passes
 - AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
@@ -289,7 +300,7 @@ Exit gate:
       negligible and its retention is intentional; otherwise remove it.
 - [x] Verify the Vercel app presents the labelled precomputed sample and
       truthfully reflects whether live processing is available.
-- [ ] Record resource status and final actual/forecast AWS spend.
+- [x] Record resource status and final actual/forecast AWS spend.
 - [ ] Create final small commits and release tag.
 - [ ] Record live URLs, test results, cloud resources, spend guardrails, and
       teardown procedure.

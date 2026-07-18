@@ -75,13 +75,11 @@ Debian publishes one.
 ## Vercel production deployment
 
 The public frontend is verified at
-[`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app). Deployment
-`dpl_Dk9zWj3pcr2WU38yhZZcUYHBRNGP` rebuilt the current `main` state with the `apps/web`
-monorepo root, Next.js preset, Node.js 22, and external workspace dependency
-access.
+[`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app). The
+GitHub-connected `main` deployment uses the `apps/web` monorepo root, Next.js
+preset, Node.js 22, and external workspace dependency access.
 
-After the portfolio-state checkpoint, live-enabled deployment
-`dpl_FaXVm5FXYF16DJucLD6zRdCj2mVw` reached Ready and kept the production alias.
+The live-enabled production deployment reached Ready and kept the production alias.
 The public landing, passwordless sign-in page, authenticated upload flow,
 comparison workspace, and labelled sample were rechecked without browser
 warnings or errors; the drawing canvas loaded without horizontal overflow.
@@ -116,10 +114,11 @@ Verified remote evidence:
 - Thirteen public JavaScript assets contained none of the checked server-only
   environment names.
 
-The remaining storage review is a direct S3 zero-object/multipart audit after
-refreshing the temporary AWS CLI browser session. The latest passing journey
-uses API-driven cleanup; any confirmed synthetic artifact from earlier test
-runs will be removed during that audit.
+The final direct storage audit found 11 unreferenced objects from earlier
+production E2E attempts. All four originals matched the committed test
+fixtures, all seven derived artifacts belonged to a deleted test analysis, and
+none had a database reference. Those exact synthetic objects were removed;
+S3 then contained zero objects and zero incomplete multipart uploads.
 
 ## AWS runtime evidence
 
@@ -133,8 +132,14 @@ runs will be removed during that audit.
 - The deployed result contained one real CV/OCR change, seven private
   artifacts, and an evidence-constrained Bedrock report. Test data and
   incomplete multipart uploads were removed afterward.
-- Billing and Cost Explorer both reported USD 0.00 at verification time.
-  Billing can lag, so USD 10/15/20/25 gross-cost alerts remain authoritative.
+- AWS Budgets reported USD 0.01 gross actual spend while Cost Explorer still
+  reported USD 0.00 unblended spend. AWS did not yet provide a forecast, so the
+  USD 22.94 conservative monthly ceiling and USD 10/15/20/25 gross-cost alerts
+  remain authoritative.
+- The retained live footprint at capture time was one `t3.small`, encrypted
+  20 GB gp3, approximately 3.2 GB across the two ECR repositories, one
+  encrypted SSM parameter, two healthy CloudWatch alarms, seven-day logs, and
+  an empty S3 bucket.
 - ECR scan-on-push is enabled, but a manual AWS Basic scan rejects the OCI
   image-index media type. The application dependencies and locally built
   images were scanned before deployment; future images should be built with
