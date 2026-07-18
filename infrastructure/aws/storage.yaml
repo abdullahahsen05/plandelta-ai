@@ -20,6 +20,11 @@ Parameters:
     Default: amazon.nova-micro-v1:0
     Description: In-region on-demand Bedrock model permitted to the runtime role.
     AllowedPattern: "^[A-Za-z0-9._:-]+$"
+  EnvironmentParameterName:
+    Type: String
+    Default: /plandelta/production/env
+    Description: Exact SecureString parameter read by the EC2 runtime during bootstrap.
+    AllowedPattern: "^/plandelta/[a-z0-9/-]+$"
 
 Resources:
   PrivateArtifactsBucket:
@@ -153,6 +158,50 @@ Resources:
                   - bedrock:InvokeModel
                   - bedrock:InvokeModelWithResponseStream
                 Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
+              - Sid: ReadOnlyProductionEnvironment
+                Effect: Allow
+                Action:
+                  - ssm:GetParameter
+                Resource: !Sub arn:${AWS::Partition}:ssm:${AWS::Region}:${AWS::AccountId}:parameter${EnvironmentParameterName}
+              - Sid: SystemsManagerInstanceChannels
+                Effect: Allow
+                Action:
+                  - ssm:DescribeAssociation
+                  - ssm:DescribeDocument
+                  - ssm:GetDeployablePatchSnapshotForInstance
+                  - ssm:GetDocument
+                  - ssm:GetManifest
+                  - ssm:ListAssociations
+                  - ssm:ListInstanceAssociations
+                  - ssm:PutComplianceItems
+                  - ssm:PutConfigurePackageResult
+                  - ssm:PutInventory
+                  - ssm:UpdateAssociationStatus
+                  - ssm:UpdateInstanceAssociationStatus
+                  - ssm:UpdateInstanceInformation
+                  - ssmmessages:CreateControlChannel
+                  - ssmmessages:CreateDataChannel
+                  - ssmmessages:OpenControlChannel
+                  - ssmmessages:OpenDataChannel
+                  - ec2messages:AcknowledgeMessage
+                  - ec2messages:DeleteMessage
+                  - ec2messages:FailMessage
+                  - ec2messages:GetEndpoint
+                  - ec2messages:GetMessages
+                  - ec2messages:SendReply
+                Resource: "*"
+              - Sid: AuthorizeEcrPull
+                Effect: Allow
+                Action:
+                  - ecr:GetAuthorizationToken
+                Resource: "*"
+              - Sid: PullOnlyPlanDeltaImages
+                Effect: Allow
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                Resource: !Sub arn:${AWS::Partition}:ecr:${AWS::Region}:${AWS::AccountId}:repository/plandelta-*
               - Sid: WritePlanDeltaLogs
                 Effect: Allow
                 Action:

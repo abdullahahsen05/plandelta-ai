@@ -1,0 +1,142 @@
+name: plandelta-production
+
+x-aws-log-options: &aws-log-options
+  awslogs-region: ${AWS_REGION}
+  awslogs-group: /plandelta/production
+  awslogs-create-group: "false"
+
+x-app-environment: &app-environment
+  env_file:
+    - path: ./.env.api
+      format: raw
+  networks:
+    - private
+  restart: unless-stopped
+
+services:
+  api:
+    <<: *app-environment
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-api:${IMAGE_TAG}
+    command: ["node", "apps/api/dist/main.js"]
+    environment:
+      VISION_SERVICE_URL: http://vision:8000
+    depends_on:
+      vision:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:4000/health/ready').then(r=>{if(!r.ok)process.exit(1)})",
+        ]
+      interval: 20s
+      timeout: 5s
+      retries: 6
+    mem_limit: 384m
+    cpus: 0.45
+    logging:
+      driver: awslogs
+      options:
+        <<: *aws-log-options
+        awslogs-stream: api
+        tag: api
+
+  worker:
+    <<: *app-environment
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-api:${IMAGE_TAG}
+    command: ["node", "apps/api/dist/worker.js"]
+    environment:
+      VISION_SERVICE_URL: http://vision:8000
+    volumes:
+      - vision-data:/data
+    depends_on:
+      api:
+        condition: service_healthy
+    mem_limit: 384m
+    cpus: 0.55
+    logging:
+      driver: awslogs
+      options:
+        <<: *aws-log-options
+        awslogs-stream: worker
+        tag: worker
+
+  vision:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-vision:${IMAGE_TAG}
+    env_file:
+      - path: ./.env.vision
+        format: raw
+    environment:
+      VISION_SHARED_ROOT: /data
+      ONNX_MODEL_PATH: /app/models/changed-region-classifier.onnx
+      TEMP_DIRECTORY: /data/temporary
+    volumes:
+      - vision-data:/data
+      - vision-models:/home/plandelta/.paddlex
+    networks:
+      - private
+    restart: unless-stopped
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready')",
+        ]
+      interval: 20s
+      timeout: 8s
+      retries: 9
+      start_period: 30s
+    mem_limit: 896m
+    cpus: 0.8
+    logging:
+      driver: awslogs
+      options:
+        <<: *aws-log-options
+        awslogs-stream: vision
+        tag: vision
+
+  proxy:
+    image: caddy:2.10.2-alpine
+    environment:
+      PUBLIC_HOST: ${PUBLIC_HOST}
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - ./certbot:/certs:ro
+      - caddy-data:/data
+      - caddy-config:/config
+    networks:
+      - private
+    depends_on:
+      api:
+        condition: service_healthy
+    restart: unless-stopped
+    mem_limit: 128m
+    cpus: 0.2
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: awslogs
+      options:
+        <<: *aws-log-options
+        awslogs-stream: proxy
+        tag: proxy
+
+networks:
+  private:
+    driver: bridge
+
+volumes:
+  vision-data:
+  vision-models:
+  caddy-data:
+  caddy-config:

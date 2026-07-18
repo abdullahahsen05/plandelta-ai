@@ -1,0 +1,73 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Immutable cost-controlled PlanDelta container repositories.
+
+Resources:
+  ApiRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: plandelta-api
+      ImageTagMutability: IMMUTABLE
+      EmptyOnDelete: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Retain five most recent immutable API images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: production
+
+  VisionRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: plandelta-vision
+      ImageTagMutability: IMMUTABLE
+      EmptyOnDelete: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Retain five most recent immutable vision images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: production
+
+Outputs:
+  ApiRepositoryUri:
+    Value: !GetAtt ApiRepository.RepositoryUri
+  VisionRepositoryUri:
+    Value: !GetAtt VisionRepository.RepositoryUri

@@ -1,0 +1,281 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: One-instance PlanDelta production runtime without NAT, load balancer, or SSH.
+
+Parameters:
+  VpcId:
+    Type: AWS::EC2::VPC::Id
+  SubnetId:
+    Type: AWS::EC2::Subnet::Id
+  AmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  RuntimeRoleName:
+    Type: String
+    Default: plandelta-runtime-us-east-1
+    AllowedPattern: "^plandelta-runtime-[a-z0-9-]+$"
+  EnvironmentParameterName:
+    Type: String
+    Default: /plandelta/production/env
+    AllowedPattern: "^/plandelta/[a-z0-9/-]+$"
+  ReleaseCommit:
+    Type: String
+    Description: Full Git commit containing the pinned production runtime assets.
+    AllowedPattern: "^[0-9a-f]{40}$"
+  ImageTag:
+    Type: String
+    Description: Immutable ECR image tag built from ReleaseCommit.
+    AllowedPattern: "^[0-9a-f]{40}$"
+
+Resources:
+  RuntimeLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: /plandelta/production
+      RetentionInDays: 7
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: production
+
+  RuntimeInstanceProfile:
+    Type: AWS::IAM::InstanceProfile
+    Properties:
+      InstanceProfileName: plandelta-runtime-us-east-1
+      Roles:
+        - !Ref RuntimeRoleName
+
+  RuntimeSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Public TLS only for the PlanDelta API; administration uses SSM.
+      VpcId: !Ref VpcId
+      SecurityGroupIngress:
+        - Description: ACME challenge and HTTPS redirect
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+        - Description: PlanDelta HTTPS API
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - Description: Required outbound HTTPS, DNS, Supabase, ECR, S3, Bedrock, and SSM traffic
+          IpProtocol: "-1"
+          CidrIp: 0.0.0.0/0
+      Tags:
+        - Key: Name
+          Value: plandelta-production
+        - Key: Project
+          Value: PlanDelta
+
+  RuntimeInstance:
+    Type: AWS::EC2::Instance
+    DependsOn:
+      - RuntimeLogGroup
+      - RuntimeInstanceProfile
+    CreationPolicy:
+      ResourceSignal:
+        Count: 1
+        Timeout: PT20M
+    Properties:
+      ImageId: !Ref AmiId
+      InstanceType: t3.small
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          DeleteOnTermination: true
+          DeviceIndex: "0"
+          GroupSet:
+            - !Ref RuntimeSecurityGroup
+          SubnetId: !Ref SubnetId
+      IamInstanceProfile: !Ref RuntimeInstanceProfile
+      CreditSpecification:
+        CPUCredits: standard
+      BlockDeviceMappings:
+        - DeviceName: /dev/xvda
+          Ebs:
+            DeleteOnTermination: true
+            Encrypted: true
+            VolumeSize: 20
+            VolumeType: gp3
+      MetadataOptions:
+        HttpEndpoint: enabled
+        HttpPutResponseHopLimit: 2
+        HttpTokens: required
+        InstanceMetadataTags: disabled
+      Monitoring: false
+      SourceDestCheck: true
+      Tags:
+        - Key: Name
+          Value: plandelta-production
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: production
+        - Key: CostTarget
+          Value: 25-usd
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          set -Eeuo pipefail
+          exec > >(tee -a /var/log/plandelta-bootstrap.log) 2>&1
+
+          signal_failure() {
+            /opt/aws/bin/cfn-signal --exit-code 1 --stack ${AWS::StackName} --resource RuntimeInstance --region ${AWS::Region} || true
+          }
+          trap signal_failure ERR
+
+          echo "Installing bounded PlanDelta runtime dependencies."
+          dnf install -y docker curl jq
+          systemctl enable --now docker
+          systemctl enable --now amazon-ssm-agent
+          mkdir -p /usr/local/lib/docker/cli-plugins /opt/plandelta/certbot
+          curl --fail --silent --show-error --location \
+            https://github.com/docker/compose/releases/download/v2.40.3/docker-compose-linux-x86_64 \
+            --output /usr/local/lib/docker/cli-plugins/docker-compose
+          chmod 0755 /usr/local/lib/docker/cli-plugins/docker-compose
+
+          cd /opt/plandelta
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/abdullahahsen05/plandelta-ai/${ReleaseCommit}/infrastructure/runtime/docker-compose.prod.yml \
+            --output docker-compose.prod.yml
+          curl --fail --silent --show-error --location \
+            https://raw.githubusercontent.com/abdullahahsen05/plandelta-ai/${ReleaseCommit}/infrastructure/runtime/Caddyfile \
+            --output Caddyfile
+
+          echo "Retrieving encrypted runtime configuration."
+          aws ssm get-parameter \
+            --name ${EnvironmentParameterName} \
+            --with-decryption \
+            --region ${AWS::Region} \
+            --query Parameter.Value \
+            --output text | base64 --decode > .env.bundle.json
+          jq --raw-output .api .env.bundle.json | base64 --decode > .env.api
+          jq --raw-output .vision .env.bundle.json | base64 --decode > .env.vision
+          rm --force .env.bundle.json
+          chmod 0600 .env.api .env.vision
+
+          TOKEN=$(curl --fail --silent --show-error --request PUT \
+            --header "X-aws-ec2-metadata-token-ttl-seconds: 300" \
+            http://169.254.169.254/latest/api/token)
+          PUBLIC_IP=$(curl --fail --silent --show-error \
+            --header "X-aws-ec2-metadata-token: $TOKEN" \
+            http://169.254.169.254/latest/meta-data/public-ipv4)
+          cat > .env.runtime <<RUNTIME_ENV
+          AWS_ACCOUNT_ID=${AWS::AccountId}
+          AWS_REGION=${AWS::Region}
+          IMAGE_TAG=${ImageTag}
+          PUBLIC_HOST=$PUBLIC_IP
+          RUNTIME_ENV
+          chmod 0644 .env.runtime
+
+          echo "Authenticating to immutable PlanDelta repositories."
+          aws ecr get-login-password --region ${AWS::Region} |
+            docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
+          docker compose --env-file .env.runtime -f docker-compose.prod.yml pull api worker vision proxy
+
+          echo "Requesting a short-lived public IP certificate."
+          docker run --rm --network host \
+            --volume /opt/plandelta/certbot:/etc/letsencrypt \
+            certbot/certbot:v5.4.0 certonly \
+            --standalone \
+            --preferred-profile shortlived \
+            --ip-address "$PUBLIC_IP" \
+            --non-interactive \
+            --agree-tos \
+            --register-unsafely-without-email
+
+          echo "Starting one API, one worker, one vision service, and the TLS proxy."
+          docker compose --env-file .env.runtime -f docker-compose.prod.yml up --detach --wait --wait-timeout 300
+          curl --fail --silent --show-error --retry 20 --retry-delay 5 \
+            "https://$PUBLIC_IP/health/ready" > /dev/null
+
+          cat > /opt/plandelta/renew-certificate.sh <<'RENEW_SCRIPT'
+          #!/bin/bash
+          set -Eeuo pipefail
+          cd /opt/plandelta
+          docker compose --env-file .env.runtime -f docker-compose.prod.yml stop proxy
+          docker run --rm --network host \
+            --volume /opt/plandelta/certbot:/etc/letsencrypt \
+            certbot/certbot:v5.4.0 renew --quiet --preferred-profile shortlived
+          docker compose --env-file .env.runtime -f docker-compose.prod.yml start proxy
+          RENEW_SCRIPT
+          chmod 0755 /opt/plandelta/renew-certificate.sh
+
+          cat > /etc/systemd/system/plandelta-cert-renew.service <<'SERVICE'
+          [Unit]
+          Description=Renew the PlanDelta short-lived IP certificate
+          After=docker.service
+          Requires=docker.service
+
+          [Service]
+          Type=oneshot
+          ExecStart=/opt/plandelta/renew-certificate.sh
+          SERVICE
+
+          cat > /etc/systemd/system/plandelta-cert-renew.timer <<'TIMER'
+          [Unit]
+          Description=Check the PlanDelta IP certificate twice daily
+
+          [Timer]
+          OnBootSec=12h
+          OnUnitActiveSec=12h
+          RandomizedDelaySec=15m
+          Persistent=true
+
+          [Install]
+          WantedBy=timers.target
+          TIMER
+          systemctl daemon-reload
+          systemctl enable --now plandelta-cert-renew.timer
+
+          /opt/aws/bin/cfn-signal --exit-code 0 --stack ${AWS::StackName} --resource RuntimeInstance --region ${AWS::Region}
+          trap - ERR
+
+  StatusCheckAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-instance-status-check
+      AlarmDescription: PlanDelta instance failed an EC2 status check.
+      Namespace: AWS/EC2
+      MetricName: StatusCheckFailed
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref RuntimeInstance
+      Statistic: Maximum
+      Period: 60
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: missing
+
+  CpuCreditAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-low-cpu-credit
+      AlarmDescription: PlanDelta t3.small CPU credit balance is low.
+      Namespace: AWS/EC2
+      MetricName: CPUCreditBalance
+      Dimensions:
+        - Name: InstanceId
+          Value: !Ref RuntimeInstance
+      Statistic: Minimum
+      Period: 300
+      EvaluationPeriods: 2
+      DatapointsToAlarm: 2
+      Threshold: 10
+      ComparisonOperator: LessThanThreshold
+      TreatMissingData: missing
+
+Outputs:
+  InstanceId:
+    Value: !Ref RuntimeInstance
+  PublicIp:
+    Value: !GetAtt RuntimeInstance.PublicIp
+  ApiUrl:
+    Value: !Sub https://${RuntimeInstance.PublicIp}
+  RuntimeLogGroup:
+    Value: !Ref RuntimeLogGroup
