@@ -10,8 +10,11 @@ http://{$PUBLIC_HOST} {
 	redir https://{$PUBLIC_HOST}{uri} permanent
 }
 
-https://{$PUBLIC_HOST} {
+:443 {
 	tls /certs/live/{$PUBLIC_HOST}/fullchain.pem /certs/live/{$PUBLIC_HOST}/privkey.pem
+
+	@invalid_host not header Host {$PUBLIC_HOST}
+	respond @invalid_host 421
 
 	header {
 		Strict-Transport-Security "max-age=31536000; includeSubDomains"
