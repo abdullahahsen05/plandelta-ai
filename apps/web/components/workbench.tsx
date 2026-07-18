@@ -53,6 +53,7 @@ export type WorkbenchData = {
   documentWidth?: number | undefined;
   documentHeight?: number | undefined;
   reportSummary?: string | undefined;
+  summaryProvider?: "DETERMINISTIC" | "BEDROCK" | undefined;
   reportUrl?: string | undefined;
 };
 
@@ -69,6 +70,7 @@ const sampleWorkbench: WorkbenchData = {
   alignment: sampleProject.analysis.alignment,
   reprojectionError: sampleProject.analysis.reprojectionError,
   changes: sampleChanges,
+  summaryProvider: "DETERMINISTIC",
 };
 
 function RevisionRail({ data }: { data: WorkbenchData }) {
@@ -326,6 +328,11 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
               <Focus aria-hidden="true" size={13} /> Markers are shown on the revised drawing
             </span>
             <span>
+              <b className="font-semibold text-[#40433F]">
+                {data.summaryProvider === "BEDROCK"
+                  ? "AI-generated via Amazon Bedrock"
+                  : "Deterministic evidence"}
+              </b>
               {data.reportSummary ?? "Select a change marker or list item to review its evidence."}
             </span>
           </div>

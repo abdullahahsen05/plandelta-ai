@@ -117,6 +117,7 @@ export default async function AnalysisPage({
     documentWidth: baselineArtifact?.widthPx ?? undefined,
     documentHeight: baselineArtifact?.heightPx ?? undefined,
     reportSummary: report.executiveSummary,
+    summaryProvider: report.provider === "BEDROCK" ? "BEDROCK" : "DETERMINISTIC",
     reportUrl: `/api/analyses/${analysis.id}/report`,
   };
   return <Workbench data={data} />;

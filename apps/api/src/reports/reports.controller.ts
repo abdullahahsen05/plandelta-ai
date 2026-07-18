@@ -109,6 +109,8 @@ export class ReportsController {
         ? `${alignment.reprojectionErrorPx.toFixed(2)} px`
         : "Not reported";
     const warnings = stringArray(context.warnings);
+    const summarySource =
+      report.provider === "BEDROCK" ? "AI-generated via Amazon Bedrock" : "Deterministic evidence";
     const shortId = context.id.slice(0, 8).toUpperCase();
     const changeRecords = context.changes
       .map((change) => {
@@ -303,7 +305,7 @@ export class ReportsController {
       <div class="section-heading"><h2>Method and quality</h2><p>Traceability for this run</p></div>
       <dl class="method-grid">
         <div><dt>Engine</dt><dd>${escapeHtml(context.engineVersion)}</dd></div>
-        <div><dt>Summary source</dt><dd>${escapeHtml(titleCase(report.provider))}</dd></div>
+        <div><dt>Summary source</dt><dd>${escapeHtml(summarySource)}</dd></div>
         <div><dt>Alignment</dt><dd>${escapeHtml(alignmentLabel)}</dd></div>
         <div><dt>Alignment error</dt><dd>${escapeHtml(reprojection)}</dd></div>
       </dl>
