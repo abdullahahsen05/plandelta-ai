@@ -144,3 +144,15 @@ S3 then contained zero objects and zero incomplete multipart uploads.
   image-index media type. The application dependencies and locally built
   images were scanned before deployment; future images should be built with
   provenance disabled if AWS Basic scan output is required.
+
+## Live resource decision
+
+On 2026-07-18, the user explicitly chose to keep live AWS processing available
+for the portfolio demo. The one-instance runtime, encrypted root volume,
+public IPv4, required ECR manifests, one encrypted SSM parameter, and bounded
+CloudWatch resources are therefore retained intentionally. S3 was empty at the
+decision point.
+
+The USD 15 actual-spend review point, USD 25 teardown gate, and teardown steps
+in [DEPLOYMENT.md](./DEPLOYMENT.md) remain binding. This decision does not
+authorize adding capacity or any prohibited managed service.

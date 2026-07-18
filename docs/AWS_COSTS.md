@@ -120,3 +120,11 @@ Verified on 2026-07-18:
 - The retained live footprint was one `t3.small`, encrypted 20 GB gp3, approximately 3.2 GB in
   two ECR repositories, one encrypted SSM parameter, two healthy alarms, seven-day logs, and an
   empty S3 bucket.
+
+## Retention decision
+
+On 2026-07-18, the user explicitly chose to keep live processing available for the portfolio demo.
+The current EC2/EBS/IPv4 runtime and the ECR data required to run it are intentionally retained.
+S3 remains empty until a real upload occurs. Review is required at USD 15 gross actual spend, and
+the USD 25 teardown gate remains mandatory unless the user explicitly authorizes a different
+budget.

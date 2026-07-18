@@ -6,19 +6,19 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 11 — final portfolio handoff and resource review
-- Current task: Obtain the explicit keep-or-teardown decision for the verified live AWS runtime,
-  then record the chosen retained-resource state and publish the final release tag
-- Last verified command: `infrastructure/aws/verify-phase10.ps1` passed after the private S3
-  bucket was verified at zero objects and zero multipart uploads
-- Active blockers: Phase 11 requires the user to choose whether temporary live AWS processing
-  should remain available or be torn down
+- Current task: Publish the verified cloud release as `v0.1.0`, then record the final tag and
+  release status
+- Last verified command: All six GitHub CI jobs passed in run `29641467713`; the replacement
+  full-history Gitleaks container, Vercel production deployment, public app HTTP check, and AWS
+  Phase 10 verifier all passed
+- Active blockers: None
 - Last completed implementation checkpoint: External-origin Playwright support and API-driven
   production cleanup passed against the live deployment
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six
-  default-branch CI jobs passed for production-verification commit `cb04cdc` in run `29640866570`,
-  and annotated prerelease `v0.1.0-rc.1` is published
+  default-branch CI jobs passed in run `29641467713`, and annotated prerelease `v0.1.0-rc.1` is
+  published
 - Vercel status: `https://plandelta-ai.vercel.app` points to the verified Ready `main`
   deployment; the exact production callback passed, live processing is enabled, the sign-in page
   is error-free, and the authenticated public journey passed
@@ -26,7 +26,8 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
   `us-east-1`; gross-cost budget alerts at USD 10/15/20/25, empty private encrypted
   lifecycle-controlled S3, a permissions-boundary-constrained runtime role, two immutable ECR
   release tags, one encrypted Standard SSM parameter, and one public-HTTPS t3.small runtime are
-  deployed; the complete Phase 10 verifier passes
+  deployed; the complete Phase 10 verifier passes and the user explicitly chose to keep live
+  processing available
 - AWS credit budget: USD 100 active, USD 99.99 estimated remaining, required service products explicitly eligible, and USD 25 project-spend target; separate Free plan access status ends 2027-01-04
 - Credential preflight: Supabase, Vercel, GitHub, and scoped non-root AWS deployment access passed
 
@@ -293,21 +294,21 @@ Exit gate:
 - [x] Add concise resume bullets and interview talking points.
 - [x] Verify every documented command and link.
 - [x] Ensure issue templates, license, changelog, and release notes exist.
-- [ ] Ask the user whether live AWS processing should remain available. If not,
+- [x] Ask the user whether live AWS processing should remain available. If not,
       terminate EC2 and its attached EBS volume, release paid IPv4 allocation,
       remove temporary CloudWatch logs, and clean unused ECR images.
-- [ ] Keep only minimal private S3/ECR evidence if its monthly cost is
+- [x] Keep only minimal private S3/ECR evidence if its monthly cost is
       negligible and its retention is intentional; otherwise remove it.
 - [x] Verify the Vercel app presents the labelled precomputed sample and
       truthfully reflects whether live processing is available.
 - [x] Record resource status and final actual/forecast AWS spend.
 - [ ] Create final small commits and release tag.
-- [ ] Record live URLs, test results, cloud resources, spend guardrails, and
+- [x] Record live URLs, test results, cloud resources, spend guardrails, and
       teardown procedure.
 
 Final gate:
 
 - [ ] All required phases pass or external blockers are explicitly documented.
-- [ ] Repository and Vercel sample are usable; AWS deployment verification is
+- [x] Repository and Vercel sample are usable; AWS deployment verification is
       documented even if temporary compute has been torn down.
-- [ ] The product never overstates estimation accuracy or hides uncertainty.
+- [x] The product never overstates estimation accuracy or hides uncertainty.

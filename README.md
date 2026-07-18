@@ -19,7 +19,8 @@ The [public Vercel workspace](https://plandelta-ai.vercel.app) has verified pass
 live uploads connected to the AWS runtime. The production journey has completed from two uploaded
 drawings through private storage, deterministic analysis, evidence review, and report generation.
 The clearly labelled sample remains available without signing in and will remain useful if the
-temporary AWS compute is later stopped.
+temporary AWS compute is later stopped. Live processing is intentionally retained for the portfolio
+demo under USD 10/15/20/25 gross-cost alerts and the documented teardown gate.
 
 Progress and evidence are recorded in [PHASES.md](./PHASES.md).
 

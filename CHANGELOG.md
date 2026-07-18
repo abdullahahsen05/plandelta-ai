@@ -6,6 +6,8 @@ release.
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-07-18
+
 ### Added
 
 - A verified public Vercel production deployment with an always-available, clearly labelled sample.
@@ -68,4 +70,6 @@ release.
 - Live processing requires the Supabase, API, worker, and vision services. The public sample remains
   useful when temporary compute is unavailable.
 
+[Unreleased]: https://github.com/abdullahahsen05/plandelta-ai/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0
 [0.1.0-rc.1]: https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0-rc.1
