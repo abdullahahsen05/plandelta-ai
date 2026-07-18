@@ -21,6 +21,10 @@ const configuredApiUrl = (process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:4
   "",
 );
 const apiUrl = configuredApiUrl.endsWith("/v1") ? configuredApiUrl : `${configuredApiUrl}/v1`;
+const healthUrl = configuredApiUrl.endsWith("/v1")
+  ? `${configuredApiUrl.slice(0, -3)}/health/ready`
+  : `${configuredApiUrl}/health/ready`;
+const verifyRecovery = process.env.PLANDELTA_VERIFY_RECOVERY === "1";
 const suffix = randomUUID();
 const email = `plandelta-local-${suffix}@example.invalid`;
 const password = `Local-${randomUUID()}-9a!`;
@@ -69,6 +73,26 @@ async function upload(token, role, filename) {
   return api(`/projects/${projectId}/revisions`, token, { method: "POST", body: form });
 }
 
+async function waitForAnalysis(token, terminalStatuses, timeoutMs = 240_000) {
+  const deadline = Date.now() + timeoutMs;
+  let analysis = await api(`/analyses/${analysisId}`, token);
+  while (!terminalStatuses.has(analysis.status) && Date.now() < deadline) {
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 1500));
+    analysis = await api(`/analyses/${analysisId}`, token);
+  }
+  return analysis;
+}
+
+async function waitForReadiness(timeoutMs = 180_000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const response = await fetch(healthUrl).catch(() => null);
+    if (response?.ok) return;
+    await new Promise((resolvePromise) => setTimeout(resolvePromise, 2000));
+  }
+  throw new Error("The deployed API did not recover before the retry deadline.");
+}
+
 async function verify() {
   const created = await admin.auth.admin.createUser({ email, password, email_confirm: true });
   if (created.error || !created.data.user)
@@ -101,11 +125,30 @@ async function verify() {
   });
   analysisId = analysis.id;
 
-  const deadline = Date.now() + 240_000;
-  let completed = analysis;
-  while (!new Set(["COMPLETED", "FAILED"]).has(completed.status) && Date.now() < deadline) {
-    await new Promise((resolvePromise) => setTimeout(resolvePromise, 1500));
-    completed = await api(`/analyses/${analysisId}`, token);
+  let completed = await waitForAnalysis(token, new Set(["COMPLETED", "FAILED"]));
+  let recoveryAttempts;
+  if (verifyRecovery) {
+    if (
+      completed.status !== "FAILED" ||
+      completed.attemptCount < completed.maxAttempts ||
+      completed.errorCode !== "PROCESSING_FAILED"
+    ) {
+      throw new Error("The recovery check did not observe an exhausted failed analysis.");
+    }
+    recoveryAttempts = completed.attemptCount;
+    console.log(
+      JSON.stringify({
+        phase: "failure-observed",
+        status: completed.status,
+        attempts: recoveryAttempts,
+      }),
+    );
+    await waitForReadiness();
+    const retried = await api(`/analyses/${analysisId}/retry`, token, { method: "POST" });
+    if (retried.status !== "QUEUED" || retried.attemptCount !== 0) {
+      throw new Error("The failed analysis was not reset safely for retry.");
+    }
+    completed = await waitForAnalysis(token, new Set(["COMPLETED", "FAILED"]));
   }
   if (completed.status !== "COMPLETED")
     throw new Error(`Analysis ended as ${completed.status}: ${completed.errorCode ?? "timeout"}`);
@@ -150,6 +193,8 @@ async function verify() {
       artifacts: artifacts.length,
       reportProvider: report.provider,
       engineVersion: completed.engineVersion,
+      recovery: verifyRecovery ? "passed" : undefined,
+      failedAttemptsBeforeRecovery: recoveryAttempts,
       cleanup: "passed",
     }),
   );
