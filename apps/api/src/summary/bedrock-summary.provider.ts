@@ -134,7 +134,7 @@ export class BedrockSummaryProvider implements SummaryProvider {
     const modelId = process.env.BEDROCK_MODEL_ID?.trim();
     if (!modelId) throw new Error("BEDROCK_MODEL_ID is required for Bedrock summaries.");
     const maxOutputTokens = Number(process.env.BEDROCK_MAX_OUTPUT_TOKENS ?? 600);
-    const timeoutMs = Number(process.env.BEDROCK_TIMEOUT_MS ?? 15_000);
+    const timeoutMs = Number(process.env.BEDROCK_TIMEOUT_MS ?? 30_000);
     const maxInputCharacters = Number(process.env.BEDROCK_MAX_INPUT_CHARACTERS ?? 12_000);
     const evidence = evidencePayload(changes, maxInputCharacters);
     const response = await this.client.send(

@@ -49,7 +49,7 @@ describe("BedrockSummaryProvider", () => {
     process.env.BEDROCK_MODEL_ID = "provider.model-version";
     process.env.BEDROCK_MAX_OUTPUT_TOKENS = "600";
     process.env.BEDROCK_MAX_INPUT_CHARACTERS = "12000";
-    process.env.BEDROCK_TIMEOUT_MS = "15000";
+    process.env.BEDROCK_TIMEOUT_MS = "30000";
   });
 
   afterEach(() => {

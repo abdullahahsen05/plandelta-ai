@@ -34,7 +34,7 @@ const environmentSchema = z
     BEDROCK_MODEL_ID: z.string().min(1).optional(),
     BEDROCK_MAX_OUTPUT_TOKENS: z.coerce.number().int().min(100).max(1_200).default(600),
     BEDROCK_MAX_INPUT_CHARACTERS: z.coerce.number().int().min(4_000).max(30_000).default(12_000),
-    BEDROCK_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(30_000).default(15_000),
+    BEDROCK_TIMEOUT_MS: z.coerce.number().int().min(1_000).max(120_000).default(30_000),
     BEDROCK_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(2).default(2),
     MAX_UPLOAD_BYTES: z.coerce
       .number()
