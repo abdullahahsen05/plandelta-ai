@@ -110,7 +110,8 @@ presenting a stale certificate or URL.
 
 - JSON logs with service, environment, correlation ID, analysis ID, level, and
   safe error code.
-- CloudWatch retention limit to control cost.
+- The seven-day CloudWatch group belongs to the persistent control stack so
+  failed-bootstrap evidence survives automatic EC2 rollback.
 - Alarm on repeated health failure, disk pressure, and abnormal failed-job rate
   where practical.
 - Never log signed URLs, OCR text from private plans, or secrets.
