@@ -1,0 +1,71 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: PlanDelta gross-cost budget guardrails. Deploy before persistent AWS resources.
+
+Parameters:
+  NotificationEmail:
+    Type: String
+    Description: Email recipient for PlanDelta AWS cost notifications.
+    AllowedPattern: '^[^@\s]+@[^@\s]+\.[^@\s]+$'
+    ConstraintDescription: Enter a valid notification email address.
+
+Resources:
+  ProjectBudget:
+    Type: AWS::Budgets::Budget
+    Properties:
+      Budget:
+        BudgetName: plandelta-project-monthly
+        BudgetLimit:
+          Amount: 25
+          Unit: USD
+        BudgetType: COST
+        CostTypes:
+          IncludeCredit: false
+          IncludeDiscount: true
+          IncludeOtherSubscription: true
+          IncludeRecurring: true
+          IncludeRefund: false
+          IncludeSubscription: true
+          IncludeSupport: true
+          IncludeTax: false
+          IncludeUpfront: true
+          UseAmortized: false
+          UseBlended: false
+        TimeUnit: MONTHLY
+      NotificationsWithSubscribers:
+        - Notification:
+            ComparisonOperator: GREATER_THAN
+            NotificationType: ACTUAL
+            Threshold: 10
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - Address: !Ref NotificationEmail
+              SubscriptionType: EMAIL
+        - Notification:
+            ComparisonOperator: GREATER_THAN
+            NotificationType: ACTUAL
+            Threshold: 15
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - Address: !Ref NotificationEmail
+              SubscriptionType: EMAIL
+        - Notification:
+            ComparisonOperator: GREATER_THAN
+            NotificationType: ACTUAL
+            Threshold: 20
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - Address: !Ref NotificationEmail
+              SubscriptionType: EMAIL
+        - Notification:
+            ComparisonOperator: GREATER_THAN
+            NotificationType: ACTUAL
+            Threshold: 25
+            ThresholdType: ABSOLUTE_VALUE
+          Subscribers:
+            - Address: !Ref NotificationEmail
+              SubscriptionType: EMAIL
+
+Outputs:
+  BudgetName:
+    Description: AWS Budgets name used for PlanDelta.
+    Value: plandelta-project-monthly

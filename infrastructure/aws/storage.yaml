@@ -1,0 +1,189 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Private PlanDelta development storage and bounded runtime identity.
+
+Parameters:
+  BucketName:
+    Type: String
+    Description: Globally unique private bucket name beginning with plandelta-.
+    AllowedPattern: "^plandelta-[a-z0-9.-]+$"
+  PermissionsBoundaryArn:
+    Type: String
+    Description: Required boundary for every PlanDelta-created runtime role.
+    AllowedPattern: "^arn:aws:iam::[0-9]{12}:policy/plandelta-runtime-boundary$"
+  WebOrigin:
+    Type: String
+    Default: https://plandelta-ai.vercel.app
+    Description: Exact browser origin permitted for bounded read-only S3 CORS.
+    AllowedPattern: "^https://[A-Za-z0-9.-]+$"
+  BedrockModelId:
+    Type: String
+    Default: amazon.nova-micro-v1:0
+    Description: In-region on-demand Bedrock model permitted to the runtime role.
+    AllowedPattern: "^[A-Za-z0-9._:-]+$"
+
+Resources:
+  PrivateArtifactsBucket:
+    Type: AWS::S3::Bucket
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      BucketName: !Ref BucketName
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      CorsConfiguration:
+        CorsRules:
+          - AllowedHeaders:
+              - content-type
+              - x-amz-content-sha256
+              - x-amz-date
+            AllowedMethods:
+              - GET
+              - HEAD
+            AllowedOrigins:
+              - !Ref WebOrigin
+            ExposedHeaders:
+              - ETag
+            MaxAge: 300
+      LifecycleConfiguration:
+        Rules:
+          - Id: abort-incomplete-multipart-uploads
+            Status: Enabled
+            AbortIncompleteMultipartUpload:
+              DaysAfterInitiation: 1
+          - Id: expire-temporary-objects
+            Status: Enabled
+            Prefix: plandelta/temporary/
+            ExpirationInDays: 1
+          - Id: expire-demo-objects
+            Status: Enabled
+            Prefix: plandelta/demo/
+            ExpirationInDays: 7
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: development
+        - Key: CostTarget
+          Value: "25-usd"
+
+  PrivateArtifactsBucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref PrivateArtifactsBucket
+      PolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Sid: DenyInsecureTransport
+            Effect: Deny
+            Principal: "*"
+            Action: s3:*
+            Resource:
+              - !GetAtt PrivateArtifactsBucket.Arn
+              - !Sub "${PrivateArtifactsBucket.Arn}/*"
+            Condition:
+              Bool:
+                aws:SecureTransport: false
+          - Sid: DenyUnencryptedObjectUploads
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !Sub "${PrivateArtifactsBucket.Arn}/*"
+            Condition:
+              "Null":
+                s3:x-amz-server-side-encryption: true
+          - Sid: DenyUnsupportedEncryption
+            Effect: Deny
+            Principal: "*"
+            Action: s3:PutObject
+            Resource: !Sub "${PrivateArtifactsBucket.Arn}/*"
+            Condition:
+              StringNotEquals:
+                s3:x-amz-server-side-encryption: AES256
+
+  RuntimeRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub plandelta-runtime-${AWS::Region}
+      Description: Bounded PlanDelta EC2 runtime access for private storage and summaries.
+      PermissionsBoundary: !Ref PermissionsBoundaryArn
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ec2.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: plandelta-storage-summary
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Sid: ListOnlyPlanDeltaPrefix
+                Effect: Allow
+                Action:
+                  - s3:GetBucketLocation
+                  - s3:ListBucket
+                Resource: !GetAtt PrivateArtifactsBucket.Arn
+                Condition:
+                  StringLike:
+                    s3:prefix:
+                      - plandelta/*
+              - Sid: PrivatePlanDeltaObjects
+                Effect: Allow
+                Action:
+                  - s3:GetObject
+                  - s3:PutObject
+                  - s3:DeleteObject
+                  - s3:AbortMultipartUpload
+                  - s3:ListMultipartUploadParts
+                Resource: !Sub "${PrivateArtifactsBucket.Arn}/plandelta/*"
+              - Sid: InvokeOnlyConfiguredModel
+                Effect: Allow
+                Action:
+                  - bedrock:InvokeModel
+                  - bedrock:InvokeModelWithResponseStream
+                Resource: !Sub arn:${AWS::Partition}:bedrock:${AWS::Region}::foundation-model/${BedrockModelId}
+              - Sid: WritePlanDeltaLogs
+                Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                  - logs:CreateLogStream
+                  - logs:DescribeLogStreams
+                  - logs:PutLogEvents
+                Resource: !Sub arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:/plandelta/*
+              - Sid: PublishPlanDeltaMetrics
+                Effect: Allow
+                Action: cloudwatch:PutMetricData
+                Resource: "*"
+                Condition:
+                  StringEquals:
+                    cloudwatch:namespace: PlanDelta
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: development
+
+Outputs:
+  BucketName:
+    Description: Private S3 bucket for PlanDelta inputs and artifacts.
+    Value: !Ref PrivateArtifactsBucket
+  BucketArn:
+    Description: Private S3 bucket ARN.
+    Value: !GetAtt PrivateArtifactsBucket.Arn
+  RuntimeRoleArn:
+    Description: Bounded role for the later EC2 runtime.
+    Value: !GetAtt RuntimeRole.Arn
+  BedrockModelId:
+    Description: Permitted on-demand summary model.
+    Value: !Ref BedrockModelId
