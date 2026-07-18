@@ -75,6 +75,18 @@ non-root user. Supabase remains external, so PostgreSQL does not run on EC2.
 Do not add a NAT Gateway, load balancer, RDS, ElastiCache, OpenSearch,
 SageMaker endpoint, EKS, ECS/Fargate, or a second environment.
 
+The implemented portfolio runtime uses the default public subnet, one automatically assigned
+public IPv4 address, and no SSH ingress. Systems Manager is the only administrative path. The
+instance runs one API container, one worker, one private vision container, and one Caddy proxy.
+The runtime configuration is an allowlisted SSM `SecureString` bundle; API/worker and vision receive
+separate environment files so the vision service does not receive database credentials.
+
+Because this portfolio deployment does not require a purchased domain or load balancer, Certbot
+requests a publicly trusted short-lived certificate for the instance IPv4 address and a systemd
+timer checks renewal every 12 hours. Terminating the instance releases the paid public IPv4 address.
+A stop/start changes the automatic address, so restore by replacing the runtime stack rather than
+presenting a stale certificate or URL.
+
 ### Bedrock
 
 - Use on-demand invocation.

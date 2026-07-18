@@ -6,10 +6,10 @@ approval. Mark checkboxes only after evidence exists. Do not skip exit gates.
 ## Current execution state
 
 - Current phase: Phase 10 — AWS container deployment
-- Current task: Commit and push the verified Phase 9 provider checkpoint, then provision the bounded ECR/EC2 runtime and execute the deployed release path
-- Last verified command: The AWS-backed local journey completed with one real CV/OCR change, seven private S3 artifacts, a Bedrock report, protected report/artifact reads, and API-driven cleanup; repository format, typecheck, lint, 80 tests, production builds, both CloudFormation templates, and the live Phase 9 control audit passed on 2026-07-18
+- Current task: Commit the validated Phase 10 ECR/runtime/Compose/SecureString assets, push them through CI, then deploy the immutable images and one-instance runtime
+- Last verified command: GitHub Actions run `29623890693` passed the complete six-job workflow and independent secret scan for Phase 9 commit `825a560`; the three Phase 10 CloudFormation templates, production Compose configuration, PowerShell scripts, and allowlisted environment encoder passed local validation on 2026-07-18
 - Active blockers: The Supabase project owner must allow `https://plandelta-ai.vercel.app/auth/callback` before Phase 10 can enable and verify live production authentication
-- Last completed implementation commit: `5e49c6e test(aws): verify budget and provider cleanup`
+- Last completed implementation commit: `c0480ef chore(deploy): automate Phase 10 release`
 - Local app status: The product is verified from authenticated upload through worker, real CV/OCR, confidence-gated ONNX classification with visible rules fallback, private artifacts, true side-by-side original drawing previews, React Konva evidence, Realtime/polling progress, retry, and printable report; Docker API and vision services are healthy and one containerized worker is running with concurrency one
 - Supabase status: Both versioned migrations applied; Auth/API, RLS isolation, Realtime publication, pooled runtime access, direct migrations, queue concurrency, and idempotent seed verified
 - GitHub status: Public repository `abdullahahsen05/plandelta-ai` is live on `main`; all six default-branch CI jobs passed through run `29622896562` and annotated prerelease `v0.1.0-rc.1` is published
