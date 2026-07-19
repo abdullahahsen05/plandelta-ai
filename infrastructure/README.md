@@ -43,7 +43,9 @@ checks renewal twice daily. The automatic public address is released with instan
 stop/start changes it and requires a runtime replacement, so the intended cost-control action after
 evidence capture is teardown rather than an indefinite stopped instance.
 
-Run Phase 10 only from a clean commit already pushed to `origin/main`:
+Run Phase 10 only from a clean commit already pushed to the public `origin` remote. This permits
+production verification of a reviewed release branch before it is merged, while rejecting local-only
+or dirty revisions:
 
 ```powershell
 .\infrastructure\aws\deploy-phase10.ps1

@@ -22,12 +22,12 @@ $accountId = [string]$identity.Account
 $bucketName = "plandelta-$accountId-$Region"
 $boundaryArn = "arn:aws:iam::$accountId`:policy/plandelta-runtime-boundary"
 $headCommit = (git -C $repositoryRoot rev-parse HEAD).Trim()
-$remoteCommit = (
-  git -C $repositoryRoot ls-remote origin refs/heads/main |
+$remoteCommits = @(
+  git -C $repositoryRoot ls-remote origin |
     ForEach-Object { ($_ -split "\s+")[0] }
-).Trim()
-if ($headCommit -notmatch "^[0-9a-f]{40}$" -or $remoteCommit -ne $headCommit) {
-  throw "Deploy only a full commit that is already present on origin/main."
+)
+if ($headCommit -notmatch "^[0-9a-f]{40}$" -or $headCommit -notin $remoteCommits) {
+  throw "Deploy only a full commit that is already present on the origin remote."
 }
 if (-not $ImageTag) {
   $ImageTag = $headCommit
