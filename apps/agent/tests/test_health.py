@@ -27,4 +27,4 @@ def test_readiness_reports_runtime_without_loading_models() -> None:
     response = request("/health/ready")
 
     assert response.status_code == 200
-    assert response.json()["local_embeddings_configured"] is True
+    assert response.json()["localEmbeddingsConfigured"] is True

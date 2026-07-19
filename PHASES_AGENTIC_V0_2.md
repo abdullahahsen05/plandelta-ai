@@ -68,7 +68,7 @@ Implementation checkpoint:
 - [x] Add constraints preventing cross-project citations and duplicate active chunks for the same
       document version/checksum.
 - [x] Add RLS for every new user-owned table and service-role-only worker paths.
-- [ ] Add shared Zod/Pydantic-compatible schemas for chat, run events, tools, specialist packets,
+- [x] Add shared Zod/Pydantic-compatible schemas for chat, run events, tools, specialist packets,
       answers, citations, RFI drafts, ingestion, and domain profiles.
 - [ ] Update OpenAPI/internal contracts without breaking v0.1 routes.
 - [x] Add clean-database, migration, RLS, and conflict fixture coverage for the final verification
