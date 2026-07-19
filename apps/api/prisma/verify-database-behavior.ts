@@ -422,6 +422,7 @@ async function verifyAgenticQueueLeasing() {
   const messageId = randomUUID();
   const runId = randomUUID();
   await client.connect();
+  await client.query("BEGIN");
   try {
     await insertSyntheticAuthUser(client, ownerId, "agentic-queue");
     await client.query(
@@ -566,8 +567,8 @@ async function verifyAgenticQueueLeasing() {
       throw new Error("A cancelled stale run was not terminally cancelled.");
     }
   } finally {
-    await client.query("DELETE FROM public.projects WHERE id = $1", [projectId]);
-    await client.query("DELETE FROM auth.users WHERE id = $1", [ownerId]);
+    // Keep queue fixtures invisible to continuously running workers and leave no durable records.
+    await client.query("ROLLBACK").catch(() => undefined);
     await client.end();
   }
 }
