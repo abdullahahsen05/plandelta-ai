@@ -92,6 +92,7 @@ def test_agent_run_endpoint_requires_internal_auth() -> None:
     assert post(FakeRuntime(), token=None).status_code == 401
 
 
+@pytest.mark.e2e
 def test_agent_run_endpoint_executes_only_matching_claimed_run() -> None:
     runtime = FakeRuntime()
     response = post(runtime)
