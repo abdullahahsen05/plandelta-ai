@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 17 — NestJS conversation API and durable execution
-- Current task: Implement owned conversation/message/run APIs, isolated durable agent leases, and
-  resumable safe event delivery
+- Current phase: Phase 18 — Evidence Copilot experience
+- Current task: Build the responsive evidence workspace, safe streamed run states, and interactive
+  visual/document citations on top of the verified durable API
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -175,25 +175,34 @@ Implementation checkpoint:
 
 ## Phase 17 — NestJS conversation API and durable execution
 
-- [ ] Add project/analysis conversation CRUD with ownership enforcement.
-- [ ] Add message creation, run creation, status, retry, cancel, and history endpoints.
-- [ ] Add SSE for safe node/status/tool-summary/final events.
-- [ ] Do not stream model chain-of-thought, raw prompts, or document bodies.
-- [ ] Integrate the agent service through internal authenticated requests.
-- [ ] Extend the durable queue with separate ingestion/agent job types or an equivalently isolated
+- [x] Add project/analysis conversation CRUD with ownership enforcement.
+- [x] Add message creation, run creation, status, retry, cancel, and history endpoints.
+- [x] Add SSE for safe node/status/tool-summary/final events.
+- [x] Do not stream model chain-of-thought, raw prompts, or document bodies.
+- [x] Integrate the agent service through internal authenticated requests.
+- [x] Extend the durable queue with separate ingestion/agent job types or an equivalently isolated
       lease path.
-- [ ] Add idempotency keys so retries do not duplicate messages or citations.
-- [ ] Add heartbeats, expiry, maximum attempts, cancellation, stale-run recovery, and transactional
+- [x] Add idempotency keys so retries do not duplicate messages or citations.
+- [x] Add heartbeats, expiry, maximum attempts, cancellation, stale-run recovery, and transactional
       final persistence.
-- [ ] Add per-user/project daily message and token/cost quotas plus concurrency one for the AWS
+- [x] Add per-user/project daily message and token/cost quotas plus concurrency one for the AWS
       demo.
-- [ ] Add audit events and correlation IDs across web, API, agent, database, and Bedrock.
-- [ ] Preserve the existing analysis worker throughput and routes.
+- [x] Add audit events and correlation IDs across web, API, agent, database, and Bedrock.
+- [x] Preserve the existing analysis worker throughput and routes.
 
 Implementation checkpoint:
 
-- [ ] API restart and agent-service restart do not lose or duplicate a run.
-- [ ] Cross-user conversation and citation access fail safely.
+- [x] API restart and agent-service restart do not lose or duplicate a run.
+- [x] Cross-user conversation and citation access fail safely.
+
+Completion evidence:
+
+- Clean migration replay passed with 17 tables, 24 policies, and 10 isolated
+  queue/retrieval functions; the real Supabase migrations and queue behavior checks passed.
+- A real queued run survived API and agent restarts and completed with one assistant message,
+  five content-free safe trace steps, and no duplicate rows.
+- API and agent suites cover message idempotency, concurrency one, cross-owner not-found behavior,
+  internal authentication, transactional finalization, verified citations, and cancellation.
 
 ## Phase 18 — Evidence Copilot experience
 
