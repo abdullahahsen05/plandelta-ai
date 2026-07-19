@@ -9,9 +9,9 @@ engineering approval.
 - Public repository: <https://github.com/abdullahahsen05/plandelta-ai>
 - Preserved stable release: [`v0.1.0`](https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0)
 - Reviewed v0.2 branch: [`feat/agentic-v0.2`](https://github.com/abdullahahsen05/plandelta-ai/tree/feat/agentic-v0.2)
-- Verified deployment checkpoint: `904335b6eb0b2c72b6e94bb555acb3d401ac76a9`
+- Verified deployment checkpoint: `70c02f0dab5bb6282c7134e19a2d33323a940fa1`
 - Green CI run:
-  <https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29694008103>
+  <https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29696048243>
 - Draft review:
   <https://github.com/abdullahahsen05/plandelta-ai/pull/15>
 
@@ -190,10 +190,10 @@ the scripted safety-evaluation regression followed in `737e42c`.
 ## Verified production evidence
 
 - Vercel production: <https://plandelta-ai.vercel.app>
-- AWS API at verification time: `https://44.200.227.167`
+- AWS API at verification time: `https://100.58.166.134`
 - Runtime: one `t3.small`, encrypted 20 GB gp3, 2 GB swap, one worker, agent concurrency one,
   private S3, on-demand Nova Micro, and no prohibited managed services.
-- Immutable deployed image tag: `89bae3071e5dd6530f28ff4e1c83c98a38974fbd` in agent, API, and vision ECR
+- Immutable deployed image tag: `70c02f0dab5bb6282c7134e19a2d33323a940fa1` in agent, API, and vision ECR
   repositories.
 - AWS Phase 9/10 verifiers passed after a forced EC2 restart and automatic public-IP certificate
   rotation.
@@ -201,8 +201,9 @@ the scripted safety-evaluation regression followed in `737e42c`.
   disk 9.8/20 GB (49%).
 - A real production technical-note journey completed ingestion, local BGE embedding, hybrid
   retrieval, Bedrock synthesis, one verified citation, review-only RFI, and cleanup.
-- A real production browser journey completed authenticated two-drawing upload, deterministic
-  CV/OCR/ONNX analysis, linked evidence/crop, printable report, and cleanup in 38 seconds.
+- A real final-image production browser journey completed authenticated two-drawing upload,
+  deterministic CV/OCR/ONNX analysis, linked evidence/crop, printable report, and cleanup in
+  46.5 seconds.
 - Public construction and schematic samples, mobile layout, cached cited answer, and citation-to-
   ledger focus were checked in a real browser with no console warning/error.
 - AWS Budget actual was USD 0.589 against the USD 25 gate. Cost Explorer was still lagging and AWS

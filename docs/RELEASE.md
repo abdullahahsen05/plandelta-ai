@@ -32,19 +32,20 @@ The production candidate was verified on 2026-07-19:
 
 - Vercel production and alias are Ready at
   [`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app).
-- AWS Phase 9 and Phase 10 verifiers passed at `https://44.200.227.167` after a forced EC2 restart.
+- AWS Phase 9 and Phase 10 verifiers passed at `https://100.58.166.134` after a forced EC2 restart.
   The deployment refresh downloaded the exact Git revision, restored the immutable Compose bundle,
   detected the changed public IP, issued a new short-lived IP certificate, and brought all five
   services back healthy.
 - Agent, API, and vision ECR repositories contain immutable image tag
-  `89bae3071e5dd6530f28ff4e1c83c98a38974fbd`.
+  `70c02f0dab5bb6282c7134e19a2d33323a940fa1`.
 - Production has all 12 migrations. The production database behavior check passed cross-user RLS,
   analysis/ingestion/agent leases, stale recovery, hybrid conflicts, and project knowledge scope.
 - A disposable production supporting-document journey completed local BGE embedding, pgvector/full-
   text retrieval, on-demand Nova Micro synthesis, one verified citation, a review-only RFI, and
   cleanup.
-- A disposable production browser journey completed authentication, two drawing uploads, durable
-  CV/OCR/ONNX analysis, linked evidence and crop, printable report, and cleanup in 38 seconds.
+- A disposable final-image production browser journey completed authentication, two drawing
+  uploads, durable CV/OCR/ONNX analysis, linked evidence and crop, printable report, and cleanup in
+  46.5 seconds.
 - Real-browser public checks passed for both labelled samples, mobile layout, cached cited response,
   citation-to-ledger focus, and no console warnings/errors.
 - All nine CloudWatch alarms were `OK`. Log streams were present for API, worker, agent, vision, and

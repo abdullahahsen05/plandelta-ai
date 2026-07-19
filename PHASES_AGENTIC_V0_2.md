@@ -394,12 +394,12 @@ Completion evidence (2026-07-19):
 
 Completion evidence in progress (2026-07-19):
 
-- Immutable tag `89bae3071e5dd6530f28ff4e1c83c98a38974fbd` is present in all three ECR repositories.
+- Immutable tag `70c02f0dab5bb6282c7134e19a2d33323a940fa1` is present in all three ECR repositories.
   The bounded runtime runs one API, worker, agent, vision service, and proxy on the existing
   `t3.small`; no prohibited service or second environment was introduced.
 - The deploy path was forced through an EC2 restart. Its commit-pinned SSM refresh restored the
   current Compose bundle, detected the new public IP, rotated the certificate, and passed Phase 9/10
-  at `https://44.200.227.167`.
+  at `https://100.58.166.134`; API readiness reports `0.2.0`.
 - Post-deploy capacity was 843/1,913 MB used with 885 MB available, agent 87 MB idle, 2.8 MB swap
   used, and 49% disk used. No resize was justified.
 - Production has all 12 migrations. RLS, analysis/ingestion/agent leases, stale recovery, hybrid
@@ -407,7 +407,7 @@ Completion evidence in progress (2026-07-19):
 - Vercel production is Ready at `https://plandelta-ai.vercel.app`. A real supporting-document
   journey passed ingestion → BGE → hybrid retrieval → Bedrock → verified citation → review-only RFI
   → cleanup. A real browser drawing journey passed upload → CV/OCR/ONNX → linked evidence →
-  printable report → cleanup in 38 seconds.
+  printable report → cleanup in 46.5 seconds.
 - Real-browser construction/schematic samples, mobile layout, cached cited answer, and citation-to-
   ledger focus passed without console warnings/errors. The full local matrix already covers the
   backend-offline labelled-sample state and production quota implementations.
