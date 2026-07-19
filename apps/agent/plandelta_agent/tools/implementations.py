@@ -8,6 +8,7 @@ import psycopg
 from psycopg.rows import tuple_row
 from pydantic import Field
 
+from plandelta_agent.guardrails import detect_injection_signals
 from plandelta_agent.models.base import ContractModel
 from plandelta_agent.models.evidence import (
     DocumentCitationTarget,
@@ -92,10 +93,23 @@ class PostgresEvidenceTools:
                 ),
             )
             rows = await cursor.fetchall()
+        evidence = [self._visual_reference(context, row) for row in rows]
+        injection_signal_count = sum(
+            bool(detect_injection_signals(reference.summary)) for reference in evidence
+        )
         return ToolResult(
-            evidence=[self._visual_reference(context, row) for row in rows],
+            evidence=evidence,
             warnings=(
-                [] if rows else ["No completed visual changes were found in the scoped analysis."]
+                (
+                    [
+                        "Untrusted visual OCR contained instruction-like text; "
+                        "it remained quoted evidence."
+                    ]
+                    if injection_signal_count
+                    else []
+                )
+                if rows
+                else ["No completed visual changes were found in the scoped analysis."]
             ),
         )
 
@@ -111,35 +125,50 @@ class PostgresEvidenceTools:
             query=arguments.query,
             limit=min(arguments.limit, context.limits.max_retrieved_chunks),
         )
-        return ToolResult(
-            evidence=[
-                EvidenceReference(
-                    evidence_id=f"document:{row.chunk_id}",
-                    source_type="document_chunk",
-                    project_id=context.project_id,
-                    source_id=row.chunk_id,
-                    summary=(
-                        f"{row.filename}, page {row.page_number}"
-                        f"{f', {row.section_title}' if row.section_title else ''}: {row.excerpt}"
-                    )[:800],
-                    confidence=row.combined_score,
+        evidence = [
+            EvidenceReference(
+                evidence_id=f"document:{row.chunk_id}",
+                source_type="document_chunk",
+                project_id=context.project_id,
+                source_id=row.chunk_id,
+                summary=(
+                    f"{row.filename}, page {row.page_number}"
+                    f"{f', {row.section_title}' if row.section_title else ''}: {row.excerpt}"
+                )[:800],
+                confidence=row.combined_score,
+                is_active=row.is_active,
+                is_conflicting=row.is_conflicting,
+                citation_target=DocumentCitationTarget(
+                    type="document_chunk",
+                    document_id=row.document_id,
+                    document_version_id=row.document_version_id,
+                    chunk_id=row.chunk_id,
+                    page=row.page_number,
+                    section=row.section_title,
+                    excerpt=row.excerpt,
                     is_active=row.is_active,
                     is_conflicting=row.is_conflicting,
-                    citation_target=DocumentCitationTarget(
-                        type="document_chunk",
-                        document_id=row.document_id,
-                        document_version_id=row.document_version_id,
-                        chunk_id=row.chunk_id,
-                        page=row.page_number,
-                        section=row.section_title,
-                        excerpt=row.excerpt,
-                        is_active=row.is_active,
-                        is_conflicting=row.is_conflicting,
-                    ),
+                ),
+            )
+            for row in rows
+        ]
+        injection_signal_count = sum(
+            bool(detect_injection_signals(reference.summary)) for reference in evidence
+        )
+        return ToolResult(
+            evidence=evidence,
+            warnings=(
+                (
+                    [
+                        "Untrusted document evidence contained instruction-like text; "
+                        "it remained quoted evidence."
+                    ]
+                    if injection_signal_count
+                    else []
                 )
-                for row in rows
-            ],
-            warnings=[] if rows else ["No matching ready project documents were found."],
+                if rows
+                else ["No matching ready project documents were found."]
+            ),
         )
 
     async def apply_profile_rules(

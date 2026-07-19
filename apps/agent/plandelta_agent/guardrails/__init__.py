@@ -4,6 +4,7 @@ from plandelta_agent.guardrails.budgets import BudgetLimitError, RunBudget
 from plandelta_agent.guardrails.input_policy import (
     GuardedQuestion,
     InputPolicyError,
+    detect_injection_signals,
     inspect_question,
 )
 
@@ -12,5 +13,6 @@ __all__ = [
     "GuardedQuestion",
     "InputPolicyError",
     "RunBudget",
+    "detect_injection_signals",
     "inspect_question",
 ]

@@ -142,3 +142,10 @@ message, and continued access to deterministic analysis/report/sample.
 - Keep low-confidence OCR visibly uncertain.
 - RFI content remains a draft requiring review.
 - Do not expose internal prompts, hidden reasoning, or verifier scratch data.
+
+## Executable verification
+
+Run `pnpm --filter @plandelta/agent test` and `pnpm --filter @plandelta/agent eval`. The focused
+fixtures cover OCR/specification/RFI injection text, malformed and missing-artifact tools,
+cross-project evidence, stale/conflicting revisions, provider outage, duplicate tools, timeout,
+token/model/tool/cost limits, and unsupported claims. All fixture text is synthetic.

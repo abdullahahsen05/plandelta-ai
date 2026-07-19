@@ -39,6 +39,11 @@ class GuardedQuestion(ContractModel):
     injection_signals: list[str] = Field(default_factory=list, max_length=10)
 
 
+def detect_injection_signals(value: str) -> list[str]:
+    normalized = " ".join(value.split())
+    return [name for name, pattern in _INJECTION_SIGNALS.items() if pattern.search(normalized)]
+
+
 def inspect_question(value: str) -> GuardedQuestion:
     normalized = " ".join(value.split())
     if not normalized:
@@ -54,7 +59,7 @@ def inspect_question(value: str) -> GuardedQuestion:
             "The question contains unsupported control characters.",
         )
 
-    signals = [name for name, pattern in _INJECTION_SIGNALS.items() if pattern.search(normalized)]
+    signals = detect_injection_signals(normalized)
     if {"tool_override", "scope_override"} & set(signals):
         raise InputPolicyError(
             "QUESTION_POLICY_VIOLATION",

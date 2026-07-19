@@ -5,10 +5,10 @@ from uuid import UUID
 import pytest
 from pydantic import ValidationError
 
+from plandelta_agent.graph.synthesis import SynthesisDraft
 from plandelta_agent.models.answers import AgentConfidence, RfiDraft, VerifiedAnswer
 from plandelta_agent.models.evidence import Citation, NormalizedBox
 from plandelta_agent.models.requests import ExecuteAgentRunRequest
-from plandelta_agent.graph.synthesis import SynthesisDraft
 
 RUN_ID = UUID("11111111-1111-4111-8111-111111111111")
 PROJECT_ID = UUID("22222222-2222-4222-8222-222222222222")

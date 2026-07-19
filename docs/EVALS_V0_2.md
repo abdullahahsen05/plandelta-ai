@@ -101,3 +101,16 @@ status, reason codes, source IDs, and metrics needed to reproduce claims.
 Every fixed agent failure gets a minimal regression case. Do not overwrite the
 original failure evidence. Record which commit introduced the safeguard and the
 command that verifies it.
+
+## v0.2 release assets
+
+- Dataset: `apps/agent/evals/datasets/release-v0.2.jsonl` (30 curated synthetic cases).
+- Frozen thresholds: `apps/agent/evals/thresholds-v0.2.json`.
+- Deterministic runner: `pnpm --filter @plandelta/agent eval`.
+- Committed result: `apps/agent/evals/results/release-v0.2.json` and `.md`.
+- Focused failure fixtures: `apps/agent/evals/fixtures/`.
+
+The deterministic dataset uses scripted synthetic outputs to exercise routing, evidence/citation
+accounting, conflicts, refusals, prompt injection, authorization, and bounded failures. Its latency,
+token, and estimated-cost fields are scripted harness measurements, not production performance or
+actual Bedrock billing. These scores are regression gates and do not measure field accuracy.

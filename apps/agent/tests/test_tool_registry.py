@@ -13,6 +13,7 @@ from plandelta_agent.models.evidence import (
 from plandelta_agent.models.state import RunContext, RunLimits
 from plandelta_agent.tools import (
     ToolDefinition,
+    ToolExecutionError,
     ToolName,
     ToolPolicyError,
     ToolRegistry,
@@ -125,6 +126,81 @@ async def test_registry_rejects_model_scope_and_wrong_role() -> None:
             name=ToolName.HYBRID_SEARCH,
             specialist=SpecialistRole.VISUAL,
             arguments={"query": "partition"},
+            context=run_context,
+            budget=RunBudget(run_context.limits),
+        )
+
+
+@pytest.mark.anyio
+async def test_registry_rejects_malformed_missing_and_cross_project_evidence() -> None:
+    run_context = context()
+
+    async def missing(_arguments: ContractModel, _context: RunContext) -> ToolResult:
+        raise ToolExecutionError("AGENT_ARTIFACT_MISSING")
+
+    missing_registry = ToolRegistry(
+        [
+            ToolDefinition(
+                name=ToolName.GET_VISUAL_EVIDENCE,
+                version="1",
+                allowed_specialists=frozenset({SpecialistRole.VISUAL}),
+                arguments_model=QueryArguments,
+                timeout_seconds=1,
+                max_results=2,
+                handler=missing,
+            )
+        ]
+    )
+    with pytest.raises(ToolPolicyError, match="AGENT_TOOL_ARGUMENTS_INVALID"):
+        await missing_registry.invoke(
+            name=ToolName.GET_VISUAL_EVIDENCE,
+            specialist=SpecialistRole.VISUAL,
+            arguments={"unexpected": "value"},
+            context=run_context,
+            budget=RunBudget(run_context.limits),
+        )
+    with pytest.raises(ToolPolicyError, match="AGENT_ARTIFACT_MISSING"):
+        await missing_registry.invoke(
+            name=ToolName.GET_VISUAL_EVIDENCE,
+            specialist=SpecialistRole.VISUAL,
+            arguments={"query": "region"},
+            context=run_context,
+            budget=RunBudget(run_context.limits),
+        )
+
+    async def cross_project(_arguments: ContractModel, _context: RunContext) -> ToolResult:
+        return ToolResult(
+            evidence=[
+                EvidenceReference(
+                    evidence_id="other-project:evidence",
+                    source_type="profile_rule",
+                    project_id=uuid4(),
+                    summary="Evidence from a different project.",
+                    confidence=1,
+                    is_active=True,
+                    is_conflicting=False,
+                )
+            ]
+        )
+
+    cross_registry = ToolRegistry(
+        [
+            ToolDefinition(
+                name=ToolName.APPLY_PROFILE_IMPACT_RULES,
+                version="1",
+                allowed_specialists=frozenset({SpecialistRole.IMPACT}),
+                arguments_model=QueryArguments,
+                timeout_seconds=1,
+                max_results=2,
+                handler=cross_project,
+            )
+        ]
+    )
+    with pytest.raises(ToolPolicyError, match="AGENT_TOOL_SCOPE_VIOLATION"):
+        await cross_registry.invoke(
+            name=ToolName.APPLY_PROFILE_IMPACT_RULES,
+            specialist=SpecialistRole.IMPACT,
+            arguments={"query": "scope"},
             context=run_context,
             budget=RunBudget(run_context.limits),
         )

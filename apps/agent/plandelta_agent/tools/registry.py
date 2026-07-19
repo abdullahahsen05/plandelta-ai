@@ -30,6 +30,12 @@ class ToolPolicyError(RuntimeError):
         self.code = code
 
 
+class ToolExecutionError(RuntimeError):
+    def __init__(self, code: str) -> None:
+        super().__init__(code)
+        self.code = code
+
+
 class ToolResult(ContractModel):
     evidence: list[EvidenceReference] = Field(default_factory=list, max_length=20)
     warnings: list[str] = Field(default_factory=list, max_length=20)
@@ -106,6 +112,15 @@ class ToolRegistry:
                 error_code="AGENT_TOOL_TIMEOUT",
             )
             raise ToolPolicyError("AGENT_TOOL_TIMEOUT") from error
+        except ToolExecutionError as error:
+            self._record(
+                definition,
+                specialist,
+                started,
+                status="failed",
+                error_code=error.code,
+            )
+            raise ToolPolicyError(error.code) from error
         except Exception as error:
             self._record(
                 definition,

@@ -9,6 +9,8 @@
     "typecheck": "node ../../scripts/python.mjs -m mypy apps/agent/plandelta_agent apps/agent/tests apps/agent/evals",
     "test": "node ../../scripts/python.mjs -m pytest apps/agent/tests",
     "test:e2e": "node ../../scripts/python.mjs -m pytest apps/agent/tests -m e2e",
-    "eval": "node ../../scripts/python.mjs -m pytest apps/agent/evals"
+    "eval": "node ../../scripts/python.mjs -m plandelta_agent.evaluation",
+    "eval:test": "node ../../scripts/python.mjs -m pytest apps/agent/evals",
+    "eval:release": "node ../../scripts/python.mjs -m plandelta_agent.evaluation --json-output apps/agent/evals/results/release-v0.2.json --markdown-output apps/agent/evals/results/release-v0.2.md"
   }
 }

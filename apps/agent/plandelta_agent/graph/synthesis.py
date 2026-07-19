@@ -11,6 +11,7 @@ from plandelta_agent.models.answers import AgentConfidence, RfiDraft, VerifiedAn
 from plandelta_agent.models.base import ContractModel
 from plandelta_agent.models.evidence import Citation, EvidencePacket, EvidenceReference
 from plandelta_agent.models.state import RunContext
+from plandelta_agent.profiles import get_profile
 from plandelta_agent.providers import (
     ChatMessage,
     ChatProvider,
@@ -18,7 +19,6 @@ from plandelta_agent.providers import (
     ChatRole,
     SafeProviderError,
 )
-from plandelta_agent.profiles import get_profile
 
 PROMPT_VERSION = "evidence-synthesis-v1"
 _CONSERVATIVE_COST_PER_TOKEN_USD = 0.000002

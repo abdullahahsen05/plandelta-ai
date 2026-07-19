@@ -22,7 +22,12 @@ from plandelta_agent.models.evidence import (
     VisualCitationTarget,
 )
 from plandelta_agent.models.state import RunContext, RunLimits
-from plandelta_agent.providers import DeterministicChatProvider
+from plandelta_agent.providers import (
+    ChatRequest,
+    ChatResponse,
+    DeterministicChatProvider,
+    SafeProviderError,
+)
 from plandelta_agent.tools import ToolDefinition, ToolName, ToolRegistry, ToolResult
 from plandelta_agent.tools.implementations import (
     ProfileImpactArguments,
@@ -165,6 +170,13 @@ def specialists(calls: list[SpecialistRole]) -> dict[SpecialistRole, FixtureSpec
 
 class EmptyArguments(ContractModel):
     limit: int = Field(default=6, ge=1, le=12)
+
+
+class OutageProvider:
+    provider_name = "bedrock"
+
+    async def complete(self, _request: ChatRequest) -> ChatResponse:
+        raise SafeProviderError("AGENT_PROVIDER_UNAVAILABLE", retryable=True)
 
 
 def real_registry(run_context: RunContext, calls: list[ToolName]) -> ToolRegistry:
@@ -382,3 +394,18 @@ async def test_specialists_run_in_parallel_and_timeout_is_terminal() -> None:
     assert timed_out.safe_error is not None
     assert timed_out.safe_error.code == "AGENT_TIMEOUT"
     assert timed_out.answer.status == "insufficient_evidence"
+
+
+@pytest.mark.anyio
+async def test_bedrock_outage_returns_one_bounded_safe_terminal_answer() -> None:
+    result = await AgentWorkflow(
+        context=context(),
+        provider=OutageProvider(),
+        specialists=specialists([]),
+    ).execute("What changed in the drawing?")
+
+    assert result.safe_error is None
+    assert result.model_turns == 0
+    assert result.answer.status == "insufficient_evidence"
+    assert "provider returned no usable grounded answer" in " ".join(result.answer.warnings).lower()
+    assert len(result.trace) <= 8

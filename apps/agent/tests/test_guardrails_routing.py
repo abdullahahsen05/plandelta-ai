@@ -1,3 +1,5 @@
+from pathlib import Path
+
 import pytest
 
 from plandelta_agent.agents import route_question
@@ -5,6 +7,7 @@ from plandelta_agent.guardrails import (
     BudgetLimitError,
     InputPolicyError,
     RunBudget,
+    detect_injection_signals,
     inspect_question,
 )
 from plandelta_agent.models.evidence import SpecialistRole
@@ -44,6 +47,19 @@ def test_input_policy_rejects_scope_and_tool_override(question: str) -> None:
         inspect_question(question)
 
 
+def test_untrusted_ocr_spec_and_rfi_fixtures_are_detected_without_execution() -> None:
+    fixtures = Path(__file__).resolve().parents[1] / "evals" / "fixtures"
+
+    signals = {
+        name: detect_injection_signals((fixtures / name).read_text(encoding="utf-8"))
+        for name in ["ocr-injection.txt", "spec-injection.txt", "rfi-injection.txt"]
+    }
+
+    assert "instruction_override" in signals["ocr-injection.txt"]
+    assert "prompt_exfiltration" in signals["spec-injection.txt"]
+    assert "tool_override" in signals["rfi-injection.txt"]
+
+
 def test_supervisor_routes_simple_questions_without_unnecessary_specialists() -> None:
     visual = route_question("What changed in this drawing revision?", has_analysis=True)
     knowledge = route_question("What does the specification require?", has_analysis=True)
@@ -72,4 +88,33 @@ def test_budget_deduplicates_tools_and_caps_model_tokens() -> None:
             input_tokens=400,
             output_tokens=101,
             estimated_cost_usd=0.001,
+        )
+
+    bounded = RunBudget(
+        limits(
+            max_model_turns=1,
+            max_tool_calls=1,
+            max_total_tokens=500,
+            max_estimated_cost_usd=0.001,
+        )
+    )
+    bounded.reserve_tool("list_visual_changes", "{}")
+    with pytest.raises(BudgetLimitError, match="AGENT_TOOL_LIMIT"):
+        bounded.reserve_tool("hybrid_search", '{"query":"note"}')
+    with pytest.raises(BudgetLimitError, match="AGENT_COST_LIMIT"):
+        bounded.record_model_turn(
+            input_tokens=100,
+            output_tokens=100,
+            estimated_cost_usd=0.0011,
+        )
+    bounded.record_model_turn(
+        input_tokens=100,
+        output_tokens=100,
+        estimated_cost_usd=0.0009,
+    )
+    with pytest.raises(BudgetLimitError, match="AGENT_MODEL_TURN_LIMIT"):
+        bounded.record_model_turn(
+            input_tokens=1,
+            output_tokens=1,
+            estimated_cost_usd=0,
         )
