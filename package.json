@@ -33,6 +33,7 @@
     "agent:test": "pnpm --filter @plandelta/agent test",
     "agent:eval": "pnpm --filter @plandelta/agent eval",
     "vision:install": "node scripts/python.mjs -m pip install -e ./apps/vision[dev]",
+    "setup:local-agent-token": "node scripts/ensure-local-agent-token.mjs",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down"
   },

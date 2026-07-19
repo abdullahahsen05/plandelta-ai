@@ -12,8 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 15 — document ingestion and hybrid RAG
-- Current task: Add ingestion status/retry UI, then close the Phase 15 browser and regression gates
+- Current phase: Phase 16 — load-bearing multi-agent graph
+- Current task: Implement guarded context construction, dynamic specialist routing, and bounded tool
+  execution before the verifier/repair graph
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -30,12 +31,16 @@ remaining safe work.
   telemetry, cancellation/timeout controls, and the internal non-root container are verified
 - Phase 15 checkpoint: authorized PDF/TXT knowledge upload, validation, private storage, pending
   version/job creation, source access, retry, deletion, and focused API coverage pass
-- Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local
-  BGE embeddings, transactional activation, filtered hybrid retrieval, clean migration replay,
-  and a real temporary Supabase ingestion/search/cleanup journey pass
+- Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local BGE
+  embeddings, transactional activation, filtered hybrid retrieval, clean migration replay, and a
+  real temporary Supabase ingestion/search/cleanup journey pass
 - Phase 15 versioning checkpoint: per-version private storage, same-identity reuse, atomic
-  replacement, stale/conflicting opt-in retrieval, and full-prefix deletion pass in focused and
-  real Supabase checks
+  replacement, stale/conflicting opt-in retrieval, and full-prefix deletion pass in focused and real
+  Supabase checks
+- Phase 15 completion (2026-07-19): authenticated document register, validation/upload, version
+  replacement, real polled progress, safe failure codes, retry/deletion, desktop/mobile layouts,
+  clean migration replay, database boundaries, real Supabase RAG replacement journey,
+  repository-wide tests, lint, typecheck, and production builds pass
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -128,7 +133,7 @@ Implementation checkpoint:
 - [x] Produce citation-ready results containing source, page, section, excerpt, score components,
       checksum, and revision metadata.
 - [x] Add deletion/re-ingestion cleanup and idempotency.
-- [ ] Add ingestion status UI and safe error/retry states.
+- [x] Add ingestion status UI and safe error/retry states.
 - [x] Commit ingestion and retrieval separately.
 
 Implementation checkpoint:

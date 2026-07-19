@@ -293,10 +293,12 @@ async function verifyAgenticDataBoundaries() {
       await client.query(
         `INSERT INTO public.knowledge_document_versions (
           id, document_id, project_id, revision_label, effective_date, checksum_sha256,
-          page_count, extracted_character_count, parser_name, parser_version, chunker_version,
+          detected_mime_type, byte_size, storage_provider, storage_key, page_count,
+          extracted_character_count, parser_name, parser_version, chunker_version,
           embedding_provider, embedding_model, embedding_dimension, status, is_active, completed_at
         ) VALUES (
-          $1, $2, $3, $4, $5, $6, 1, 80, 'pypdf', '6', 'structure-v1',
+          $1, $2, $3, $4, $5, $6, 'application/pdf', 1024, 'LOCAL', $7, 1, 80,
+          'pypdf', '6', 'structure-v1',
           'local', 'BAAI/bge-small-en-v1.5', 384, 'ready', true, clock_timestamp()
         )`,
         [
@@ -306,6 +308,7 @@ async function verifyAgenticDataBoundaries() {
           `Rev ${index + 1}`,
           `2026-07-${10 + index}`,
           `${index + 1}`.repeat(64),
+          `agentic-verification/${documentIds[index]}/${versionIds[index]}.pdf`,
         ],
       );
       await client.query(
