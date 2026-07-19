@@ -96,7 +96,18 @@ try {
        AND p.proname = ANY($2::text[])`,
     [
       verificationSchema,
-      ["claim_analysis", "heartbeat_analysis", "recover_stale_analyses", "hybrid_search_knowledge"],
+      [
+        "claim_analysis",
+        "heartbeat_analysis",
+        "recover_stale_analyses",
+        "hybrid_search_knowledge",
+        "claim_ingestion_job",
+        "heartbeat_ingestion_job",
+        "recover_stale_ingestion_jobs",
+        "claim_agent_run",
+        "heartbeat_agent_run",
+        "recover_stale_agent_runs",
+      ],
     ],
   );
 
@@ -110,8 +121,8 @@ try {
   if (policyCount < 24) {
     throw new Error(`Expected ownership RLS policies; found only ${policyCount}.`);
   }
-  if (queueFunctionCount !== 4) {
-    throw new Error(`Expected 4 queue/retrieval functions; found ${queueFunctionCount}.`);
+  if (queueFunctionCount !== 10) {
+    throw new Error(`Expected 10 queue/retrieval functions; found ${queueFunctionCount}.`);
   }
 
   await client.query("ROLLBACK");

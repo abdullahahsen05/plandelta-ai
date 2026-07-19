@@ -559,6 +559,9 @@ model Message {
   messageType      MessageType   @map("message_type")
   status           MessageStatus @default(PENDING)
   content          String
+  answerStatus     String?       @map("answer_status")
+  confidence       String?
+  rfiDraft         Json?         @map("rfi_draft")
   idempotencyKey   String?       @map("idempotency_key") @db.Uuid
   provider         String?
   modelId          String?       @map("model_id")
@@ -596,6 +599,7 @@ model AgentRun {
   leaseOwner            String?         @map("lease_owner")
   leaseExpiresAt        DateTime?       @map("lease_expires_at") @db.Timestamptz(6)
   heartbeatAt           DateTime?       @map("heartbeat_at") @db.Timestamptz(6)
+  nextAttemptAt         DateTime?       @map("next_attempt_at") @db.Timestamptz(6)
   deadlineAt            DateTime        @map("deadline_at") @db.Timestamptz(6)
   cancellationRequested Boolean         @default(false) @map("cancellation_requested")
   selectedSpecialists   String[]        @default([]) @map("selected_specialists")
@@ -623,7 +627,7 @@ model AgentRun {
   steps            AgentStep[]
   citations        Citation[]
 
-  @@index([status, createdAt], map: "agent_runs_queue_idx")
+  @@index([status, nextAttemptAt, createdAt], map: "agent_runs_queue_idx")
   @@index([status, leaseExpiresAt], map: "agent_runs_lease_idx")
   @@index([projectId, createdAt(sort: Desc)], map: "agent_runs_project_created_idx")
   @@index([conversationId, createdAt], map: "agent_runs_conversation_created_idx")
