@@ -39,6 +39,9 @@ artifacts/
 !apps/web/app/api/artifacts/
 !apps/web/app/api/artifacts/**
 models/
+!apps/agent/plandelta_agent/models/
+!apps/agent/plandelta_agent/models/**
+apps/agent/plandelta_agent/models/__pycache__/
 tmp/
 *.onnx
 *.pt

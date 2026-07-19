@@ -1,0 +1,14 @@
+{
+  "name": "@plandelta/agent",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "dev": "node ../../scripts/python.mjs -m uvicorn plandelta_agent.main:app --host 0.0.0.0 --port 8100 --reload --app-dir apps/agent --env-file .env.local",
+    "build": "node ../../scripts/python.mjs -m compileall -q apps/agent/plandelta_agent",
+    "lint": "node ../../scripts/python.mjs -m ruff check apps/agent",
+    "typecheck": "node ../../scripts/python.mjs -m mypy apps/agent/plandelta_agent apps/agent/tests apps/agent/evals",
+    "test": "node ../../scripts/python.mjs -m pytest apps/agent/tests",
+    "test:e2e": "node ../../scripts/python.mjs -m pytest apps/agent/tests -m e2e",
+    "eval": "node ../../scripts/python.mjs -m pytest apps/agent/evals"
+  }
+}

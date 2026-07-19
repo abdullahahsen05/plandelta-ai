@@ -13,7 +13,8 @@ remaining safe work.
 ## Current execution state
 
 - Current phase: Phase 12 — baseline, branch, and v0.2 contract
-- Current task: Reconcile package/runtime constraints and add the agent development contract
+- Current task: Await temporary AWS reauthentication, then verify cost/resource baseline and close
+  Phase 12
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -22,8 +23,7 @@ remaining safe work.
   readiness returned HTTP 200
 - Runtime baseline: Node 22.16.0, pnpm 11.9.0, Python 3.12.10, Docker 29.6.1, Docker Compose 5.3.0,
   15.68 GiB host memory, 181.21 GiB free disk
-- Active blockers: temporary `plandelta` AWS CLI session is expired; Vercel production is reachable
-  but CLI authentication still requires validation
+- Active blockers: temporary `plandelta` AWS CLI session is expired
 - Last completed implementation checkpoint: v0.2 execution pack extracted and all required v0.1/v0.2
   documentation read
 - Agent/RAG status: Not implemented in the audited v0.1.0 source
@@ -37,14 +37,14 @@ remaining safe work.
       current cost without modifying v0.1.0.
 - [ ] Verify existing Supabase, GitHub, Vercel, and temporary AWS access without printing secret
       values.
-- [ ] Verify current v0.1.0 sample and record any pre-existing failure.
+- [x] Verify current v0.1.0 sample and record any pre-existing failure.
 - [x] Create or resume `feat/agentic-v0.2` from current `main`.
 - [x] Copy the v0.2 pack into the repository, retaining the completed original `PHASES.md` as
       historical evidence.
-- [ ] Reconcile package versions and confirm Python/Node resource constraints.
-- [ ] Add root commands for agent development, lint, typecheck, test, eval, and Docker lifecycle.
-- [ ] Update architecture documentation with the planned agent service and data flows.
-- [ ] Commit the v0.2 execution contract separately from implementation.
+- [x] Reconcile package versions and confirm Python/Node resource constraints.
+- [x] Add root commands for agent development, lint, typecheck, test, eval, and Docker lifecycle.
+- [x] Update architecture documentation with the planned agent service and data flows.
+- [x] Commit the v0.2 execution contract separately from implementation.
 
 Implementation checkpoint:
 

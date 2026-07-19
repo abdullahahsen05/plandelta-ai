@@ -26,6 +26,12 @@
     "db:verify-behavior": "pnpm --filter @plandelta/api db:verify-behavior",
     "db:verify-clean": "pnpm --filter @plandelta/api db:verify-clean",
     "db:seed": "pnpm --filter @plandelta/api db:seed",
+    "agent:install": "node scripts/python.mjs -m pip install -e ./apps/agent[dev]",
+    "agent:dev": "pnpm --filter @plandelta/agent dev",
+    "agent:lint": "pnpm --filter @plandelta/agent lint",
+    "agent:typecheck": "pnpm --filter @plandelta/agent typecheck",
+    "agent:test": "pnpm --filter @plandelta/agent test",
+    "agent:eval": "pnpm --filter @plandelta/agent eval",
     "vision:install": "node scripts/python.mjs -m pip install -e ./apps/vision[dev]",
     "docker:up": "docker compose up --build -d",
     "docker:down": "docker compose down"
