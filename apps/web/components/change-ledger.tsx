@@ -2,7 +2,7 @@
 
 import { ArrowRight, Check, ImageOff, ScanSearch } from "lucide-react";
 import Image from "next/image";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { changeKindMeta, type ChangeKind, type SampleChange } from "../lib/sample-data";
 
@@ -83,6 +83,12 @@ export function ChangeLedger({
 }) {
   const selected = changes.find((change) => change.id === selectedId) ?? changes[0];
   const filtered = filter === "all" ? changes : changes.filter((change) => change.kind === filter);
+  const rowRefs = useRef(new Map<string, HTMLButtonElement>());
+
+  useEffect(() => {
+    const row = rowRefs.current.get(selectedId);
+    row?.scrollIntoView?.({ behavior: "smooth", block: "nearest" });
+  }, [selectedId]);
 
   return (
     <aside aria-label="Change ledger" className="change-ledger">
@@ -126,6 +132,10 @@ export function ChangeLedger({
                 className="ledger-row"
                 key={change.id}
                 onClick={() => onSelect(change.id)}
+                ref={(node) => {
+                  if (node) rowRefs.current.set(change.id, node);
+                  else rowRefs.current.delete(change.id);
+                }}
                 style={{ borderLeftColor: meta.color }}
                 type="button"
               >

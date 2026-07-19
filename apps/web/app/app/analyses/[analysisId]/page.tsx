@@ -78,6 +78,7 @@ export default async function AnalysisPage({
   }));
   const data: WorkbenchData = {
     sample: false,
+    analysisId: analysis.id,
     projectId: project.id,
     projectName: project.name,
     comparisonLabel: `${baselineRevision?.revisionCode ?? "Baseline"} → ${candidateRevision?.revisionCode ?? "Candidate"}`,

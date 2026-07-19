@@ -20,6 +20,7 @@ import { sampleChanges, sampleProject } from "../lib/sample-data";
 import type { SampleChange } from "../lib/sample-data";
 import type { CompareMode } from "./blueprint-canvas";
 import { ChangeLedger, type ChangeFilter } from "./change-ledger";
+import { EvidenceCopilot } from "./evidence-copilot/evidence-copilot";
 
 const BlueprintCanvas = dynamic(
   () => import("./blueprint-canvas").then((module) => module.BlueprintCanvas),
@@ -36,6 +37,7 @@ const BlueprintCanvas = dynamic(
 
 export type WorkbenchData = {
   sample: boolean;
+  analysisId?: string | undefined;
   projectId: string;
   projectName: string;
   comparisonLabel: string;
@@ -59,6 +61,7 @@ export type WorkbenchData = {
 
 const sampleWorkbench: WorkbenchData = {
   sample: true,
+  analysisId: sampleProject.analysis.id,
   projectId: sampleProject.id,
   projectName: sampleProject.name,
   comparisonLabel: "A2.14 · Rev 03 → 04",
@@ -343,6 +346,13 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           onFilterChange={setFilter}
           onSelect={selectChange}
           selectedId={selectedId}
+        />
+        <EvidenceCopilot
+          analysisId={data.analysisId}
+          changes={data.changes}
+          onSelectChange={selectChange}
+          projectId={data.projectId}
+          sample={data.sample}
         />
       </div>
     </main>
