@@ -42,12 +42,19 @@ class SafeError(ContractModel):
 class AgentGraphState(TypedDict, total=False):
     context: RunContext
     question: str
+    intent: str
+    route_reason_codes: list[str]
+    injection_signals: list[str]
     selected_specialists: list[SpecialistRole]
     evidence_packets: list[EvidencePacket]
     candidate_answer: VerifiedAnswer
     verifier_result: VerifierResult
+    invalid_source_ids: list[str]
     model_turns: int
     tool_calls: int
+    retrieved_chunks: int
+    total_tokens: int
+    estimated_cost_usd: float
     repair_passes: int
     cancelled: bool
     safe_error: SafeError

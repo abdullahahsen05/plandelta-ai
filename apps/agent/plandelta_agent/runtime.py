@@ -4,7 +4,9 @@ from functools import lru_cache
 from typing import Protocol
 from uuid import UUID
 
+from plandelta_agent.agents import build_specialists
 from plandelta_agent.config import AgentSettings, load_settings
+from plandelta_agent.graph import AgentWorkflow
 from plandelta_agent.ingestion import (
     DocumentExtractor,
     IngestionProcessor,
@@ -14,7 +16,14 @@ from plandelta_agent.ingestion import (
     StructureAwareChunker,
     VisionOcrFallback,
 )
-from plandelta_agent.providers import LocalEmbeddingProvider
+from plandelta_agent.models.state import RunContext
+from plandelta_agent.providers import (
+    BedrockChatProvider,
+    DeterministicChatProvider,
+    LocalEmbeddingProvider,
+)
+from plandelta_agent.retrieval import HybridKnowledgeRetriever
+from plandelta_agent.tools import PostgresEvidenceTools, build_tool_registry
 
 
 class AgentRuntimeUnavailableError(RuntimeError):
@@ -82,6 +91,34 @@ class AgentRuntime:
             embeddings=self._embeddings,
         )
         await processor.process(job_id)
+
+    def create_workflow(self, context: RunContext) -> AgentWorkflow:
+        settings = self._settings
+        if settings.database_url is None:
+            raise AgentRuntimeUnavailableError("DATABASE_URL is not configured.")
+        repository = PostgresKnowledgeRepository(settings.database_url.get_secret_value())
+        retriever = HybridKnowledgeRetriever(
+            repository=repository,
+            embeddings=self._embeddings,
+            max_results=settings.max_retrieved_chunks,
+        )
+        registry = build_tool_registry(
+            PostgresEvidenceTools(settings.database_url.get_secret_value(), retriever)
+        )
+        provider = (
+            BedrockChatProvider(
+                model_id=settings.bedrock_model_id or "",
+                region=settings.bedrock_region,
+                timeout_seconds=min(settings.run_timeout_seconds, 45),
+            )
+            if settings.chat_provider == "bedrock"
+            else DeterministicChatProvider()
+        )
+        return AgentWorkflow(
+            context=context,
+            provider=provider,
+            specialists=build_specialists(registry),
+        )
 
 
 @lru_cache(maxsize=1)
