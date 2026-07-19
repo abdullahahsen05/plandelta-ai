@@ -60,22 +60,30 @@ runtime inside a USD 25 target while preserving a real cloud path.
 
 Amazon Linux package conflicts, named-volume ownership, a self-public-IP
 health probe, IP TLS clients without DNS SNI, and swap inspection syntax all
-failed in distinct ways. Each was fixed at the underlying layer and verified
-through CloudFormation, SSM, public HTTPS, container state, and recovery tests
-without replacing the healthy instance unnecessarily.
+failed in distinct ways. During v0.2, CloudFormation restarted the existing
+instance without rerunning updated user data, leaving the old Compose bundle
+and then a stale IP certificate. The deployment now runs an explicit,
+commit-pinned SSM refresh after every stack update and rotates TLS when the
+public IP changes. Each failure was verified at the underlying layer without
+adding capacity.
 
 ## Measured evidence
 
-- Unit suites: 3 contract, 9 web, 41 API, and 27 vision tests.
-- Deployed journey: completed with one detected change, seven private
-  artifacts, and a Bedrock report, followed by cleanup.
-- Recovery: API restart recovered; a natural 3/3 failed job completed after
-  vision restoration and the real retry endpoint.
+- Unit/service suites: 66 agent, 56 API, 32 vision, 15 web, and 8 contract
+  tests, plus separately passing real Supabase RAG and AWS provider tests.
+- Frozen agent evaluation: 30/30 curated cases passed; routing, evidence,
+  citation, conflict, and refusal gates were 100%; unsupported claims,
+  cross-project disclosures, and injection overrides were zero.
+- Deployed drawing journey: authenticated upload through deterministic
+  CV/OCR/ONNX evidence and printable report, followed by cleanup.
+- Deployed RAG journey: technical-note ingestion, local BGE embedding,
+  pgvector hybrid retrieval, Bedrock answer, verified citation, review-only
+  RFI, and cleanup.
 - ONNX synthetic benchmark: 1.000 accuracy and macro-F1 versus 0.750 accuracy
   and 0.667 macro-F1 for deterministic rules; 0.1697 ms CPU p95 for one crop on
   the recorded development machine.
-- Verified AWS billing snapshot: USD 0.00 actual and estimated at capture time,
-  with lag acknowledged and budget alerts at USD 10, 15, 20, and 25.
+- Verified AWS billing snapshot: Budget actual USD 0.589; forecast unavailable
+  for insufficient history; alerts remain at USD 10, 15, 20, and 25.
 
 ## Limitations
 

@@ -1,7 +1,11 @@
 # API Contract
 
 All payloads are JSON unless an upload endpoint specifies multipart form data.
-Public routes use /v1. Internal vision routes use /internal/v1.
+Public routes use /v1. Internal vision and agent routes use /internal/v1.
+
+The final v0.2 knowledge-document, conversation, agent-run, SSE, citation,
+retry, and cancellation contracts are specified in
+[API_CHAT_V0_2.md](./API_CHAT_V0_2.md).
 
 ## Common behavior
 

@@ -6,6 +6,7 @@
 apps/
   web/          Next.js user interface
   api/          NestJS HTTP API and worker entry point
+  agent/        FastAPI bounded graph, ingestion, retrieval, and verification
   vision/       FastAPI computer-vision service
 packages/
   contracts/    Shared schemas, enums, and generated API types
@@ -25,8 +26,8 @@ docs/           Architecture, contract, security, testing, and deployment docs
 
 - Next.js runs on the host or in its own development process.
 - NestJS API and NestJS worker use the same codebase but separate entry points.
-- FastAPI runs as an independent service.
-- API, worker, and vision share a mounted local data directory through the
+- Agent and vision FastAPI applications run as independent private services.
+- API, worker, agent, and vision share a mounted local data directory through the
   LocalStorageProvider contract.
 - Supabase PostgreSQL is hosted or local. Application behavior must not depend
   on production-only database features that cannot be tested.
@@ -34,10 +35,12 @@ docs/           Architecture, contract, security, testing, and deployment docs
 ### Production
 
 - Vercel hosts Next.js.
-- EC2 runs reverse proxy, NestJS API, NestJS worker, and FastAPI containers.
-- Supabase hosts PostgreSQL and authentication.
+- EC2 runs reverse proxy, NestJS API/worker, agent FastAPI, and vision FastAPI
+  containers.
+- Supabase hosts PostgreSQL, authentication, durable queues, and pgvector.
 - S3 stores private input and derived artifacts.
-- Bedrock optionally generates evidence-grounded summaries.
+- Local BGE embeddings power hybrid retrieval; Bedrock generates bounded,
+  evidence-grounded summaries and Copilot responses.
 - CloudWatch receives redacted structured logs.
 
 ## Service responsibilities
@@ -50,6 +53,7 @@ docs/           Architecture, contract, security, testing, and deployment docs
 - Progress subscription plus polling fallback.
 - Blueprint canvas and evidence presentation.
 - Printable report.
+- Evidence Copilot with resumable durable runs and interactive citations.
 - Never has Supabase service role or AWS credentials.
 
 ### NestJS API
@@ -71,6 +75,21 @@ docs/           Architecture, contract, security, testing, and deployment docs
 - Persists changes and artifacts transactionally.
 - Calls local or Bedrock summary provider.
 - Marks completion or a structured retryable/permanent failure.
+- Claims durable ingestion and agent runs and invokes the private agent service
+  with server-owned scope.
+
+### FastAPI agent service
+
+- Extracts/chunks supporting documents and generates local BGE embeddings.
+- Searches only the authorized project through full-text/pgvector hybrid
+  retrieval.
+- Runs a schema-bounded supervisor and visual, knowledge, and impact
+  specialists over allowlisted tools.
+- Enforces duplicate/tool/turn/time/token/cost/repair limits.
+- Verifies every claim/citation, persists a safe trace, and returns a
+  review-only RFI when requested.
+- Never accepts browser-selected owner/project scope and is not publicly
+  exposed.
 
 ### FastAPI vision service
 

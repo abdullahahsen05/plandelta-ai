@@ -13,8 +13,9 @@ remaining safe work.
 ## Current execution state
 
 - Current phase: Phase 22 — Cost-controlled deployment and v0.2 handoff
-- Current task: Production AWS runtime is verified on the immutable v0.2 images; make the refresh
-  path durable, migrate production, deploy Vercel, and verify the complete production journeys
+- Current task: AWS, Vercel, production migrations, both production journeys, evidence, costs, and
+  cleanup are verified; run final documentation/CI review, merge, tag, release, and recheck public
+  paths
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -378,18 +379,43 @@ Completion evidence (2026-07-19):
 - [x] Add only the minimum new SSM configuration and IAM permissions.
 - [x] Verify local embeddings and agent concurrency one fit the current runtime; resize only after
       recorded failure and within the existing policy.
-- [ ] Apply production migrations safely and verify RLS.
-- [ ] Deploy backend and then Vercel changes.
-- [ ] Run authenticated production ingestion-to-cited-chat smoke test.
-- [ ] Verify clickable citations, schematic sample, report regression, quota, public sample, offline
+- [x] Apply production migrations safely and verify RLS.
+- [x] Deploy backend and then Vercel changes.
+- [x] Run authenticated production ingestion-to-cited-chat smoke test.
+- [x] Verify clickable citations, schematic sample, report regression, quota, public sample, offline
       state, logs, alarms, and cleanup.
-- [ ] Capture actual/forecast AWS cost and ensure the existing teardown gate is still active.
-- [ ] Populate `docs/APPLICATION_EVIDENCE_V0_2.md` from final source and tests.
-- [ ] Update README, architecture, operations, security, testing, limitations, screenshots, API
+- [x] Capture actual/forecast AWS cost and ensure the existing teardown gate is still active.
+- [x] Populate `docs/APPLICATION_EVIDENCE_V0_2.md` from final source and tests.
+- [x] Update README, architecture, operations, security, testing, limitations, screenshots, API
       docs, changelog, and release notes.
 - [ ] Run final CI, merge the reviewed branch, tag `v0.2.0`, and publish the release only after
       every gate passes.
 - [ ] Recheck deployed public paths after the release commit.
+
+Completion evidence in progress (2026-07-19):
+
+- Immutable tag `89bae3071e5dd6530f28ff4e1c83c98a38974fbd` is present in all three ECR repositories.
+  The bounded runtime runs one API, worker, agent, vision service, and proxy on the existing
+  `t3.small`; no prohibited service or second environment was introduced.
+- The deploy path was forced through an EC2 restart. Its commit-pinned SSM refresh restored the
+  current Compose bundle, detected the new public IP, rotated the certificate, and passed Phase 9/10
+  at `https://44.200.227.167`.
+- Post-deploy capacity was 843/1,913 MB used with 885 MB available, agent 87 MB idle, 2.8 MB swap
+  used, and 49% disk used. No resize was justified.
+- Production has all 12 migrations. RLS, analysis/ingestion/agent leases, stale recovery, hybrid
+  conflicts, and project knowledge scope passed.
+- Vercel production is Ready at `https://plandelta-ai.vercel.app`. A real supporting-document
+  journey passed ingestion → BGE → hybrid retrieval → Bedrock → verified citation → review-only RFI
+  → cleanup. A real browser drawing journey passed upload → CV/OCR/ONNX → linked evidence →
+  printable report → cleanup in 38 seconds.
+- Real-browser construction/schematic samples, mobile layout, cached cited answer, and citation-to-
+  ledger focus passed without console warnings/errors. The full local matrix already covers the
+  backend-offline labelled-sample state and production quota implementations.
+- All nine CloudWatch alarms were `OK`; all five service log streams were present. AWS Budget actual
+  was USD 0.589 against the USD 25 gate. Forecast was unavailable for insufficient history and is
+  not claimed.
+- Scoped cleanup removed the interrupted synthetic Playwright identity and four older exact
+  `plandelta-playwright-…@example.invalid` projects/users plus their private S3 objects.
 
 Final gate:
 

@@ -2,23 +2,26 @@
 
 ## Service topology
 
-PlanDelta runs four processes: the Next.js web application, the public NestJS
-API, one NestJS worker, and the private FastAPI vision service. Supabase
-PostgreSQL/Auth remains external. Local object storage is a private shared
-volume; the AWS phase replaces it with private S3 through the same interface.
+PlanDelta runs five processes: the Next.js web application, the public NestJS
+API, one NestJS worker, the private FastAPI vision service, and the private
+FastAPI agent service. Supabase PostgreSQL/Auth/pgvector remains external.
+Local object storage is a private shared volume; production uses private S3
+through the same interface.
 
-Only the web application and API are public. The vision service must remain
-private in deployed environments. One worker with concurrency one is the
-cost-controlled default.
+Only the web application and API are public. Vision and agent ports remain
+private. One worker and one agent execution with concurrency one are the
+cost-controlled defaults.
 
 ## Health and readiness
 
 | Endpoint | Purpose | Success criteria |
 | --- | --- | --- |
 | `GET /health/live` | API process liveness | Process can serve HTTP |
-| `GET /health/ready` | API dependency readiness | Database query and vision readiness both pass |
+| `GET /health/ready` | API dependency readiness | Database, vision, and agent readiness pass |
 | `GET /health/live` on port 8000 | Vision process liveness | FastAPI process can serve HTTP |
 | `GET /health/ready` on port 8000 | Vision engine readiness | Required CV runtime is available |
+| `GET /health/live` on port 8100 | Agent process liveness | FastAPI process can serve HTTP |
+| `GET /health/ready` on port 8100 | Agent readiness | Database/configuration is ready without eagerly loading embeddings |
 
 Liveness does not promise that an analysis can finish. Load balancers, Compose,
 and operators should use readiness when dependency health matters.
@@ -37,15 +40,21 @@ environment variables.
 | Uploaded bytes per user per rolling 24 hours | 500 MiB |
 | Analyses per user per rolling hour | 12 |
 | Active analyses per user | 3 |
+| Agent messages per user per day | 20 |
+| Agent estimated cost per user per day | USD 0.20 |
+| Concurrent AWS agent runs | 1 |
+| Agent tool calls / model turns / repair passes | 12 / 8 / 1 |
+| Agent wall-clock timeout | 60 seconds |
 | One uploaded file | 20 MiB |
 | PDF pages | 50 |
 | Decoded image pixels | 60 million |
 | Worker concurrency | 1 |
 
-The IP limiter is intentionally in-memory because the planned deployment has
+The IP limiter is intentionally in-memory because the deployed runtime has
 one API instance and no load balancer. User-level upload and analysis quotas
-are enforced from PostgreSQL and remain authoritative. A future multi-instance
-deployment must replace the IP limiter with a shared implementation.
+plus agent message/cost/concurrency quotas are enforced from PostgreSQL and
+remain authoritative. A future multi-instance deployment must replace the IP
+limiter with a shared implementation.
 
 Limit failures return `429` with a safe code and `Retry-After` where
 applicable. Request timeouts return `503 REQUEST_TIMEOUT`; dependency readiness
@@ -66,6 +75,11 @@ returns `503 DEPENDENCY_UNAVAILABLE`.
 - Worker scratch data is scoped to ignored runtime storage and is not source
   control material.
 - User uploads are never used as classifier training data.
+- Deleting a knowledge document removes its source/version objects and makes
+  its chunks unavailable to retrieval; stale versions remain auditable until
+  the owning document is deleted.
+- Agent answers, citations, and safe traces are durable project records.
+  Disposable verification projects and users are removed after each journey.
 
 The AWS storage phase must add S3 lifecycle rules for abandoned multipart
 uploads and temporary/demo prefixes. Permanent originals and evidence remain
@@ -85,12 +99,17 @@ Operational events include:
 - `job_claimed`
 - `job_failed`
 - `worker_loop_error`
+- `agent_run_completed`
+- `agent_run_failed`
+- `agent_tool_invocation`
+- `agent_quota_denied`
 
-Records contain safe operational identifiers, stages, status, duration, region
-count, and engine version where relevant. They do not contain authorization
-headers, cookies, environment values, database URLs, signed URLs, raw drawing
-bytes, or OCR text. Correlation IDs connect browser/API failures to worker
-activity without exposing private content.
+Records contain safe operational identifiers, stages, status, duration,
+counters, region count, and engine version where relevant. They do not contain
+authorization headers, cookies, environment values, database URLs, signed
+URLs, raw drawing bytes, OCR text, prompts, answers, or retrieved chunks.
+Correlation IDs connect browser/API failures to worker/agent activity without
+exposing private content.
 
 ## Local operation
 
@@ -104,7 +123,7 @@ Invoke-RestMethod http://localhost:8000/health/ready
 Follow service logs without printing environment configuration:
 
 ```powershell
-docker compose logs --tail 100 api worker vision
+docker compose logs --tail 100 api worker agent vision
 ```
 
 Stop the application while preserving its named local data volume:

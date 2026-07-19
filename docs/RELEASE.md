@@ -26,6 +26,46 @@ remain accepted and monitored. The images run non-root, the browser bundle conta
 checked server-only variable names, and the full-history secret scan is required immediately before
 each push.
 
+## v0.2 production release evidence
+
+The production candidate was verified on 2026-07-19:
+
+- Vercel production and alias are Ready at
+  [`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app).
+- AWS Phase 9 and Phase 10 verifiers passed at `https://44.200.227.167` after a forced EC2 restart.
+  The deployment refresh downloaded the exact Git revision, restored the immutable Compose bundle,
+  detected the changed public IP, issued a new short-lived IP certificate, and brought all five
+  services back healthy.
+- Agent, API, and vision ECR repositories contain immutable image tag
+  `89bae3071e5dd6530f28ff4e1c83c98a38974fbd`.
+- Production has all 12 migrations. The production database behavior check passed cross-user RLS,
+  analysis/ingestion/agent leases, stale recovery, hybrid conflicts, and project knowledge scope.
+- A disposable production supporting-document journey completed local BGE embedding, pgvector/full-
+  text retrieval, on-demand Nova Micro synthesis, one verified citation, a review-only RFI, and
+  cleanup.
+- A disposable production browser journey completed authentication, two drawing uploads, durable
+  CV/OCR/ONNX analysis, linked evidence and crop, printable report, and cleanup in 38 seconds.
+- Real-browser public checks passed for both labelled samples, mobile layout, cached cited response,
+  citation-to-ledger focus, and no console warnings/errors.
+- All nine CloudWatch alarms were `OK`. Log streams were present for API, worker, agent, vision, and
+  proxy.
+
+The retained `t3.small` did not require resizing. After deployment it had 1,913 MB total memory,
+843 MB used, 885 MB available, and only 2.8 MB of 2 GB swap used. The agent used approximately
+87 MB idle. The encrypted 20 GB gp3 root volume was 49% used.
+
+AWS Budgets reported USD 0.589 actual against the USD 25 teardown gate. Cost Explorer remained
+lagged and returned effectively zero unblended cost; AWS rejected the forecast request with
+`DataUnavailableException` because there was insufficient history. No forecast is claimed. Gross
+USD 10/15/20/25 alerts and the teardown gate remain binding.
+
+One interrupted browser smoke test created a disposable synthetic identity before local network
+access to Supabase timed out. The smallest journey rerun passed. A direct scoped cleanup removed
+that identity plus four older `plandelta-playwright-…@example.invalid` test projects/users and their
+private S3 objects; no non-synthetic owner was in scope.
+
+## Preserved v0.1 release evidence
+
 This record began with the local `v0.1.0-rc.1` candidate and now includes the
 verified Vercel production deployment and AWS runtime evidence captured on
 2026-07-18. Passwordless authentication, live uploads, deterministic analysis,

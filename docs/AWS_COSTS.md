@@ -121,6 +121,28 @@ Verified on 2026-07-18:
   two ECR repositories, one encrypted SSM parameter, two healthy alarms, seven-day logs, and an
   empty S3 bucket.
 
+## v0.2 agentic runtime evidence
+
+Verified on 2026-07-19 without adding another instance or prohibited service:
+
+- The existing `t3.small` now runs API, worker, private agent, private vision,
+  and TLS proxy containers. Agent and worker concurrency remain one.
+- A third immutable ECR repository holds the agent image. Local BGE embeddings
+  run inside the agent container; Supabase pgvector remains the database and
+  on-demand Nova Micro remains the only model service.
+- Post-deploy capacity was 843/1,913 MB memory used with 885 MB available,
+  2.8 MB of 2 GB swap used, and 9.8/20 GB disk used. The idle agent used about
+  87 MB, so no instance resize was justified.
+- All nine instance/agent alarms were `OK`; log streams existed for all five
+  long-running services.
+- AWS Budgets reported USD 0.589 actual against the USD 25 project gate. Cost
+  Explorer was still lagged, and AWS returned `DataUnavailableException` for
+  the forecast because there was insufficient history. No forecast is claimed.
+- A production Bedrock/RAG journey and a production drawing/report journey
+  both passed and removed their disposable data. Earlier synthetic Playwright
+  leftovers were scoped by the exact `@example.invalid` prefix, their S3
+  objects were removed, and their projects/users were deleted.
+
 ## Retention decision
 
 On 2026-07-18, the user explicitly chose to keep live processing available for the portfolio demo.
