@@ -8,6 +8,7 @@ from pydantic import ValidationError
 from plandelta_agent.models.answers import AgentConfidence, RfiDraft, VerifiedAnswer
 from plandelta_agent.models.evidence import Citation, NormalizedBox
 from plandelta_agent.models.requests import ExecuteAgentRunRequest
+from plandelta_agent.graph.synthesis import SynthesisDraft
 
 RUN_ID = UUID("11111111-1111-4111-8111-111111111111")
 PROJECT_ID = UUID("22222222-2222-4222-8222-222222222222")
@@ -81,3 +82,16 @@ def test_rfi_draft_is_always_review_only() -> None:
     )
 
     assert draft.status == "draft_requires_human_review"
+
+
+def test_synthesis_draft_normalizes_non_boolean_rfi_output() -> None:
+    draft = SynthesisDraft.model_validate(
+        {
+            "answerMarkdown": "One verified change is present.",
+            "confidence": "high",
+            "citedEvidenceIds": ["change:1"],
+            "draftRfi": "No RFI draft provided because the evidence is clear.",
+        }
+    )
+
+    assert draft.draft_rfi is False

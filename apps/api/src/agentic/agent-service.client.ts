@@ -4,6 +4,12 @@ import {
   agentExecutionResponseSchema,
   type AgentExecutionResponse,
 } from "./agent-response.schema.js";
+import { z } from "zod";
+
+const agentCapabilitiesSchema = z.object({
+  liveChatReady: z.boolean(),
+  chatProvider: z.enum(["bedrock", "fake"]),
+});
 
 @Injectable()
 export class AgentServiceClient {
@@ -36,6 +42,27 @@ export class AgentServiceClient {
       signal,
     );
     return agentExecutionResponseSchema.parse(payload);
+  }
+
+  async capabilities() {
+    if (process.env.AGENT_ENABLED !== "true") {
+      return { available: false, provider: "offline" as const };
+    }
+    try {
+      const configuration = this.configuration;
+      const response = await fetch(`${configuration.baseUrl}/health/ready`, {
+        signal: AbortSignal.timeout(3_000),
+        cache: "no-store",
+      });
+      if (!response.ok) return { available: false, provider: "offline" as const };
+      const parsed = agentCapabilitiesSchema.parse(await response.json());
+      return {
+        available: parsed.liveChatReady,
+        provider: parsed.liveChatReady ? ("bedrock" as const) : ("offline" as const),
+      };
+    } catch {
+      return { available: false, provider: "offline" as const };
+    }
   }
 
   private async request(

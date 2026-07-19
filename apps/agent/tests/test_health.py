@@ -28,3 +28,7 @@ def test_readiness_reports_runtime_without_loading_models() -> None:
 
     assert response.status_code == 200
     assert response.json()["localEmbeddingsConfigured"] is True
+    assert response.json()["chatProvider"] in {"bedrock", "fake"}
+    assert response.json()["liveChatReady"] is (
+        response.json()["chatProvider"] == "bedrock"
+    )

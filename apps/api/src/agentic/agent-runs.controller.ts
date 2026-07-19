@@ -15,6 +15,7 @@ import { Observable } from "rxjs";
 import { CurrentAuth } from "../auth/current-auth.decorator.js";
 import type { AuthContext } from "../auth/auth.types.js";
 import { ConversationsService } from "./conversations.service.js";
+import { AgentServiceClient } from "./agent-service.client.js";
 
 const terminalStatuses = new Set(["COMPLETED", "FAILED", "CANCELLED", "EXPIRED"]);
 
@@ -22,7 +23,15 @@ const terminalStatuses = new Set(["COMPLETED", "FAILED", "CANCELLED", "EXPIRED"]
 @ApiBearerAuth()
 @Controller("agent-runs")
 export class AgentRunsController {
-  constructor(private readonly conversations: ConversationsService) {}
+  constructor(
+    private readonly conversations: ConversationsService,
+    private readonly agent: AgentServiceClient,
+  ) {}
+
+  @Get("capabilities")
+  capabilities() {
+    return this.agent.capabilities();
+  }
 
   @Get(":runId")
   get(

@@ -14,3 +14,5 @@ class HealthResponse(ContractModel):
 class ReadinessResponse(HealthResponse):
     graph_runtime_ready: bool
     local_embeddings_configured: bool
+    live_chat_ready: bool
+    chat_provider: Literal["bedrock", "fake"]

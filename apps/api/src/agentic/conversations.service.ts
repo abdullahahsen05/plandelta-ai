@@ -58,6 +58,18 @@ const messageSelect = {
     },
     orderBy: { displayOrder: "asc" as const },
   },
+  requestedRuns: {
+    select: {
+      id: true,
+      status: true,
+      failureCode: true,
+      cancellationRequested: true,
+      createdAt: true,
+      updatedAt: true,
+    },
+    orderBy: { createdAt: "desc" as const },
+    take: 1,
+  },
 } as const;
 
 const runSelect = {

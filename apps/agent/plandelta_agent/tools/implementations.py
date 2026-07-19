@@ -80,7 +80,7 @@ class PostgresEvidenceTools:
                 WHERE c.analysis_id = %s
                   AND a.project_id = %s
                   AND p.owner_id = %s
-                  AND a.status = 'completed'
+                  AND a.status = 'COMPLETED'
                 ORDER BY c.sequence
                 LIMIT %s
                 """,

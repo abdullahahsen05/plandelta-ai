@@ -4,7 +4,7 @@ import json
 from typing import Literal
 from uuid import NAMESPACE_URL, uuid5
 
-from pydantic import Field, ValidationError
+from pydantic import Field, ValidationError, field_validator
 
 from plandelta_agent.guardrails import RunBudget
 from plandelta_agent.models.answers import AgentConfidence, RfiDraft, VerifiedAnswer
@@ -28,6 +28,11 @@ class SynthesisDraft(ContractModel):
     confidence: AgentConfidence
     cited_evidence_ids: list[str] = Field(default_factory=list, max_length=20)
     draft_rfi: bool = False
+
+    @field_validator("draft_rfi", mode="before")
+    @classmethod
+    def normalize_draft_rfi(cls, value: object) -> bool:
+        return value is True or (isinstance(value, str) and value.lower() == "true")
 
 
 class SynthesisOutcome(ContractModel):

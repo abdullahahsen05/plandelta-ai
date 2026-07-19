@@ -78,6 +78,17 @@ try {
     [conversationId, projectId, analysisId, ownerId],
   );
   await client.query(
+    `INSERT INTO public.detected_changes (
+      analysis_id, sequence, change_type, category, source,
+      x, y, width, height, confidence, affected_trades, impact
+    ) VALUES (
+      $1, 1, 'ADDED', 'WALL_LINEWORK', 'RULES',
+      0.18, 0.22, 0.20, 0.16, 0.91, ARRAY['framing', 'electrical'],
+      'Review the added partition with framing and electrical coordination.'
+    )`,
+    [analysisId],
+  );
+  await client.query(
     `INSERT INTO public.messages (
       id, conversation_id, author_id, role, message_type, status, content, idempotency_key
     ) VALUES (
@@ -125,17 +136,28 @@ try {
     assistant_count: number;
     citation_count: number;
     step_count: number;
+    answer_status: string | null;
+    provider: string | null;
+    warnings: string[];
+    model_turn_count: number;
   }>(
     `SELECT r.status::text,
             r.assistant_message_id,
             r.failure_code,
             r.verifier_outcome,
+            r.model_turn_count,
             (SELECT count(*)::integer FROM public.messages m
              WHERE m.conversation_id = r.conversation_id AND m.role = 'assistant') AS assistant_count,
             (SELECT count(*)::integer FROM public.citations c
              WHERE c.agent_run_id = r.id) AS citation_count,
             (SELECT count(*)::integer FROM public.agent_steps s
-             WHERE s.agent_run_id = r.id) AS step_count
+             WHERE s.agent_run_id = r.id) AS step_count,
+            (SELECT m.answer_status FROM public.messages m
+             WHERE m.id = r.assistant_message_id) AS answer_status,
+            (SELECT m.provider FROM public.messages m
+             WHERE m.id = r.assistant_message_id) AS provider,
+            COALESCE((SELECT m.warnings FROM public.messages m
+             WHERE m.id = r.assistant_message_id), '[]'::jsonb) AS warnings
      FROM public.agent_runs r
      WHERE r.id = $1`,
     [runId],
@@ -145,11 +167,12 @@ try {
     terminalStatus !== "completed" ||
     !verified?.assistant_message_id ||
     verified.assistant_count !== 1 ||
+    verified.citation_count !== 1 ||
     verified.step_count < 2 ||
     verified.verifier_outcome !== "approved"
   ) {
     throw new Error(
-      `Agentic execution failed safely: status=${terminalStatus}, code=${verified?.failure_code ?? "none"}, assistants=${verified?.assistant_count ?? 0}, steps=${verified?.step_count ?? 0}.`,
+      `Agentic execution failed safely: status=${terminalStatus}, code=${verified?.failure_code ?? "none"}, assistants=${verified?.assistant_count ?? 0}, citations=${verified?.citation_count ?? 0}, answer=${verified?.answer_status ?? "none"}, provider=${verified?.provider ?? "none"}, modelTurns=${verified?.model_turn_count ?? 0}, warnings=${(verified?.warnings ?? []).join("|") || "none"}, steps=${verified?.step_count ?? 0}.`,
     );
   }
   process.stdout.write(

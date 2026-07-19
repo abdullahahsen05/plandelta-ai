@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 import importlib.util
-from typing import Annotated
+import os
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import Depends, FastAPI, HTTPException, Request, status
@@ -67,10 +68,15 @@ def live() -> HealthResponse:
 
 @app.get("/health/ready", response_model=ReadinessResponse)
 def ready() -> ReadinessResponse:
+    chat_provider: Literal["bedrock", "fake"] = (
+        "bedrock" if os.getenv("AGENT_CHAT_PROVIDER", "fake") == "bedrock" else "fake"
+    )
     return ReadinessResponse(
         version=__version__,
         graph_runtime_ready=importlib.util.find_spec("langgraph") is not None,
         local_embeddings_configured=True,
+        live_chat_ready=chat_provider == "bedrock" and bool(os.getenv("BEDROCK_MODEL_ID")),
+        chat_provider=chat_provider,
     )
 
 
