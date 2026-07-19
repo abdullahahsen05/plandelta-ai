@@ -3,7 +3,9 @@ import { expect, test } from "@playwright/test";
 test("fixture-driven project journey reaches the labelled evidence workbench", async ({ page }) => {
   await page.goto("/app");
   await expect(page.getByRole("heading", { name: "Projects" })).toBeVisible();
-  await expect(page.getByText("BUILT-IN SAMPLE", { exact: true })).toBeVisible();
+  const sampleLabels = page.getByText("BUILT-IN SAMPLE", { exact: true });
+  await expect(sampleLabels).toHaveCount(2);
+  await expect(sampleLabels.first()).toBeVisible();
 
   await Promise.all([
     page.waitForURL("**/app/projects/northline-office"),
@@ -36,9 +38,9 @@ test("comparison controls expose zoom, swipe, filtering, and evidence selection"
   await expect(page.getByText("115%", { exact: true })).toBeVisible();
 
   await page.getByRole("button", { name: "Removed", exact: true }).click();
-  await expect(page.getByRole("button", { name: /Break-room sink removed/ })).toBeVisible();
-  await page.getByRole("button", { name: /Break-room sink removed/ }).click();
-  await expect(page.getByRole("heading", { name: "Break-room sink removed" })).toBeVisible();
+  await expect(page.getByRole("button", { name: /Fixture symbol removed/ })).toBeVisible();
+  await page.getByRole("button", { name: /Fixture symbol removed/ }).click();
+  await expect(page.getByRole("heading", { name: "Fixture symbol removed" })).toBeVisible();
 });
 
 test("projects and evidence remain usable at mobile width with reduced motion", async ({
