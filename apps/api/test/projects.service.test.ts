@@ -32,4 +32,26 @@ describe("ProjectsService", () => {
     );
     expect(findMany).not.toHaveBeenCalled();
   });
+
+  it("locks the analysis profile after project evidence exists", async () => {
+    const update = vi.fn();
+    const service = new ProjectsService({
+      project: {
+        findFirst: vi.fn().mockResolvedValue({
+          analysisProfile: "CONSTRUCTION_DRAWING",
+          _count: { revisions: 1, analyses: 0, knowledgeDocuments: 0 },
+        }),
+        update,
+      },
+    } as unknown as DatabaseService);
+
+    await expectApiError(
+      service.update("owner-a", "00000000-0000-4000-8000-000000000010", {
+        analysisProfile: "ENGINEERING_SCHEMATIC",
+      }),
+      "ANALYSIS_PROFILE_LOCKED",
+      409,
+    );
+    expect(update).not.toHaveBeenCalled();
+  });
 });

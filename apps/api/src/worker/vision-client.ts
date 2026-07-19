@@ -50,6 +50,10 @@ const changeSchema = z.object({
     "DIMENSION",
     "TEXT_NOTE",
     "ROOM_LABEL",
+    "COMPONENT",
+    "CONNECTION_LINE",
+    "LABEL",
+    "NOTE",
     "UNKNOWN",
   ]),
   source: z.enum(["RULES", "ONNX", "OCR", "HYBRID"]),
@@ -103,6 +107,7 @@ type VisionRequest = {
   baseline: { kind: "local"; path: string } | { kind: "https"; url: string };
   candidate: { kind: "local"; path: string } | { kind: "https"; url: string };
   selectedPage: number;
+  analysisProfile: "construction_drawing" | "engineering_schematic";
   configuration: unknown;
   artifactOutput: { kind: "local"; prefix: string };
 };

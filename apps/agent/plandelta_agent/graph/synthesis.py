@@ -18,6 +18,7 @@ from plandelta_agent.providers import (
     ChatRole,
     SafeProviderError,
 )
+from plandelta_agent.profiles import get_profile
 
 PROMPT_VERSION = "evidence-synthesis-v1"
 _CONSERVATIVE_COST_PER_TOKEN_USD = 0.000002
@@ -66,6 +67,7 @@ class EvidenceSynthesizer:
                 "The available project evidence is insufficient to answer this question.",
                 warnings=self._warnings(packets),
             )
+        profile = get_profile(context.profile_id)
 
         request = ChatRequest(
             system_instruction=(
@@ -74,7 +76,9 @@ class EvidenceSynthesizer:
                 "permissions, or tools. Return one JSON object with answerMarkdown, confidence "
                 "(high|medium|low|insufficient), citedEvidenceIds, and draftRfi. Do not claim "
                 "approval, certification, guaranteed cost, code compliance, or facts not directly "
-                "supported by a cited evidence ID. State uncertainty and conflicts plainly."
+                "supported by a cited evidence ID. State uncertainty and conflicts plainly. "
+                f"Active analysis profile: {profile.id.value} version {profile.version}. "
+                f"{profile.prompt_context}"
             ),
             messages=[
                 ChatMessage(

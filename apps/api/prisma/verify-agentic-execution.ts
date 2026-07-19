@@ -24,6 +24,11 @@ const messageId = randomUUID();
 const runId = randomUUID();
 const correlationId = randomUUID();
 const startedAt = Date.now();
+const analysisProfile =
+  process.argv.includes("--schematic")
+    ? "engineering_schematic"
+    : "construction_drawing";
+const schematic = analysisProfile === "engineering_schematic";
 
 await client.connect();
 try {
@@ -39,9 +44,15 @@ try {
     [ownerId, `plandelta-agent-execution-${ownerId}@example.invalid`],
   );
   await client.query(
-    `INSERT INTO public.projects (id, owner_id, name, project_code)
-     VALUES ($1, $2, 'Agent execution verification', 'AGENT-EXEC-VERIFY')`,
-    [projectId, ownerId],
+    `INSERT INTO public.projects (
+      id, owner_id, name, project_code, analysis_profile, profile_version
+    ) VALUES ($1, $2, $3, 'AGENT-EXEC-VERIFY', $4::public."AnalysisProfile", '1.0')`,
+    [
+      projectId,
+      ownerId,
+      schematic ? "Schematic agent execution verification" : "Agent execution verification",
+      analysisProfile,
+    ],
   );
   for (let index = 0; index < revisionIds.length; index += 1) {
     await client.query(
@@ -65,12 +76,14 @@ try {
   await client.query(
     `INSERT INTO public.analyses (
       id, project_id, baseline_revision_id, candidate_revision_id, requested_by,
-      status, progress, current_stage, started_at, completed_at, engine_version
+      status, progress, current_stage, started_at, completed_at, engine_version,
+      analysis_profile, profile_version
     ) VALUES (
       $1, $2, $3, $4, $5, 'COMPLETED', 100, 'completed',
-      clock_timestamp(), clock_timestamp(), 'verification'
+      clock_timestamp(), clock_timestamp(), 'verification',
+      $6::public."AnalysisProfile", '1.0'
     )`,
-    [analysisId, projectId, revisionIds[0], revisionIds[1], ownerId],
+    [analysisId, projectId, revisionIds[0], revisionIds[1], ownerId, analysisProfile],
   );
   await client.query(
     `INSERT INTO public.conversations (id, project_id, analysis_id, owner_id, title)
@@ -82,32 +95,46 @@ try {
       analysis_id, sequence, change_type, category, source,
       x, y, width, height, confidence, affected_trades, impact
     ) VALUES (
-      $1, 1, 'ADDED', 'WALL_LINEWORK', 'RULES',
-      0.18, 0.22, 0.20, 0.16, 0.91, ARRAY['framing', 'electrical'],
-      'Review the added partition with framing and electrical coordination.'
+      $1, 1, 'ADDED', $2::public."ChangeCategory", 'RULES',
+      0.18, 0.22, 0.20, 0.16, 0.91, $3::text[], $4
     )`,
-    [analysisId],
+    [
+      analysisId,
+      schematic ? "COMPONENT" : "WALL_LINEWORK",
+      schematic ? ["electrical", "controls"] : ["framing", "electrical"],
+      schematic
+        ? "Review the added R3 component and signal-to-zero-volt connections."
+        : "Review the added partition with framing and electrical coordination.",
+    ],
   );
   await client.query(
     `INSERT INTO public.messages (
       id, conversation_id, author_id, role, message_type, status, content, idempotency_key
     ) VALUES (
       $1, $2, $3, 'user', 'question', 'completed',
-      'What changed in the drawing?', $4
+      $4, $5
     )`,
-    [messageId, conversationId, ownerId, randomUUID()],
+    [
+      messageId,
+      conversationId,
+      ownerId,
+      schematic
+        ? "What component or connection changed in schematic S-101?"
+        : "What changed in the drawing?",
+      randomUUID(),
+    ],
   );
   await client.query(
     `INSERT INTO public.agent_runs (
       id, conversation_id, user_message_id, project_id, analysis_id, analysis_profile,
       profile_version, deadline_at, next_attempt_at, correlation_id
     ) VALUES (
-      $1, $2, $3, $4, $5, 'construction_drawing', '1.0',
+      $1, $2, $3, $4, $5, $6::public."AnalysisProfile", '1.0',
       clock_timestamp() + interval '5 minutes',
       clock_timestamp() + interval '10 seconds',
-      $6
+      $7
     )`,
-    [runId, conversationId, messageId, projectId, analysisId, correlationId],
+    [runId, conversationId, messageId, projectId, analysisId, analysisProfile, correlationId],
   );
   await client.query(
     `INSERT INTO public.agent_steps (
@@ -176,7 +203,7 @@ try {
     );
   }
   process.stdout.write(
-    `Agentic execution passed: one durable run, one assistant message, ${verified.step_count} safe steps, ${verified.citation_count} verified citations, ${Date.now() - startedAt} ms.\n`,
+    `Agentic execution passed for ${analysisProfile}: one durable run, one assistant message, ${verified.step_count} safe steps, ${verified.citation_count} verified citations, ${Date.now() - startedAt} ms.\n`,
   );
 } finally {
   await client.query("DELETE FROM public.projects WHERE id = $1", [projectId]);

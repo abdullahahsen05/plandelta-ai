@@ -17,6 +17,7 @@
     "db:migrate": "prisma migrate deploy",
     "db:verify-behavior": "tsx prisma/verify-database-behavior.ts",
     "db:verify-agentic": "tsx prisma/verify-agentic-execution.ts",
+    "db:verify-schematic": "tsx prisma/verify-agentic-execution.ts --schematic",
     "db:verify-clean": "tsx prisma/verify-clean-migration.ts",
     "db:seed": "prisma db seed"
   },

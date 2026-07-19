@@ -12,6 +12,7 @@ from plandelta_vision.models import AnalysisRequest
 from plandelta_vision.pipeline import analyze
 
 FIXTURES = Path(__file__).resolve().parents[2] / ".." / "samples" / "vision"
+SCHEMATIC_FIXTURES = Path(__file__).resolve().parents[2] / ".." / "samples" / "schematic"
 
 
 def settings(root: Path) -> VisionSettings:
@@ -111,6 +112,28 @@ def test_revision_annotation_produces_real_directional_evidence(fixture_root: Pa
     assert result.metrics.added_area_ratio > result.metrics.removed_area_ratio
     assert any(change.change_type == "ADDED" for change in result.changes)
     assert any(artifact.kind == "EVIDENCE_CROP" for artifact in result.artifacts)
+
+
+def test_engineering_schematic_profile_detects_profile_categories(tmp_path: Path) -> None:
+    shutil.copy2(SCHEMATIC_FIXTURES / "baseline.png", tmp_path / "baseline.png")
+    shutil.copy2(SCHEMATIC_FIXTURES / "candidate.png", tmp_path / "candidate.png")
+    analysis_request = request("candidate.png", "artifacts/schematic")
+    analysis_request.analysis_profile = "engineering_schematic"
+
+    result = analyze(analysis_request, settings(tmp_path))
+
+    assert result.changes
+    assert {change.category for change in result.changes} <= {
+        "COMPONENT",
+        "CONNECTION_LINE",
+        "LABEL",
+        "NOTE",
+        "DIMENSION",
+        "UNKNOWN",
+    }
+    assert any(
+        change.category in {"COMPONENT", "CONNECTION_LINE"} for change in result.changes
+    )
 
 
 def test_auto_classifier_uses_selected_onnx_model(fixture_root: Path) -> None:

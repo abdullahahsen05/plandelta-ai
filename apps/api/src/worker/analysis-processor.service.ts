@@ -73,6 +73,10 @@ export class AnalysisProcessorService {
             analysis.candidateRevision.selectedPage ??
             1,
         ),
+        analysisProfile:
+          analysis.analysisProfile === "ENGINEERING_SCHEMATIC"
+            ? "engineering_schematic"
+            : "construction_drawing",
         configuration: analysis.configuration,
         artifactOutput: { kind: "local", prefix: scratchPrefix },
       });
@@ -149,7 +153,9 @@ export class AnalysisProcessorService {
           impact: true,
         },
       });
-      const summary = await this.summary.summarizeAnalysis(persistedChanges);
+      const summary = await this.summary.summarizeAnalysis(persistedChanges, {
+        analysisProfile: analysis.analysisProfile,
+      });
 
       await this.database.inTransaction(async (transaction) => {
         await transaction.analysisReport.upsert({

@@ -11,6 +11,8 @@ const projectSelect = {
   projectCode: true,
   description: true,
   status: true,
+  analysisProfile: true,
+  profileVersion: true,
   createdAt: true,
   updatedAt: true,
   _count: { select: { revisions: true, analyses: true } },
@@ -27,6 +29,8 @@ export class ProjectsService {
         name: input.name.trim(),
         projectCode: input.projectCode?.trim() || null,
         description: input.description?.trim() || null,
+        analysisProfile: input.analysisProfile ?? "CONSTRUCTION_DRAWING",
+        profileVersion: "1.0",
       },
       select: projectSelect,
     });
@@ -90,7 +94,33 @@ export class ProjectsService {
   }
 
   async update(ownerId: string, projectId: string, input: UpdateProjectDto) {
-    await this.getOwned(ownerId, projectId);
+    const existing = await this.database.project.findFirst({
+      where: { id: projectId, ownerId },
+      select: {
+        analysisProfile: true,
+        _count: { select: { revisions: true, analyses: true, knowledgeDocuments: true } },
+      },
+    });
+    if (!existing) {
+      throw new ApiException(
+        "PROJECT_NOT_FOUND",
+        "The project was not found.",
+        HttpStatus.NOT_FOUND,
+      );
+    }
+    if (
+      input.analysisProfile !== undefined &&
+      input.analysisProfile !== existing.analysisProfile &&
+      (existing._count.revisions > 0 ||
+        existing._count.analyses > 0 ||
+        existing._count.knowledgeDocuments > 0)
+    ) {
+      throw new ApiException(
+        "ANALYSIS_PROFILE_LOCKED",
+        "The analysis profile cannot change after drawings, analyses, or knowledge evidence exist.",
+        HttpStatus.CONFLICT,
+      );
+    }
     return this.database.project.update({
       where: { id: projectId },
       data: {
@@ -102,6 +132,9 @@ export class ProjectsService {
           ? { description: input.description.trim() || null }
           : {}),
         ...(input.status !== undefined ? { status: input.status } : {}),
+        ...(input.analysisProfile !== undefined
+          ? { analysisProfile: input.analysisProfile, profileVersion: "1.0" }
+          : {}),
       },
       select: projectSelect,
     });

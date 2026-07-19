@@ -10,7 +10,10 @@ function titleCase(value: string) {
     .replace(/\b\w/g, (letter) => letter.toUpperCase());
 }
 
-export function buildDeterministicReport(changes: ReportChange[]) {
+export function buildDeterministicReport(
+  changes: ReportChange[],
+  profile: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC" = "CONSTRUCTION_DRAWING",
+) {
   const counts = changes.reduce<Record<string, number>>((result, change) => {
     result[change.changeType] = (result[change.changeType] ?? 0) + 1;
     return result;
@@ -22,7 +25,9 @@ export function buildDeterministicReport(changes: ReportChange[]) {
           counts,
         )
           .map(([type, count]) => `${count} ${titleCase(type)}`)
-          .join(", ")}. Review each region against the source drawings before coordination.`;
+          .join(", ")}. Review each region against the source ${
+            profile === "ENGINEERING_SCHEMATIC" ? "schematics" : "drawings"
+          } before coordination.`;
 
   return {
     executiveSummary,

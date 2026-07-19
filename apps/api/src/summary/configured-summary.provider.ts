@@ -2,7 +2,12 @@ import { Injectable, Logger } from "@nestjs/common";
 
 import { BedrockSummaryProvider } from "./bedrock-summary.provider.js";
 import { DeterministicSummaryProvider } from "./deterministic-summary.provider.js";
-import type { GeneratedSummary, SummaryChange, SummaryProvider } from "./summary.types.js";
+import type {
+  GeneratedSummary,
+  SummaryChange,
+  SummaryContext,
+  SummaryProvider,
+} from "./summary.types.js";
 
 @Injectable()
 export class ConfiguredSummaryProvider implements SummaryProvider {
@@ -13,12 +18,15 @@ export class ConfiguredSummaryProvider implements SummaryProvider {
     private readonly bedrock: BedrockSummaryProvider,
   ) {}
 
-  async summarizeAnalysis(changes: SummaryChange[]): Promise<GeneratedSummary> {
+  async summarizeAnalysis(
+    changes: SummaryChange[],
+    context?: SummaryContext,
+  ): Promise<GeneratedSummary> {
     if (process.env.SUMMARY_PROVIDER?.toLowerCase() !== "bedrock") {
-      return this.deterministic.summarizeAnalysis(changes);
+      return this.deterministic.summarizeAnalysis(changes, context);
     }
     try {
-      return await this.bedrock.summarizeAnalysis(changes);
+      return await this.bedrock.summarizeAnalysis(changes, context);
     } catch {
       this.logger.warn(
         JSON.stringify({
@@ -26,7 +34,7 @@ export class ConfiguredSummaryProvider implements SummaryProvider {
           reason: "provider_unavailable_or_invalid",
         }),
       );
-      const fallback = await this.deterministic.summarizeAnalysis(changes);
+      const fallback = await this.deterministic.summarizeAnalysis(changes, context);
       return {
         ...fallback,
         structuredSummary: {

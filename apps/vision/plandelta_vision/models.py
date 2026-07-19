@@ -79,6 +79,9 @@ class AnalysisRequest(ContractModel):
     baseline: ReadReference
     candidate: ReadReference
     selected_page: int = Field(default=1, ge=1)
+    analysis_profile: Literal["construction_drawing", "engineering_schematic"] = (
+        "construction_drawing"
+    )
     configuration: ProcessingConfiguration = Field(default_factory=ProcessingConfiguration)
     artifact_output: ArtifactOutput
 
@@ -167,6 +170,10 @@ class DetectedChangeResult(ContractModel):
         "DIMENSION",
         "TEXT_NOTE",
         "ROOM_LABEL",
+        "COMPONENT",
+        "CONNECTION_LINE",
+        "LABEL",
+        "NOTE",
         "UNKNOWN",
     ]
     source: Literal["RULES", "ONNX", "OCR", "HYBRID"]

@@ -20,6 +20,14 @@ export class CreateProjectDto {
   @IsString()
   @MaxLength(2000)
   description?: string;
+
+  @ApiPropertyOptional({
+    enum: ["CONSTRUCTION_DRAWING", "ENGINEERING_SCHEMATIC"],
+    default: "CONSTRUCTION_DRAWING",
+  })
+  @IsOptional()
+  @IsIn(["CONSTRUCTION_DRAWING", "ENGINEERING_SCHEMATIC"])
+  analysisProfile?: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
 }
 
 export class UpdateProjectDto {
@@ -46,6 +54,11 @@ export class UpdateProjectDto {
   @IsOptional()
   @IsIn(["ACTIVE", "ARCHIVED"])
   status?: "ACTIVE" | "ARCHIVED";
+
+  @ApiPropertyOptional({ enum: ["CONSTRUCTION_DRAWING", "ENGINEERING_SCHEMATIC"] })
+  @IsOptional()
+  @IsIn(["CONSTRUCTION_DRAWING", "ENGINEERING_SCHEMATIC"])
+  analysisProfile?: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
 }
 
 export class ProjectListQueryDto {

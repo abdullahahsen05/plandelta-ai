@@ -27,6 +27,8 @@ export const safeAnalysisSelect = {
   metrics: true,
   warnings: true,
   summaryProvider: true,
+  analysisProfile: true,
+  profileVersion: true,
   createdAt: true,
   updatedAt: true,
 } as const;
@@ -133,6 +135,8 @@ export class AnalysesService {
         baselineRevisionId: input.baselineRevisionId,
         candidateRevisionId: input.candidateRevisionId,
         requestedBy: ownerId,
+        analysisProfile: project.analysisProfile,
+        profileVersion: project.profileVersion,
         configuration: { ...input.configuration },
         maxAttempts: Number(process.env.JOB_MAX_ATTEMPTS ?? 3),
       },
