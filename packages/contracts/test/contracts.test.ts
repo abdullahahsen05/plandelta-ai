@@ -30,7 +30,7 @@ describe("shared contracts", () => {
 
   it("requires a versioned health response", () => {
     expect(
-      healthResponseSchema.safeParse({ service: "api", status: "ok", version: "0.1.0" }).success,
+      healthResponseSchema.safeParse({ service: "api", status: "ok", version: "0.2.0" }).success,
     ).toBe(true);
   });
 });

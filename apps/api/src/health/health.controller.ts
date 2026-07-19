@@ -13,7 +13,7 @@ export class HealthController {
 
   @Get("live")
   live(): HealthResponse {
-    return { service: "api", status: "ok", version: "0.1.0" };
+    return { service: "api", status: "ok", version: "0.2.0" };
   }
 
   @Get("ready")
@@ -43,7 +43,7 @@ export class HealthController {
       return {
         service: "api",
         status: "ok",
-        version: "0.1.0",
+        version: "0.2.0",
         database: "ok",
         agent,
         vision: "ok",

@@ -19,7 +19,7 @@ RUN groupadd --gid 1000 plandelta \
 WORKDIR /app
 COPY pyproject.toml ./
 RUN mkdir plandelta_vision \
-    && printf '__version__ = "0.1.0"\n' > plandelta_vision/__init__.py \
+    && printf '__version__ = "0.2.0"\n' > plandelta_vision/__init__.py \
     && python -m pip install . \
     && rm -rf plandelta_vision
 COPY plandelta_vision ./plandelta_vision

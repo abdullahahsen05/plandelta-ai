@@ -1,6 +1,6 @@
 {
   "name": "plandelta-ai",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "description": "Evidence-based construction blueprint revision analysis.",
   "packageManager": "pnpm@11.9.0",
