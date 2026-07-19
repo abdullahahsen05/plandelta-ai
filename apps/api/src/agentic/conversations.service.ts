@@ -281,30 +281,53 @@ export class ConversationsService {
         HttpStatus.CONFLICT,
       );
     }
-    const next = await this.database.agentRun.create({
-      data: {
-        conversationId: run.conversationId,
-        userMessageId: run.userMessageId,
-        projectId: run.projectId,
-        analysisId: run.analysisId,
-        analysisProfile: (
-          await this.database.project.findUniqueOrThrow({
-            where: { id: run.projectId },
-            select: { analysisProfile: true },
-          })
-        ).analysisProfile,
-        profileVersion: "1.0",
-        maxAttempts: Number(process.env.AGENT_MAX_ATTEMPTS ?? 3),
-        deadlineAt: new Date(
-          Date.now() + Number(process.env.AGENT_QUEUE_DEADLINE_SECONDS ?? 600) * 1000,
-        ),
-        correlationId,
-      },
-      select: runSelect,
+    await this.enforceQuota(ownerId, run.projectId);
+    const project = await this.database.project.findUniqueOrThrow({
+      where: { id: run.projectId },
+      select: { analysisProfile: true, profileVersion: true },
     });
-    await this.audit(ownerId, run.projectId, "AGENT_RUN_RETRIED", {
-      priorRunId: runId,
-      runId: next.id,
+    const nextId = randomUUID();
+    const next = await this.database.inTransaction(async (transaction) => {
+      const created = await transaction.agentRun.create({
+        data: {
+          id: nextId,
+          conversationId: run.conversationId,
+          userMessageId: run.userMessageId,
+          projectId: run.projectId,
+          analysisId: run.analysisId,
+          analysisProfile: project.analysisProfile,
+          profileVersion: project.profileVersion,
+          maxAttempts: Number(process.env.AGENT_MAX_ATTEMPTS ?? 3),
+          deadlineAt: new Date(
+            Date.now() + Number(process.env.AGENT_QUEUE_DEADLINE_SECONDS ?? 600) * 1000,
+          ),
+          correlationId,
+        },
+        select: runSelect,
+      });
+      await transaction.agentStep.create({
+        data: {
+          agentRunId: nextId,
+          sequence: 1,
+          nodeName: "queue",
+          nodeVersion: "1",
+          eventType: "run.queued",
+          status: "COMPLETED",
+          safeSummary: "Evidence run queued.",
+          metadata: { retryOfRunId: runId },
+        },
+      });
+      await transaction.auditEvent.create({
+        data: {
+          actorId: ownerId,
+          projectId: run.projectId,
+          analysisId: run.analysisId,
+          eventType: "AGENT_RUN_RETRIED",
+          correlationId,
+          metadata: { priorRunId: runId, runId: nextId },
+        },
+      });
+      return created;
     });
     return next;
   }

@@ -71,12 +71,16 @@ services:
     command: ["node", "apps/api/dist/worker.js"]
     env_file: .env.local
     environment:
+      AGENT_ENABLED: "true"
+      AGENT_SERVICE_URL: http://agent:8100
       LOCAL_STORAGE_ROOT: /data
       VISION_SERVICE_URL: http://vision:8000
     volumes:
       - plandelta-data:/data
     depends_on:
       api:
+        condition: service_healthy
+      agent:
         condition: service_healthy
     restart: unless-stopped
 
