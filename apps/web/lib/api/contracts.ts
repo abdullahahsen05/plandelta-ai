@@ -135,3 +135,72 @@ export const reportSchema = z.object({
   updatedAt: dateString,
 });
 export type AnalysisReport = z.infer<typeof reportSchema>;
+
+const knowledgeDocumentTypeSchema = z.enum([
+  "SPECIFICATION",
+  "DRAWING_NOTES",
+  "REVISION_NARRATIVE",
+  "ADDENDUM",
+  "BOQ_SCHEDULE",
+  "RFI",
+  "PRIOR_REPORT",
+  "TECHNICAL_NOTE",
+]);
+
+const ingestionJobSchema = z.object({
+  id: z.string().uuid(),
+  documentVersionId: z.string().uuid().nullable(),
+  status: z.enum([
+    "QUEUED",
+    "CLAIMED",
+    "EXTRACTING",
+    "CHUNKING",
+    "EMBEDDING",
+    "RETRYING",
+    "COMPLETED",
+    "FAILED",
+    "CANCELLED",
+  ]),
+  progress: z.number().int().min(0).max(100),
+  currentStage: z.string(),
+  attemptCount: z.number().int().nonnegative(),
+  maxAttempts: z.number().int().positive(),
+  failureCode: z.string().nullable(),
+  createdAt: dateString,
+  updatedAt: dateString,
+  completedAt: dateString.nullable(),
+});
+
+export const knowledgeDocumentSchema = z.object({
+  id: z.string().uuid(),
+  projectId: z.string().uuid(),
+  originalName: z.string(),
+  detectedMimeType: z.enum(["application/pdf", "text/plain"]),
+  byteSize: z.number().nonnegative(),
+  checksumSha256: z.string(),
+  documentType: knowledgeDocumentTypeSchema,
+  status: z.enum(["UPLOADED", "EXTRACTING", "EMBEDDING", "READY", "FAILED", "DELETED"]),
+  failureCode: z.string().nullable(),
+  createdAt: dateString,
+  updatedAt: dateString,
+  activeVersion: z
+    .object({
+      id: z.string().uuid(),
+      revisionLabel: z.string().nullable(),
+      effectiveDate: dateString.nullable(),
+      pageCount: z.number().int().positive().nullable(),
+      extractedCharacterCount: z.number().int().nonnegative().nullable(),
+      parserName: z.string(),
+      parserVersion: z.string(),
+      chunkerVersion: z.string(),
+      embeddingProvider: z.string(),
+      embeddingModel: z.string(),
+      embeddingDimension: z.number().int().positive(),
+      status: z.string(),
+      completedAt: dateString.nullable(),
+    })
+    .nullable(),
+  ingestionJobs: z.array(ingestionJobSchema).max(1),
+});
+export type KnowledgeDocument = z.infer<typeof knowledgeDocumentSchema>;
+export const knowledgeDocumentListSchema = z.array(knowledgeDocumentSchema);

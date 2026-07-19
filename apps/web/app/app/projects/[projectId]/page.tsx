@@ -1,9 +1,11 @@
 import { ArrowLeft, ArrowRight, CalendarDays, FileStack, MapPin } from "lucide-react";
 import Link from "next/link";
 
+import { KnowledgeRegister } from "../../../../components/knowledge-register";
 import { apiRequest } from "../../../../lib/api/client";
 import {
   analysisListSchema,
+  knowledgeDocumentListSchema,
   projectSchema,
   revisionListSchema,
 } from "../../../../lib/api/contracts";
@@ -24,10 +26,11 @@ export default async function ProjectDetailPage({
 
   if (!isSample) {
     const token = await requireServerAccessToken();
-    const [project, revisions, analyses] = await Promise.all([
+    const [project, revisions, analyses, knowledgeDocuments] = await Promise.all([
       apiRequest(`/projects/${projectId}`, token, projectSchema),
       apiRequest(`/projects/${projectId}/revisions`, token, revisionListSchema),
       apiRequest(`/projects/${projectId}/analyses?limit=20`, token, analysisListSchema),
+      apiRequest(`/projects/${projectId}/knowledge-documents`, token, knowledgeDocumentListSchema),
     ]);
     const latest = analyses.items[0];
 
@@ -130,6 +133,8 @@ export default async function ProjectDetailPage({
             </div>
           </section>
         )}
+
+        <KnowledgeRegister initialDocuments={knowledgeDocuments} projectId={projectId} />
       </main>
     );
   }

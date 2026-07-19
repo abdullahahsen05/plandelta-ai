@@ -354,6 +354,159 @@ button {
     @apply mt-1 text-sm text-[#646762];
   }
 
+  .knowledge-register {
+    @apply mt-10 border-t-2 border-[#171A1C] pt-7;
+  }
+
+  .knowledge-heading {
+    @apply mb-5 items-start;
+  }
+
+  .knowledge-heading h2 {
+    @apply mt-1 text-2xl font-semibold tracking-[-0.025em];
+  }
+
+  .knowledge-heading p:not(.eyebrow) {
+    @apply mt-1 max-w-2xl text-sm text-[#646762];
+  }
+
+  .knowledge-refresh {
+    @apply inline-flex min-h-10 items-center gap-2 border border-[#AAA79F] bg-[#FBFAF6] px-3 text-sm font-semibold hover:border-[#171A1C] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
+  .knowledge-upload {
+    @apply grid gap-px border border-[#D8D4CA] bg-[#D8D4CA] lg:grid-cols-[1.4fr_1fr_1fr_1fr_auto];
+  }
+
+  .knowledge-upload > label {
+    @apply flex min-h-24 flex-col justify-center bg-[#FBFAF6] px-4 py-3;
+  }
+
+  .knowledge-upload label > span {
+    @apply mb-1.5 text-xs font-semibold;
+  }
+
+  .knowledge-upload label small {
+    @apply font-normal text-[#777A75];
+  }
+
+  .knowledge-upload input:not([type="file"]),
+  .knowledge-upload select {
+    @apply min-h-10 w-full border border-[#AAA79F] bg-white px-2.5 text-sm outline-none focus:border-[#E6532F] focus:ring-2 focus:ring-[#E6532F]/20 disabled:bg-[#ECE9E1];
+  }
+
+  .knowledge-file input,
+  .knowledge-actions input {
+    @apply sr-only;
+  }
+
+  .knowledge-file strong {
+    @apply flex max-w-full items-center gap-2 truncate text-sm;
+  }
+
+  .knowledge-file small {
+    @apply mt-1 text-[11px];
+  }
+
+  .knowledge-submit {
+    @apply inline-flex min-h-12 items-center justify-center gap-2 bg-[#171A1C] px-5 font-semibold text-white hover:bg-[#313538] disabled:cursor-not-allowed disabled:bg-[#777A75] lg:min-h-full;
+  }
+
+  .knowledge-message {
+    @apply mt-3 flex items-center gap-2 border-l-2 border-[#17845B] bg-[#EDF7F1] px-3 py-2 text-sm text-[#126B4A];
+  }
+
+  .knowledge-message-error {
+    @apply border-[#C53F3F] bg-[#FFF0F0] text-[#A63232];
+  }
+
+  .knowledge-empty {
+    @apply mt-4 flex gap-3 border border-dashed border-[#AAA79F] bg-[#FBFAF6] p-5 text-[#646762];
+  }
+
+  .knowledge-empty h3 {
+    @apply font-semibold text-[#171A1C];
+  }
+
+  .knowledge-empty p {
+    @apply mt-1 text-sm;
+  }
+
+  .knowledge-list {
+    @apply mt-4 border-x border-t border-[#D8D4CA] bg-[#FBFAF6];
+  }
+
+  .knowledge-list-header {
+    @apply technical hidden grid-cols-[1.4fr_.7fr_1fr_1fr] border-b border-[#D8D4CA] bg-[#ECE9E1] px-4 py-2 text-[9px] font-semibold tracking-[.1em] text-[#646762] lg:grid;
+  }
+
+  .knowledge-row {
+    @apply grid gap-4 border-b border-[#D8D4CA] p-4 lg:grid-cols-[1.4fr_.7fr_1fr_1fr] lg:items-center;
+  }
+
+  .knowledge-document {
+    @apply flex min-w-0 items-start gap-3;
+  }
+
+  .knowledge-document h3 {
+    @apply truncate font-semibold;
+  }
+
+  .knowledge-document p,
+  .knowledge-revision span,
+  .knowledge-state small {
+    @apply block text-xs text-[#646762];
+  }
+
+  .knowledge-revision strong {
+    @apply block text-sm;
+  }
+
+  .knowledge-state > div:first-child {
+    @apply flex items-center gap-2 text-xs;
+  }
+
+  .knowledge-state > div:first-child > span:last-child {
+    @apply technical ml-auto text-[10px] text-[#646762];
+  }
+
+  .knowledge-state-mark {
+    @apply block h-2 w-2 bg-[#D88916];
+  }
+
+  .knowledge-state-ready {
+    @apply bg-[#17845B];
+  }
+
+  .knowledge-state-error {
+    @apply bg-[#C53F3F];
+  }
+
+  .knowledge-progress {
+    @apply mt-2 h-1 overflow-hidden bg-[#E4E1D9];
+  }
+
+  .knowledge-progress span {
+    @apply block h-full bg-[#E6532F] transition-[width] motion-reduce:transition-none;
+  }
+
+  .knowledge-state small {
+    @apply mt-1;
+  }
+
+  .knowledge-actions {
+    @apply flex flex-wrap items-center gap-x-4 gap-y-2 lg:justify-end;
+  }
+
+  .knowledge-actions button,
+  .knowledge-actions label {
+    @apply inline-flex min-h-9 cursor-pointer items-center gap-1.5 text-xs font-semibold underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:text-[#AAA79F];
+  }
+
+  .knowledge-actions label.is-disabled {
+    @apply pointer-events-none text-[#AAA79F];
+  }
+
   .status-dot {
     @apply mt-1 inline-block h-2 w-2 shrink-0 bg-[#17845B];
   }
