@@ -30,6 +30,11 @@ each push.
 
 The production candidate was verified on 2026-07-19:
 
+- Annotated release
+  [`v0.2.0`](https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0) was published from
+  commit `82156213f058bfdb4de287357083d1a14fd01b81` after
+  [`main` CI run `29697277667`](https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29697277667)
+  passed.
 - Final branch CI
   [`29697136227`](https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29697136227)
   passed every required job, and reviewed

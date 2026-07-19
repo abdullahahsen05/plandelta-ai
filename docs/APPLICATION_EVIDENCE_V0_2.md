@@ -8,15 +8,17 @@ engineering approval.
 
 - Public repository: <https://github.com/abdullahahsen05/plandelta-ai>
 - Preserved stable release: [`v0.1.0`](https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0)
+- Published agentic release:
+  [`v0.2.0`](https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0)
 - Reviewed and merged v0.2 change:
   [PR #15](https://github.com/abdullahahsen05/plandelta-ai/pull/15)
 - Merge commit: `ba9d1138dec87e347cc2c6a418809685fc874a08`
+- Release commit: `82156213f058bfdb4de287357083d1a14fd01b81`
 - Verified deployment checkpoint: `70c02f0dab5bb6282c7134e19a2d33323a940fa1`
 - Final green branch CI:
   <https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29697136227>
-
-The `v0.2.0` tag and release URL are added after this release record passes `main` CI and the public
-paths are rechecked.
+- Green release-commit CI:
+  <https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29697277667>
 
 ## Load-bearing source paths
 

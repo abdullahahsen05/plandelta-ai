@@ -12,9 +12,8 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 22 — Cost-controlled deployment and v0.2 handoff
-- Current task: Final CI passed and PR #15 merged at `ba9d1138`; publish the release commit, tag
-  `v0.2.0`, create the GitHub release, and recheck public paths
+- Current phase: Complete — Phases 12 through 22 passed
+- Current task: Complete; `v0.2.0` is published and the released public paths are verified
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -389,14 +388,16 @@ Completion evidence (2026-07-19):
       docs, changelog, and release notes.
 - [x] Run final CI and merge the reviewed branch only after every implementation and deployment gate
       passes.
-- [ ] Tag `v0.2.0` and publish the GitHub release from the final release commit.
-- [ ] Recheck deployed public paths after the release commit.
+- [x] Tag `v0.2.0` and publish the GitHub release from the final release commit.
+- [x] Recheck deployed public paths after the release commit.
 
-Completion evidence in progress (2026-07-19):
+Completion evidence (2026-07-19):
 
 - Final branch CI run `29697136227` passed all web, API/contracts, vision, browser smoke, Docker
   image, secret-scan, and Vercel checks. PR #15 was mergeable with no unresolved review threads and
   merged to `main` as `ba9d1138dec87e347cc2c6a418809685fc874a08`.
+- Release commit `82156213f058bfdb4de287357083d1a14fd01b81` passed `main` CI run `29697277667`.
+  Annotated tag `v0.2.0` and the GitHub release were published from that exact commit.
 - Immutable tag `70c02f0dab5bb6282c7134e19a2d33323a940fa1` is present in all three ECR repositories.
   The bounded runtime runs one API, worker, agent, vision service, and proxy on the existing
   `t3.small`; no prohibited service or second environment was introduced.
@@ -422,6 +423,6 @@ Completion evidence in progress (2026-07-19):
 
 Final gate:
 
-- [ ] Repository history is intact, CI is green, deployment claims are true, citations are
+- [x] Repository history is intact, CI is green, deployment claims are true, citations are
       inspectable, evaluation results are reproducible, and the application evidence document
       matches the source.
