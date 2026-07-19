@@ -15,3 +15,8 @@ class ExecuteAgentRunRequest(ContractModel):
 class ExecuteIngestionJobRequest(ContractModel):
     job_id: UUID
     correlation_id: str = Field(min_length=1, max_length=100, pattern=r"^[A-Za-z0-9._:-]+$")
+
+
+class IngestionExecutionResponse(ContractModel):
+    job_id: UUID
+    status: str = Field(pattern=r"^completed$")

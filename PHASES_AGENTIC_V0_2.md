@@ -31,6 +31,9 @@ remaining safe work.
   telemetry, cancellation/timeout controls, and the internal non-root container are verified
 - Phase 15 checkpoint: authorized PDF/TXT knowledge upload, validation, private storage, pending
   version/job creation, source access, retry, deletion, and focused API coverage pass
+- Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local
+  BGE embeddings, transactional activation, filtered hybrid retrieval, clean migration replay,
+  and a real temporary Supabase ingestion/search/cleanup journey pass
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -111,16 +114,16 @@ Implementation checkpoint:
 - [x] Implement authorized supporting-document upload through NestJS and the storage-provider
       boundary.
 - [x] Validate MIME signature, size, page count, checksum, ownership, and safe filenames.
-- [ ] Implement text extraction for supported PDFs with OCR fallback only when necessary and
+- [x] Implement text extraction for supported PDFs with OCR fallback only when necessary and
       bounded.
-- [ ] Chunk by document structure/page with deterministic overlap and stable identifiers.
-- [ ] Generate local embeddings with batching, timeout, memory, and length limits.
-- [ ] Persist chunks transactionally and mark previous versions stale/inactive.
-- [ ] Implement project-scoped hybrid vector/full-text retrieval.
-- [ ] Add metadata filters for active version, revision/effective date, document type, page, and
+- [x] Chunk by document structure/page with deterministic overlap and stable identifiers.
+- [x] Generate local embeddings with batching, timeout, memory, and length limits.
+- [x] Persist chunks transactionally and mark previous versions stale/inactive.
+- [x] Implement project-scoped hybrid vector/full-text retrieval.
+- [x] Add metadata filters for active version, revision/effective date, document type, page, and
       analysis profile.
-- [ ] Detect and preserve conflicting records; never silently select a winner.
-- [ ] Produce citation-ready results containing source, page, section, excerpt, score components,
+- [x] Detect and preserve conflicting records; never silently select a winner.
+- [x] Produce citation-ready results containing source, page, section, excerpt, score components,
       checksum, and revision metadata.
 - [ ] Add deletion/re-ingestion cleanup and idempotency.
 - [ ] Add ingestion status UI and safe error/retry states.
@@ -128,8 +131,8 @@ Implementation checkpoint:
 
 Implementation checkpoint:
 
-- [ ] A supported document becomes searchable without a paid embedding API.
-- [ ] Stale and cross-project chunks are excluded.
+- [x] A supported document becomes searchable without a paid embedding API.
+- [x] Stale and cross-project chunks are excluded.
 
 ## Phase 16 — Load-bearing multi-agent graph
 
