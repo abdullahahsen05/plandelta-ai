@@ -4,7 +4,13 @@ import Link from "next/link";
 import { apiRequest } from "../../lib/api/client";
 import { projectListSchema } from "../../lib/api/contracts";
 import { optionalServerAccessToken } from "../../lib/api/server";
-import { changeKindMeta, sampleChanges, sampleProject } from "../../lib/sample-data";
+import {
+  changeKindMeta,
+  sampleChanges,
+  sampleProject,
+  schematicSampleChanges,
+  schematicSampleProject,
+} from "../../lib/sample-data";
 
 export default async function ProjectsPage() {
   const token = await optionalServerAccessToken();
@@ -15,6 +21,10 @@ export default async function ProjectsPage() {
       )
     : [];
   const counts = sampleChanges.reduce(
+    (result, change) => ({ ...result, [change.kind]: result[change.kind] + 1 }),
+    { added: 0, modified: 0, removed: 0 },
+  );
+  const schematicCounts = schematicSampleChanges.reduce(
     (result, change) => ({ ...result, [change.kind]: result[change.kind] + 1 }),
     { added: 0, modified: 0, removed: 0 },
   );
@@ -43,6 +53,7 @@ export default async function ProjectsPage() {
           <div>
             <div className="mb-2 flex items-center gap-2">
               <span className="sample-flag">BUILT-IN SAMPLE</span>
+              <span className="profile-flag">Construction drawing</span>
               <span className="technical text-[10px] text-[#646762]">{sampleProject.number}</span>
             </div>
             <h2 id="sample-project-heading">{sampleProject.name}</h2>
@@ -69,11 +80,49 @@ export default async function ProjectsPage() {
             <ArrowRight aria-hidden="true" size={19} />
           </Link>
         </article>
+        <article className="project-table-row">
+          <div>
+            <div className="mb-2 flex items-center gap-2">
+              <span className="sample-flag">BUILT-IN SAMPLE</span>
+              <span className="profile-flag">Engineering schematic</span>
+              <span className="technical text-[10px] text-[#646762]">
+                {schematicSampleProject.number}
+              </span>
+            </div>
+            <h2>{schematicSampleProject.name}</h2>
+            <p>{schematicSampleProject.location}</p>
+          </div>
+          <div>
+            <span className="technical text-[11px] text-[#646762]">S-101 · REV A → B</span>
+            <p className="mt-1 font-medium">{schematicSampleProject.analysis.status}</p>
+            <p>{schematicSampleProject.analysis.completedAt}</p>
+          </div>
+          <div className="change-counts" aria-label="Three schematic sample changes">
+            {(["added", "modified", "removed"] as const).map((kind) => (
+              <span key={kind} style={{ borderColor: changeKindMeta[kind].color }}>
+                <b style={{ color: changeKindMeta[kind].color }}>{schematicCounts[kind]}</b>{" "}
+                {changeKindMeta[kind].label}
+              </span>
+            ))}
+          </div>
+          <Link
+            aria-label={`Open ${schematicSampleProject.name}`}
+            className="row-action"
+            href={`/app/projects/${schematicSampleProject.id}`}
+          >
+            <ArrowRight aria-hidden="true" size={19} />
+          </Link>
+        </article>
         {liveProjects.map((project) => (
           <article className="project-table-row project-table-live" key={project.id}>
             <div>
               <div className="mb-2 flex items-center gap-2">
                 <span className="live-flag">LIVE PROJECT</span>
+                <span className="profile-flag">
+                  {project.analysisProfile === "ENGINEERING_SCHEMATIC"
+                    ? "Engineering schematic"
+                    : "Construction drawing"}
+                </span>
                 {project.projectCode ? (
                   <span className="technical text-[10px] text-[#646762]">
                     {project.projectCode}

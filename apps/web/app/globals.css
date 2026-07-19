@@ -121,6 +121,10 @@ button {
     @apply technical inline-flex border border-[#17845B] bg-[#EDF7F1] px-2 py-0.5 text-[9px] font-semibold tracking-[0.1em] text-[#126B4A];
   }
 
+  .profile-flag {
+    @apply technical inline-flex border border-[#8EA8B9] bg-[#EEF3F6] px-2 py-0.5 text-[9px] font-semibold tracking-[0.08em] text-[#294C64];
+  }
+
   .project-table-shell {
     @apply border border-[#D8D4CA] bg-[#FBFAF6];
   }
@@ -181,20 +185,44 @@ button {
     @apply mb-5 grid gap-px border border-[#D8D4CA] bg-[#D8D4CA] sm:grid-cols-2;
   }
 
-  .comparison-metadata label {
+  .comparison-metadata > label {
     @apply bg-[#FBFAF6] p-5;
   }
 
-  .comparison-metadata label > span {
+  .comparison-metadata > label > span {
     @apply mb-2 flex items-baseline justify-between text-xs font-semibold;
   }
 
-  .comparison-metadata label small {
+  .comparison-metadata > label small {
     @apply font-normal text-[#777A75];
   }
 
-  .comparison-metadata input {
+  .comparison-metadata > label input {
     @apply min-h-11 w-full border border-[#AAA79F] bg-white px-3 text-sm outline-none focus:border-[#E6532F] focus:ring-2 focus:ring-[#E6532F]/20 disabled:bg-[#ECE9E1];
+  }
+
+  .profile-selector {
+    @apply grid gap-px bg-[#D8D4CA] sm:col-span-2 sm:grid-cols-2;
+  }
+
+  .profile-selector legend {
+    @apply sr-only;
+  }
+
+  .profile-selector label {
+    @apply flex cursor-pointer items-start gap-3 bg-[#FBFAF6] p-5 text-sm outline-none transition-colors hover:bg-[#FFF4EF] has-[:checked]:bg-[#FFF4EF] has-[:checked]:shadow-[inset_3px_0_0_#E6532F];
+  }
+
+  .profile-selector input {
+    @apply mt-1 h-4 w-4 shrink-0 accent-[#E6532F];
+  }
+
+  .profile-selector span {
+    @apply flex flex-col gap-1;
+  }
+
+  .profile-selector small {
+    @apply leading-5 text-[#646762];
   }
 
   .upload-field {
@@ -611,7 +639,7 @@ button {
     @apply truncate font-semibold;
   }
 
-  .workbench-crumbs > span:not(.sample-flag) {
+  .workbench-crumbs > span:not(.sample-flag):not(.live-flag):not(.profile-flag) {
     @apply hidden text-[#AAA79F] md:inline;
   }
 
@@ -1018,6 +1046,10 @@ button {
 
   .copilot-heading h2 {
     @apply mt-1 text-lg font-semibold tracking-[-0.02em];
+  }
+
+  .copilot-profile {
+    @apply technical mt-1 block text-[8px] tracking-[0.06em] text-[#646762];
   }
 
   .copilot-panel-controls {

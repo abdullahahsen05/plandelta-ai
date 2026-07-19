@@ -10,7 +10,12 @@ import {
   revisionListSchema,
 } from "../../../../lib/api/contracts";
 import { requireServerAccessToken } from "../../../../lib/api/server";
-import { sampleChanges, sampleProject } from "../../../../lib/sample-data";
+import {
+  sampleChanges,
+  sampleProject,
+  schematicSampleChanges,
+  schematicSampleProject,
+} from "../../../../lib/sample-data";
 
 function formatStatus(value: string) {
   return value.toLowerCase().replaceAll("_", " ");
@@ -22,7 +27,12 @@ export default async function ProjectDetailPage({
   params: Promise<{ projectId: string }>;
 }) {
   const { projectId } = await params;
-  const isSample = projectId === sampleProject.id;
+  const isConstructionSample = projectId === sampleProject.id;
+  const isSchematicSample = projectId === schematicSampleProject.id;
+  const isSample = isConstructionSample || isSchematicSample;
+  const sample = isSchematicSample ? schematicSampleProject : sampleProject;
+  const sampleEvidence = isSchematicSample ? schematicSampleChanges : sampleChanges;
+  const sampleAnalysisHref = `/app/analyses/${sample.analysis.id}`;
 
   if (!isSample) {
     const token = await requireServerAccessToken();
@@ -43,6 +53,11 @@ export default async function ProjectDetailPage({
           <div>
             <div className="mb-3 flex items-center gap-2">
               <span className="live-flag">LIVE PROJECT</span>
+              <span className="profile-flag">
+                {project.analysisProfile === "ENGINEERING_SCHEMATIC"
+                  ? "Engineering schematic"
+                  : "Construction drawing"}
+              </span>
               {project.projectCode ? (
                 <span className="technical text-[10px] text-[#646762]">{project.projectCode}</span>
               ) : null}
@@ -148,12 +163,13 @@ export default async function ProjectDetailPage({
         <div>
           <div className="mb-3 flex items-center gap-2">
             <span className="sample-flag">{isSample ? "BUILT-IN SAMPLE" : "FIXTURE PREVIEW"}</span>
-            <span className="technical text-[10px] text-[#646762]">{sampleProject.number}</span>
+            <span className="profile-flag">{sample.profileLabel}</span>
+            <span className="technical text-[10px] text-[#646762]">{sample.number}</span>
           </div>
-          <h1>{sampleProject.name}</h1>
-          <p>{sampleProject.location}</p>
+          <h1>{sample.name}</h1>
+          <p>{sample.location}</p>
         </div>
-        <Link className="signal-button" href="/app/analyses/sample">
+        <Link className="signal-button" href={sampleAnalysisHref}>
           Open evidence review <ArrowRight aria-hidden="true" size={17} />
         </Link>
       </div>
@@ -167,12 +183,14 @@ export default async function ProjectDetailPage({
         <div>
           <FileStack aria-hidden="true" size={18} />
           <span>Comparison</span>
-          <strong>A2.14 · Rev 03 → Rev 04</strong>
+          <strong>
+            {sample.baseline.sheet} · {sample.baseline.revision} → {sample.candidate.revision}
+          </strong>
         </div>
         <div>
           <CalendarDays aria-hidden="true" size={18} />
           <span>Updated</span>
-          <strong>{sampleProject.updatedAt}</strong>
+          <strong>{sample.updatedAt}</strong>
         </div>
       </section>
 
@@ -185,7 +203,7 @@ export default async function ProjectDetailPage({
           <span className="technical text-xs text-[#646762]">ALIGNMENT · STRONG</span>
         </div>
         <div className="revision-pair">
-          {[sampleProject.baseline, sampleProject.candidate].map((revision) => (
+          {[sample.baseline, sample.candidate].map((revision) => (
             <article key={revision.label}>
               <span className="eyebrow">{revision.label}</span>
               <div className="sheet-stamp">{revision.sheet}</div>
@@ -206,12 +224,12 @@ export default async function ProjectDetailPage({
             <p className="eyebrow">PRECOMPUTED SAMPLE</p>
             <h2 id="analysis-heading">Revision evidence review</h2>
             <p>
-              {sampleChanges.length} changes · {sampleProject.analysis.engine} · completed{" "}
-              {sampleProject.analysis.completedAt}
+              {sampleEvidence.length} changes · {sample.analysis.engine} · completed{" "}
+              {sample.analysis.completedAt}
             </p>
           </div>
         </div>
-        <Link className="row-link" href="/app/analyses/sample">
+        <Link className="row-link" href={sampleAnalysisHref}>
           Review changes <ArrowRight aria-hidden="true" size={17} />
         </Link>
       </section>

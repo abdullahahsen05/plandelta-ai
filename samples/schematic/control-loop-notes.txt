@@ -1,0 +1,10 @@
+SYNTHETIC SAMPLE — CONTROL LOOP S-101
+
+Design note 1: PT-101 uses a 4–20 mA signal connected to PLC-1 input AI-03.
+Design note 2: R2 is the existing 10 kΩ input bias resistor in revision B.
+Revision B note: add R3 as the pull-down component shown between the signal node and 0 V.
+Coordination note: verify component identifiers and connection continuity against the source
+schematic before fabrication, installation, commissioning, or safety review.
+
+This synthetic document is revision evidence for demonstration only. It does not establish circuit
+correctness, ratings, regulatory compliance, operational fitness, or engineering approval.

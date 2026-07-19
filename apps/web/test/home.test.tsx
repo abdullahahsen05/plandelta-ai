@@ -18,6 +18,7 @@ describe("marketing entry", () => {
     render(<Home />);
 
     expect(screen.getByRole("link", { name: "Open labelled sample" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Open schematic sample" })).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Compare revisions" })).toBeInTheDocument();
     expect(
       screen.getByText(/uploaded drawings run through the real CV\/OCR pipeline/i),

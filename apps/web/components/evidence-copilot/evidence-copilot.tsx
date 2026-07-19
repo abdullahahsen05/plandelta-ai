@@ -103,6 +103,11 @@ const sampleQuestions = [
   "What is the highest-confidence revision?",
   "Draft an RFI for the changed keynote.",
 ] as const;
+const schematicSampleQuestions = [
+  "What components or connections changed?",
+  "What is the highest-confidence revision?",
+  "Draft an RFI for the revised schematic evidence.",
+] as const;
 
 function toUiMessage(message: CopilotMessage): UiMessage | null {
   if (message.role !== "USER" && message.role !== "ASSISTANT") return null;
@@ -118,9 +123,19 @@ function toUiMessage(message: CopilotMessage): UiMessage | null {
   };
 }
 
-function sampleAnswer(question: string, changes: SampleChange[]): UiMessage {
+function sampleAnswer(
+  question: string,
+  changes: SampleChange[],
+  profile: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC",
+): UiMessage {
   const first = changes[0];
-  const keynote = changes.find((change) => change.category.toLowerCase().includes("text"));
+  const keynote = changes.find((change) =>
+    ["text", "note", "label"].some((term) => change.category.toLowerCase().includes(term)),
+  );
+  const profileWarning =
+    profile === "ENGINEERING_SCHEMATIC"
+      ? "Synthetic schematic sample output; qualified engineering review is required."
+      : "Sample output from committed fixtures; verify against source drawings.";
   if (question.includes("highest-confidence")) {
     return {
       id: "sample-answer-confidence",
@@ -130,7 +145,7 @@ function sampleAnswer(question: string, changes: SampleChange[]): UiMessage {
         : "This cached sample contains no change evidence.",
       answerStatus: first ? "verified" : "insufficient_evidence",
       confidence: first ? "high" : "insufficient",
-      warnings: ["Sample output from committed fixtures; verify against source drawings."],
+      warnings: [profileWarning],
       citations: first
         ? [
             {
@@ -176,7 +191,10 @@ function sampleAnswer(question: string, changes: SampleChange[]): UiMessage {
         : [],
       rfiDraft: target
         ? {
-            subject: `Clarify revised note on drawing A2.14`,
+            subject:
+              profile === "ENGINEERING_SCHEMATIC"
+                ? "Clarify revision shown on schematic S-101"
+                : "Clarify revised note on drawing A2.14",
             question: `Please confirm the intended scope associated with “${target.newText ?? target.title}.”`,
             observedConflictOrChange: `${target.oldText ?? "Prior condition"} was revised to ${target.newText ?? target.title}.`,
             requestedClarification:
@@ -205,7 +223,7 @@ function sampleAnswer(question: string, changes: SampleChange[]): UiMessage {
         : "This cached sample contains no change evidence.",
     answerStatus: cited.length > 0 ? "verified" : "insufficient_evidence",
     confidence: cited.length > 0 ? "high" : "insufficient",
-    warnings: ["Sample output from committed fixtures; verify against source drawings."],
+    warnings: [profileWarning],
     citations: cited.map((change, index) => ({
       id: `sample-citation-${index + 1}`,
       displayOrder: index + 1,
@@ -433,12 +451,14 @@ export function EvidenceCopilot({
   analysisId,
   changes,
   onSelectChange,
+  profile,
   projectId,
   sample,
 }: {
   analysisId?: string | undefined;
   changes: SampleChange[];
   onSelectChange: (changeId: string) => void;
+  profile: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
   projectId: string;
   sample: boolean;
 }) {
@@ -463,16 +483,22 @@ export function EvidenceCopilot({
   const messageListRef = useRef<HTMLDivElement>(null);
 
   const suggestedQuestions = useMemo(() => {
-    if (sample) return [...sampleQuestions];
+    if (sample) {
+      return profile === "ENGINEERING_SCHEMATIC"
+        ? [...schematicSampleQuestions]
+        : [...sampleQuestions];
+    }
     const selected = changes[0];
     return [
-      "Summarize the verified changes and affected trades.",
+      profile === "ENGINEERING_SCHEMATIC"
+        ? "Summarize verified component, connection, label, and note changes."
+        : "Summarize the verified changes and affected trades.",
       selected
         ? `What evidence supports change #${selected.sequence}?`
         : "What evidence is available for this analysis?",
       "Are there conflicts or missing evidence that need an RFI?",
     ];
-  }, [changes, sample]);
+  }, [changes, profile, sample]);
 
   const accessToken = useCallback(async () => {
     const { data } = await supabaseRef.current.auth.getSession();
@@ -643,7 +669,7 @@ export function EvidenceCopilot({
           rfiDraft: null,
           sample: true,
         },
-        sampleAnswer(content, changes),
+        sampleAnswer(content, changes, profile),
       ]);
       setPanelState("ready");
       setStatusText("Showing versioned sample output. No live model was called.");
@@ -780,6 +806,11 @@ export function EvidenceCopilot({
             <Bot aria-hidden="true" size={13} /> EVIDENCE COPILOT
           </span>
           <h2>Ask the project record</h2>
+          <small className="copilot-profile">
+            {profile === "ENGINEERING_SCHEMATIC"
+              ? "Engineering schematic · profile v1.0"
+              : "Construction drawing · profile v1.0"}
+          </small>
         </div>
         <div className="copilot-panel-controls">
           <button

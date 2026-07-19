@@ -8,6 +8,8 @@ export const projectSchema = z.object({
   projectCode: z.string().nullable(),
   description: z.string().nullable(),
   status: z.enum(["ACTIVE", "ARCHIVED"]),
+  analysisProfile: z.enum(["CONSTRUCTION_DRAWING", "ENGINEERING_SCHEMATIC"]),
+  profileVersion: z.string(),
   createdAt: dateString,
   updatedAt: dateString,
   _count: z.object({ revisions: z.number(), analyses: z.number() }).optional(),
@@ -72,6 +74,8 @@ export const analysisSchema = z.object({
   metrics: z.record(z.string(), z.unknown()),
   warnings: z.array(z.string()),
   summaryProvider: z.string(),
+  analysisProfile: z.enum(["CONSTRUCTION_DRAWING", "ENGINEERING_SCHEMATIC"]),
+  profileVersion: z.string(),
   createdAt: dateString,
   updatedAt: dateString,
 });

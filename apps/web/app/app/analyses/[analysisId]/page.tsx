@@ -1,4 +1,7 @@
-import { Workbench } from "../../../../components/workbench";
+import {
+  schematicSampleWorkbench,
+  Workbench,
+} from "../../../../components/workbench";
 import type { WorkbenchData } from "../../../../components/workbench";
 import { AnalysisProgress } from "../../../../components/analysis-progress";
 import { apiRequest } from "../../../../lib/api/client";
@@ -11,7 +14,11 @@ import {
   revisionListSchema,
 } from "../../../../lib/api/contracts";
 import { requireServerAccessToken } from "../../../../lib/api/server";
-import { sampleProject, type ChangeKind } from "../../../../lib/sample-data";
+import {
+  sampleProject,
+  schematicSampleProject,
+  type ChangeKind,
+} from "../../../../lib/sample-data";
 
 function changeKind(value: string): ChangeKind {
   if (value === "ADDED") return "added";
@@ -30,6 +37,9 @@ export default async function AnalysisPage({
 }) {
   const { analysisId } = await params;
   if (analysisId === sampleProject.analysis.id) return <Workbench />;
+  if (analysisId === schematicSampleProject.analysis.id) {
+    return <Workbench data={schematicSampleWorkbench} />;
+  }
 
   const token = await requireServerAccessToken();
   const analysis = await apiRequest(`/analyses/${analysisId}`, token, analysisSchema);
@@ -81,6 +91,11 @@ export default async function AnalysisPage({
     analysisId: analysis.id,
     projectId: project.id,
     projectName: project.name,
+    analysisProfile: analysis.analysisProfile,
+    profileLabel:
+      analysis.analysisProfile === "ENGINEERING_SCHEMATIC"
+        ? "Engineering schematic"
+        : "Construction drawing",
     comparisonLabel: `${baselineRevision?.revisionCode ?? "Baseline"} → ${candidateRevision?.revisionCode ?? "Candidate"}`,
     sheet: `PAGE ${String(candidateRevision?.selectedPage ?? 1).padStart(2, "0")}`,
     sheetTitle: candidateRevision?.originalName ?? "Blueprint comparison",

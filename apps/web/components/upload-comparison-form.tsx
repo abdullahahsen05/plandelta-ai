@@ -12,6 +12,7 @@ const maximumBytes = 20 * 1024 * 1024;
 const acceptedTypes = new Set(["application/pdf", "image/png", "image/jpeg"]);
 
 type ProgressStage = "idle" | "project" | "baseline" | "candidate" | "analysis";
+type AnalysisProfile = "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
 
 function FileField({
   eyebrow,
@@ -81,6 +82,8 @@ export function UploadComparisonForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [projectCode, setProjectCode] = useState("");
+  const [analysisProfile, setAnalysisProfile] =
+    useState<AnalysisProfile>("CONSTRUCTION_DRAWING");
   const [baseline, setBaseline] = useState<File | null>(null);
   const [candidate, setCandidate] = useState<File | null>(null);
   const [stage, setStage] = useState<ProgressStage>("idle");
@@ -114,7 +117,11 @@ export function UploadComparisonForm() {
         body: JSON.stringify({
           name: name.trim(),
           projectCode: projectCode.trim() || undefined,
-          description: "Blueprint revision comparison created in the PlanDelta workspace.",
+          analysisProfile,
+          description:
+            analysisProfile === "ENGINEERING_SCHEMATIC"
+              ? "Engineering schematic revision comparison created in the PlanDelta workspace."
+              : "Blueprint revision comparison created in the PlanDelta workspace.",
         }),
       });
       projectId = project.id;
@@ -196,6 +203,33 @@ export function UploadComparisonForm() {
             value={projectCode}
           />
         </label>
+        <fieldset className="profile-selector" disabled={busy}>
+          <legend>Analysis profile</legend>
+          <label>
+            <input
+              checked={analysisProfile === "CONSTRUCTION_DRAWING"}
+              name="analysis-profile"
+              onChange={() => setAnalysisProfile("CONSTRUCTION_DRAWING")}
+              type="radio"
+            />
+            <span>
+              <strong>Construction drawing</strong>
+              <small>Walls, openings, fixtures, dimensions, labels, and notes</small>
+            </span>
+          </label>
+          <label>
+            <input
+              checked={analysisProfile === "ENGINEERING_SCHEMATIC"}
+              name="analysis-profile"
+              onChange={() => setAnalysisProfile("ENGINEERING_SCHEMATIC")}
+              type="radio"
+            />
+            <span>
+              <strong>Engineering schematic</strong>
+              <small>Components, connections, labels, notes, and dimensions</small>
+            </span>
+          </label>
+        </fieldset>
       </div>
       <div className="upload-grid">
         <FileField

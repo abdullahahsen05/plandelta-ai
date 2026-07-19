@@ -11,7 +11,12 @@ import {
   EvidenceCopilot,
   SafeMarkdown,
 } from "../components/evidence-copilot/evidence-copilot";
-import { sampleChanges, sampleProject } from "../lib/sample-data";
+import {
+  sampleChanges,
+  sampleProject,
+  schematicSampleChanges,
+  schematicSampleProject,
+} from "../lib/sample-data";
 
 describe("EvidenceCopilot", () => {
   it("labels cached sample output and focuses the cited drawing change", () => {
@@ -21,6 +26,7 @@ describe("EvidenceCopilot", () => {
         analysisId={sampleProject.analysis.id}
         changes={sampleChanges}
         onSelectChange={onSelectChange}
+        profile="CONSTRUCTION_DRAWING"
         projectId={sampleProject.id}
         sample
       />,
@@ -45,6 +51,7 @@ describe("EvidenceCopilot", () => {
         analysisId={sampleProject.analysis.id}
         changes={sampleChanges}
         onSelectChange={vi.fn()}
+        profile="CONSTRUCTION_DRAWING"
         projectId={sampleProject.id}
         sample
       />,
@@ -86,5 +93,28 @@ describe("EvidenceCopilot", () => {
     fireEvent.click(screen.getByRole("button", { name: /Open citation 1/ }));
     expect(onCitation).toHaveBeenCalledOnce();
     expect(screen.getByText(/Supported/).closest("p")).toHaveTextContent("[99]");
+  });
+
+  it("uses engineering-schematic questions and citations for the second sample", () => {
+    const onSelectChange = vi.fn();
+    render(
+      <EvidenceCopilot
+        analysisId={schematicSampleProject.analysis.id}
+        changes={schematicSampleChanges}
+        onSelectChange={onSelectChange}
+        profile="ENGINEERING_SCHEMATIC"
+        projectId={schematicSampleProject.id}
+        sample
+      />,
+    );
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "What components or connections changed?" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Ask Evidence Copilot" }));
+    fireEvent.click(screen.getByRole("button", { name: /Open citation 1/ }));
+
+    expect(onSelectChange).toHaveBeenCalledWith(schematicSampleChanges[0]!.id);
+    expect(screen.getByText(/qualified engineering review/i)).toBeInTheDocument();
   });
 });
