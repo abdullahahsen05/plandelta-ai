@@ -123,6 +123,15 @@ $apiExists = (
   --query "contains(imageIds[].imageTag, '$ImageTag')" `
   --output text
 ).Trim() -eq "True"
+$agentExists = (
+  aws ecr list-images `
+  --repository-name plandelta-agent `
+  --filter tagStatus=TAGGED `
+  --profile $Profile `
+  --region $Region `
+  --query "contains(imageIds[].imageTag, '$ImageTag')" `
+  --output text
+).Trim() -eq "True"
 $visionExists = (
   aws ecr list-images `
   --repository-name plandelta-vision `
@@ -132,14 +141,14 @@ $visionExists = (
   --query "contains(imageIds[].imageTag, '$ImageTag')" `
   --output text
 ).Trim() -eq "True"
-if ($apiExists -ne $visionExists) {
-  throw "The immutable release tag is present in only one repository."
+if (($apiExists -ne $agentExists) -or ($apiExists -ne $visionExists)) {
+  throw "The immutable release tag is present in only a subset of the three repositories."
 }
 
 $registry = "$accountId.dkr.ecr.$Region.amazonaws.com"
 if (-not $apiExists) {
-  Write-Output "Building the two production images from the verified commit."
-  docker compose -f (Join-Path $repositoryRoot "docker-compose.yml") build api vision
+  Write-Output "Building the three production images from the verified commit."
+  docker compose -f (Join-Path $repositoryRoot "docker-compose.yml") build agent api vision
   if ($LASTEXITCODE -ne 0) { throw "The production image build failed." }
 
   aws ecr get-login-password --profile $Profile --region $Region |
@@ -147,13 +156,16 @@ if (-not $apiExists) {
   if ($LASTEXITCODE -ne 0) { throw "The ECR login failed." }
 
   docker tag plandelta-api:local "$registry/plandelta-api`:$ImageTag"
+  docker tag plandelta-agent:local "$registry/plandelta-agent`:$ImageTag"
   docker tag plandelta-vision:local "$registry/plandelta-vision`:$ImageTag"
   docker push "$registry/plandelta-api`:$ImageTag"
   if ($LASTEXITCODE -ne 0) { throw "The API image push failed." }
+  docker push "$registry/plandelta-agent`:$ImageTag"
+  if ($LASTEXITCODE -ne 0) { throw "The agent image push failed." }
   docker push "$registry/plandelta-vision`:$ImageTag"
   if ($LASTEXITCODE -ne 0) { throw "The vision image push failed." }
 } else {
-  Write-Output "The immutable release tag already exists in both repositories."
+  Write-Output "The immutable release tag already exists in all three repositories."
 }
 
 $rollbackStack = aws cloudformation list-stacks `

@@ -34,6 +34,38 @@ Resources:
         - Key: Environment
           Value: production
 
+  AgentRepository:
+    Type: AWS::ECR::Repository
+    Properties:
+      RepositoryName: plandelta-agent
+      ImageTagMutability: IMMUTABLE
+      EmptyOnDelete: true
+      EncryptionConfiguration:
+        EncryptionType: AES256
+      ImageScanningConfiguration:
+        ScanOnPush: true
+      LifecyclePolicy:
+        LifecyclePolicyText: |
+          {
+            "rules": [
+              {
+                "rulePriority": 1,
+                "description": "Retain five most recent immutable agent images",
+                "selection": {
+                  "tagStatus": "any",
+                  "countType": "imageCountMoreThan",
+                  "countNumber": 5
+                },
+                "action": { "type": "expire" }
+              }
+            ]
+          }
+      Tags:
+        - Key: Project
+          Value: PlanDelta
+        - Key: Environment
+          Value: production
+
   VisionRepository:
     Type: AWS::ECR::Repository
     Properties:
@@ -69,5 +101,7 @@ Resources:
 Outputs:
   ApiRepositoryUri:
     Value: !GetAtt ApiRepository.RepositoryUri
+  AgentRepositoryUri:
+    Value: !GetAtt AgentRepository.RepositoryUri
   VisionRepositoryUri:
     Value: !GetAtt VisionRepository.RepositoryUri

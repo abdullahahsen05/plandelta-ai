@@ -141,9 +141,10 @@ Resources:
             --query Parameter.Value \
             --output text | base64 --decode > .env.bundle.json
           jq --raw-output .api .env.bundle.json | base64 --decode > .env.api
+          jq --raw-output .agent .env.bundle.json | base64 --decode > .env.agent
           jq --raw-output .vision .env.bundle.json | base64 --decode > .env.vision
           rm --force .env.bundle.json
-          chmod 0600 .env.api .env.vision
+          chmod 0600 .env.agent .env.api .env.vision
 
           TOKEN=$(curl --fail --silent --show-error --request PUT \
             --header "X-aws-ec2-metadata-token-ttl-seconds: 300" \
@@ -162,7 +163,7 @@ Resources:
           echo "Authenticating to immutable PlanDelta repositories."
           aws ecr get-login-password --region ${AWS::Region} |
             docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
-          docker compose --env-file .env.runtime -f docker-compose.prod.yml pull api worker vision proxy
+          docker compose --env-file .env.runtime -f docker-compose.prod.yml pull agent api worker vision proxy
 
           echo "Requesting a short-lived public IP certificate."
           docker run --rm --network host \
@@ -175,7 +176,7 @@ Resources:
             --agree-tos \
             --register-unsafely-without-email
 
-          echo "Starting one API, one worker, one vision service, and the TLS proxy."
+          echo "Starting one API, one worker, one agent, one vision service, and the TLS proxy."
           docker compose --env-file .env.runtime -f docker-compose.prod.yml up --detach --wait --wait-timeout 300
           curl --fail --silent --show-error --retry 20 --retry-delay 5 --retry-all-errors \
             --resolve "$PUBLIC_IP:443:127.0.0.1" \

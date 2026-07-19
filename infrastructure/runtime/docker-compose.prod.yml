@@ -19,12 +19,14 @@ services:
     entrypoint: ["/bin/sh", "-c"]
     command:
       [
-        "chown 1000:1000 /data /home/plandelta/.paddlex && chmod 0770 /data /home/plandelta/.paddlex",
+        "chown 1000:1000 /data /home/plandelta/.paddlex /home/plandelta/.cache/fastembed && chmod
+        0770 /data /home/plandelta/.paddlex /home/plandelta/.cache/fastembed",
       ]
     user: "0:0"
     volumes:
       - vision-data:/data
       - vision-models:/home/plandelta/.paddlex
+      - agent-models:/home/plandelta/.cache/fastembed
     network_mode: none
     restart: "no"
     read_only: true
@@ -41,8 +43,12 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-api:${IMAGE_TAG}
     command: ["node", "apps/api/dist/main.js"]
     environment:
+      AGENT_ENABLED: "true"
+      AGENT_SERVICE_URL: http://agent:8100
       VISION_SERVICE_URL: http://vision:8000
     depends_on:
+      agent:
+        condition: service_healthy
       vision:
         condition: service_healthy
     healthcheck:
@@ -70,11 +76,15 @@ services:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-api:${IMAGE_TAG}
     command: ["node", "apps/api/dist/worker.js"]
     environment:
+      AGENT_ENABLED: "true"
+      AGENT_SERVICE_URL: http://agent:8100
       VISION_SERVICE_URL: http://vision:8000
     volumes:
       - vision-data:/data
     depends_on:
       api:
+        condition: service_healthy
+      agent:
         condition: service_healthy
     mem_limit: 384m
     cpus: 0.55
@@ -84,6 +94,53 @@ services:
         <<: *aws-log-options
         awslogs-stream: worker
         tag: worker
+
+  agent:
+    image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-agent:${IMAGE_TAG}
+    env_file:
+      - path: ./.env.agent
+        format: raw
+    environment:
+      HF_HOME: /home/plandelta/.cache/fastembed/huggingface
+      HF_HUB_DISABLE_XET: "1"
+      VISION_SERVICE_URL: http://vision:8000
+      XDG_CACHE_HOME: /home/plandelta/.cache/fastembed
+    volumes:
+      - agent-models:/home/plandelta/.cache/fastembed
+    networks:
+      - private
+    restart: unless-stopped
+    depends_on:
+      volume-init:
+        condition: service_completed_successfully
+      vision:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health/ready')",
+        ]
+      interval: 20s
+      timeout: 8s
+      retries: 9
+    mem_limit: 640m
+    cpus: 0.65
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    logging:
+      driver: awslogs
+      options:
+        <<: *aws-log-options
+        awslogs-stream: agent
+        tag: agent
 
   vision:
     image: ${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com/plandelta-vision:${IMAGE_TAG}
@@ -161,6 +218,7 @@ networks:
     driver: bridge
 
 volumes:
+  agent-models:
   vision-data:
   vision-models:
   caddy-data:
