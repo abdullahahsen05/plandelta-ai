@@ -59,6 +59,14 @@ export class AgenticQueueService {
     >(Prisma.sql`SELECT * FROM public.recover_stale_agent_runs()`);
   }
 
+  async depths() {
+    const [agentRuns, ingestionJobs] = await Promise.all([
+      this.database.agentRun.count({ where: { status: "QUEUED" } }),
+      this.database.ingestionJob.count({ where: { status: "QUEUED" } }),
+    ]);
+    return { agentRuns, ingestionJobs };
+  }
+
   async failIngestion(jobId: string, workerId: string) {
     const job = await this.database.ingestionJob.findUnique({
       where: { id: jobId },

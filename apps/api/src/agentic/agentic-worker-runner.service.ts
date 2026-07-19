@@ -39,10 +39,22 @@ export class AgenticWorkerRunnerService
   private async runLoop() {
     const workerId = `${process.env.WORKER_ID ?? "local-worker-1"}-agentic`;
     const leaseSeconds = Number(process.env.AGENT_JOB_LEASE_SECONDS ?? 120);
+    let lastQueueMetricAt = 0;
     this.logger.log(JSON.stringify({ event: "agentic_worker_started", workerId, concurrency: 1 }));
     while (this.running) {
       try {
         await Promise.all([this.queue.recoverIngestion(), this.queue.recoverRuns()]);
+        if (Date.now() - lastQueueMetricAt >= 60_000) {
+          const depth = await this.queue.depths();
+          this.logger.log(
+            JSON.stringify({
+              event: "agentic_queue_depth",
+              agentRunDepth: depth.agentRuns,
+              ingestionDepth: depth.ingestionJobs,
+            }),
+          );
+          lastQueueMetricAt = Date.now();
+        }
         const ingestion = await this.queue.claimIngestion(workerId, leaseSeconds);
         if (ingestion) {
           await this.executeWithHeartbeat(

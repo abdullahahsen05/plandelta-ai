@@ -82,3 +82,15 @@ Add bounded alerts or operational checks for:
 - Bedrock throttling/unavailability.
 
 Use short log retention consistent with the existing deployment.
+
+## Implemented operator controls
+
+- Agent completion/failure events contain only opaque IDs and numeric routing, tool, citation,
+  latency, token, cost, repair, and injection-signal counters.
+- `pnpm --filter @plandelta/api db:inspect-agent-run <run-uuid>` prints a redacted operator trace;
+  it excludes questions, answers, prompts, chunks, URLs, storage keys, headers, and credentials.
+- The production CloudFormation template defines log metrics and alarms for failures, p95 latency,
+  duplicate-tool loops, output-token surges, estimated Bedrock spend, agent queue depth, invalid
+  citations, prompt-injection detections, and HTTP quota denials.
+- The worker emits bounded queue-depth counters once per minute. Public samples are static cached
+  data and never call an unauthenticated model route.

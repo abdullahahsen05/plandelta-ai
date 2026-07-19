@@ -18,6 +18,7 @@
     "db:verify-behavior": "tsx prisma/verify-database-behavior.ts",
     "db:verify-agentic": "tsx prisma/verify-agentic-execution.ts",
     "db:verify-schematic": "tsx prisma/verify-agentic-execution.ts --schematic",
+    "db:inspect-agent-run": "tsx prisma/inspect-agent-run.ts",
     "db:verify-clean": "tsx prisma/verify-clean-migration.ts",
     "db:seed": "prisma db seed"
   },

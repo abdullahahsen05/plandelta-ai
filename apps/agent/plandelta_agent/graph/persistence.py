@@ -6,6 +6,7 @@ import psycopg
 from psycopg.types.json import Jsonb
 
 from plandelta_agent.models.state import RunContext
+from plandelta_agent.telemetry import log_safe_event
 
 if TYPE_CHECKING:
     from plandelta_agent.graph.workflow import GraphExecutionResult, GraphTraceRecord
@@ -98,6 +99,36 @@ class PostgresGraphResultSink:
                     context.run_id,
                 ),
             )
+        trace_duration_ms = (
+            round((result.trace[-1].timestamp - result.trace[0].timestamp).total_seconds() * 1000)
+            if len(result.trace) >= 2
+            else 0
+        )
+        injection_signal_count = 0
+        for record in result.trace:
+            value = record.metadata.get("injectionSignalCount")
+            if record.node == "intake" and isinstance(value, int):
+                injection_signal_count += value
+        log_safe_event(
+            "agent_run_failed" if result.safe_error else "agent_run_completed",
+            context.correlation_id,
+            {
+                "runId": str(context.run_id),
+                "projectId": str(context.project_id),
+                "analysisProfile": context.profile_id.value,
+                "durationMs": trace_duration_ms,
+                "modelTurns": result.model_turns,
+                "toolCalls": result.tool_calls,
+                "retrievedChunks": result.retrieved_chunks,
+                "inputTokens": result.input_tokens,
+                "outputTokens": result.output_tokens,
+                "estimatedCostUsd": result.estimated_cost_usd,
+                "repairPasses": result.repair_passes,
+                "invalidCitationCount": len(result.verifier.invalid_citation_ids),
+                "injectionSignalCount": injection_signal_count,
+                "failureCode": result.safe_error.code if result.safe_error else None,
+            },
+        )
 
     @staticmethod
     def _step_values(

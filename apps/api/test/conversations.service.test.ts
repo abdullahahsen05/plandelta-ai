@@ -97,4 +97,43 @@ describe("ConversationsService", () => {
       409,
     );
   });
+
+  it("enforces the authenticated daily message allowance before model work", async () => {
+    const database = {
+      conversation: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: conversationId,
+          projectId,
+          analysisId: null,
+          status: "ACTIVE",
+          project: { analysisProfile: "CONSTRUCTION_DRAWING", profileVersion: "1.0" },
+        }),
+      },
+      message: {
+        findFirst: vi.fn().mockResolvedValue(null),
+        count: vi.fn().mockResolvedValue(20),
+      },
+      agentRun: {
+        count: vi.fn().mockResolvedValue(0),
+        aggregate: vi.fn().mockResolvedValue({
+          _sum: { inputTokens: 0, outputTokens: 0, estimatedCostUsd: 0 },
+        }),
+      },
+    };
+    const service = new ConversationsService(database as unknown as DatabaseService);
+
+    await expectApiError(
+      service.createMessage(
+        ownerId,
+        conversationId,
+        {
+          content: "What changed?",
+          idempotencyKey: "00000000-0000-4000-8000-000000000109",
+        },
+        "correlation",
+      ),
+      "AGENT_RATE_LIMITED",
+      429,
+    );
+  });
 });
