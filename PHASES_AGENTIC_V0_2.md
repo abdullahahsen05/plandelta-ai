@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 20 — Guardrails, observability, evaluations, and cost controls
-- Current task: Complete executable failure-mode fixtures, versioned evaluations, redacted trace
-  inspection, rate limits, metrics, alarms, and documented release thresholds
+- Current phase: Phase 21 — Complete verification and mandatory repair loop
+- Current task: Freeze feature work, run the complete final verification matrix from a clean state,
+  repair underlying failures, and restart the matrix after every fix
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -27,8 +27,8 @@ remaining safe work.
   `t3.small` with one encrypted 20 GiB `gp3` volume; `$25` monthly budget with `$0.103` recorded
   spend; bounded Amazon Nova Micro runtime invocation passed
 - Active blockers: none
-- Last completed implementation checkpoint: Phase 14 typed provider/runtime foundation, redacted
-  telemetry, cancellation/timeout controls, and the internal non-root container are verified
+- Last completed implementation checkpoint: Phase 20 guardrails, deterministic evaluations,
+  redacted trace inspection, rate/queue controls, telemetry, and CloudWatch definitions are verified
 - Phase 15 checkpoint: authorized PDF/TXT knowledge upload, validation, private storage, pending
   version/job creation, source access, retry, deletion, and focused API coverage pass
 - Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local BGE
@@ -50,7 +50,13 @@ remaining safe work.
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
 - Deployment policy: Reuse current cost-controlled runtime; no new paid service
-- Final verification status: Not started
+- Phase 20 completion (2026-07-19): 30-case versioned scripted evaluation passes every frozen
+  threshold with 100% routing, tool selection, evidence recall, citation validity/precision,
+  conflict handling, refusal, and limit compliance; unsupported claims, cross-project disclosures,
+  and injection overrides remain zero. Agent tests pass `64` with one explicit database-integration
+  skip; API tests pass `56` with two explicit integration skips. Agent/API lint and strict
+  typechecks pass, and the AWS runtime template validates.
+- Final verification status: Phase 21 started; complete matrix pending
 
 ## Phase 12 — Baseline, branch, and v0.2 contract
 
@@ -280,26 +286,38 @@ Completion evidence (2026-07-19):
 
 ## Phase 20 — Guardrails, observability, evaluations, and cost controls
 
-- [ ] Implement the policies in `docs/GUARDRAILS_V0_2.md` at code boundaries.
-- [ ] Add prompt-injection fixtures inside OCR text and supporting documents.
-- [ ] Add wrong-revision, stale-document, conflicting-record, malformed-tool, missing-artifact,
+- [x] Implement the policies in `docs/GUARDRAILS_V0_2.md` at code boundaries.
+- [x] Add prompt-injection fixtures inside OCR text and supporting documents.
+- [x] Add wrong-revision, stale-document, conflicting-record, malformed-tool, missing-artifact,
       cross-project, and Bedrock-outage fixtures.
-- [ ] Create the versioned evaluation dataset and runner.
-- [ ] Record routing, evidence recall, citation validity/precision, unsupported-claim, conflict,
+- [x] Create the versioned evaluation dataset and runner.
+- [x] Record routing, evidence recall, citation validity/precision, unsupported-claim, conflict,
       refusal, tool-count, latency, token, and cost metrics.
-- [ ] Establish documented release thresholds before reading final scores; do not tune thresholds
+- [x] Establish documented release thresholds before reading final scores; do not tune thresholds
       merely to pass.
-- [ ] Add redacted run trace inspection and authorized debug view or CLI.
-- [ ] Add CloudWatch metrics/alarms for failures, latency, tool loops, token use, estimated spend,
+- [x] Add redacted run trace inspection and authorized debug view or CLI.
+- [x] Add CloudWatch metrics/alarms for failures, latency, tool loops, token use, estimated spend,
       queue depth, and invalid citations.
-- [ ] Add authenticated rate limits and public-sample abuse protection.
-- [ ] Verify one run cannot exceed configured tool/model/cost limits.
-- [ ] Document limitations and distinguish curated/synthetic evaluation from field accuracy.
+- [x] Add authenticated rate limits and public-sample abuse protection.
+- [x] Verify one run cannot exceed configured tool/model/cost limits.
+- [x] Document limitations and distinguish curated/synthetic evaluation from field accuracy.
 
 Implementation checkpoint:
 
-- [ ] The important failure modes have executable tests and trace evidence.
-- [ ] No private content is present in logs or evaluation artifacts.
+- [x] The important failure modes have executable tests and trace evidence.
+- [x] No private content is present in logs or evaluation artifacts.
+
+Completion evidence (2026-07-19):
+
+- `pnpm --filter @plandelta/agent lint`, strict typecheck, `64` active tests, and the evaluation
+  harness pass; the sole skipped agent test is the separately invoked real Supabase integration.
+- Dataset `release-v0.2` contains `30` curated synthetic/scripted cases. All frozen release gates
+  pass; total scripted usage is `5,040` tokens and `$0.010080` estimated cost. These measurements are
+  explicitly labelled as scripted harness observations rather than field accuracy or provider
+  billing.
+- API lint/typecheck and `56` active tests pass. The runtime template validates in `us-east-1`.
+- Redacted completion/failure events and the authorized run-inspection CLI exclude prompts,
+  answers, chunks, URLs, storage keys, headers, and credentials.
 
 ## Phase 21 — Complete verification and mandatory repair loop
 
