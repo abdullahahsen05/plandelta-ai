@@ -13,8 +13,8 @@ remaining safe work.
 ## Current execution state
 
 - Current phase: Phase 15 — document ingestion and hybrid RAG
-- Current task: Implement authorized document upload, bounded extraction/chunking, local embedding,
-  transactional versioning, and scoped retrieval
+- Current task: Implement bounded extraction/chunking, local embedding, transactional activation,
+  and project-scoped citation-ready retrieval
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -29,6 +29,8 @@ remaining safe work.
 - Active blockers: none
 - Last completed implementation checkpoint: Phase 14 typed provider/runtime foundation, redacted
   telemetry, cancellation/timeout controls, and the internal non-root container are verified
+- Phase 15 checkpoint: authorized PDF/TXT knowledge upload, validation, private storage, pending
+  version/job creation, source access, retry, deletion, and focused API coverage pass
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -106,9 +108,9 @@ Implementation checkpoint:
 
 ## Phase 15 — Document ingestion and hybrid RAG
 
-- [ ] Implement authorized supporting-document upload through NestJS and the storage-provider
+- [x] Implement authorized supporting-document upload through NestJS and the storage-provider
       boundary.
-- [ ] Validate MIME signature, size, page count, checksum, ownership, and safe filenames.
+- [x] Validate MIME signature, size, page count, checksum, ownership, and safe filenames.
 - [ ] Implement text extraction for supported PDFs with OCR fallback only when necessary and
       bounded.
 - [ ] Chunk by document structure/page with deterministic overlap and stable identifiers.

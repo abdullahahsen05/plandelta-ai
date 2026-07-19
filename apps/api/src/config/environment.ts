@@ -50,6 +50,13 @@ const environmentSchema = z
       .default(20 * 1024 * 1024),
     MAX_PDF_PAGES: z.coerce.number().int().positive().max(200).default(50),
     MAX_IMAGE_PIXELS: z.coerce.number().int().positive().max(120_000_000).default(60_000_000),
+    KNOWLEDGE_MAX_FILE_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(50 * 1024 * 1024)
+      .default(20 * 1024 * 1024),
+    KNOWLEDGE_MAX_PAGES: z.coerce.number().int().positive().max(200).default(100),
     WORKER_ID: z.string().min(1).max(100).default("local-worker-1"),
     WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(1).default(1),
     JOB_LEASE_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
