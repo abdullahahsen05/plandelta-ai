@@ -1,10 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DatabaseService } from "../src/database/database.service.js";
 import { HealthController } from "../src/health/health.controller.js";
 
 describe("HealthController", () => {
+  beforeEach(() => {
+    vi.stubEnv("AGENT_ENABLED", "false");
+    vi.stubEnv("INTERNAL_SERVICE_SECRET", "ci-internal-service-secret-000000");
+    vi.stubEnv("JWT_AUDIENCE", "authenticated");
+    vi.stubEnv("JWT_ISSUER", "https://example.supabase.co/auth/v1");
+  });
+
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
 
