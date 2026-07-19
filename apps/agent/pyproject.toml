@@ -48,5 +48,5 @@ strict = true
 plugins = ["pydantic.mypy"]
 
 [[tool.mypy.overrides]]
-module = ["boto3.*", "fastembed.*", "langgraph.*", "uvicorn.*"]
+module = ["boto3", "boto3.*", "botocore.*", "fastembed.*", "langgraph.*", "uvicorn.*"]
 ignore_missing_imports = true
