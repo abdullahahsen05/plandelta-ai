@@ -282,6 +282,20 @@ async def test_graph_routes_real_specialist_and_requires_verifier_approval() -> 
 
 
 @pytest.mark.anyio
+async def test_graph_accepts_schema_valid_json_inside_a_model_fence() -> None:
+    provider = DeterministicChatProvider([f"```json\n{response()}\n```"])
+    result = await AgentWorkflow(
+        context=context(),
+        provider=provider,
+        specialists=specialists([]),
+    ).execute("What changed in the drawing?")
+
+    assert result.verifier.approved is True
+    assert result.answer.status == "verified"
+    assert len(result.answer.citations) == 1
+
+
+@pytest.mark.anyio
 async def test_graph_repairs_one_hallucinated_source_then_terminates() -> None:
     calls: list[SpecialistRole] = []
     provider = DeterministicChatProvider(

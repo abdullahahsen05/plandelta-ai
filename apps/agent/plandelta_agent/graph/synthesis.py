@@ -116,7 +116,7 @@ class EvidenceSynthesizer:
                     * _CONSERVATIVE_COST_PER_TOKEN_USD
                 ),
             )
-            draft = SynthesisDraft.model_validate_json(response.text)
+            draft = self._parse_draft(response.text)
         except (SafeProviderError, ValidationError, ValueError):
             return self.safe_fallback(
                 "The evidence response could not be verified safely. Try again later.",
@@ -157,6 +157,19 @@ class EvidenceSynthesizer:
             ),
             invalid_source_ids=invalid,
         )
+
+    @staticmethod
+    def _parse_draft(text: str) -> SynthesisDraft:
+        try:
+            return SynthesisDraft.model_validate_json(text)
+        except ValidationError as direct_error:
+            # Bedrock may wrap an otherwise schema-valid object in a Markdown JSON fence.
+            # Extract only the outer object and keep strict field validation in force.
+            start = text.find("{")
+            end = text.rfind("}")
+            if start < 0 or end <= start:
+                raise direct_error
+            return SynthesisDraft.model_validate_json(text[start : end + 1])
 
     @staticmethod
     def safe_fallback(message: str, *, warnings: list[str]) -> SynthesisOutcome:
