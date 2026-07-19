@@ -9,7 +9,7 @@ from fastapi import Depends, FastAPI
 from pydantic import ValidationError
 
 from plandelta_agent.auth import require_internal_token
-from plandelta_agent.config import load_settings
+from plandelta_agent.config import _psycopg_database_url, load_settings
 
 TEST_TOKEN = "agent-test-token-that-is-at-least-32-characters"
 
@@ -60,3 +60,14 @@ def test_bedrock_provider_requires_model_id(monkeypatch: pytest.MonkeyPatch) -> 
 
     with pytest.raises(ValidationError, match="BEDROCK_MODEL_ID"):
         load_settings()
+
+
+def test_database_url_removes_prisma_only_pool_options() -> None:
+    normalized = _psycopg_database_url(
+        "postgresql://user:password@pooler.example.test:6543/postgres"
+        "?pgbouncer=true&sslmode=require&connection_limit=1"
+    )
+
+    assert normalized == (
+        "postgresql://user:password@pooler.example.test:6543/postgres?sslmode=require"
+    )

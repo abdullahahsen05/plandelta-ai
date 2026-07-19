@@ -21,7 +21,7 @@ from plandelta_agent.models.answers import VerifiedAnswer, VerifierResult
 from plandelta_agent.models.base import ContractModel
 from plandelta_agent.models.evidence import SpecialistRole
 from plandelta_agent.models.state import AgentGraphState, RunContext, SafeError
-from plandelta_agent.providers import ChatProvider
+from plandelta_agent.providers import ChatProvider, SafeProviderError
 from plandelta_agent.tools import ToolInvocationRecord, ToolPolicyError
 
 
@@ -104,7 +104,7 @@ class AgentWorkflow:
             )
             state = self._safe_terminal_state(initial, safe_error)
             self._record("fallback", "safe_limit", {"code": safe_error.code})
-        except (BudgetLimitError, InputPolicyError, ToolPolicyError) as error:
+        except (BudgetLimitError, InputPolicyError, ToolPolicyError, SafeProviderError) as error:
             code = error.code
             safe_error = SafeError(
                 code=code,

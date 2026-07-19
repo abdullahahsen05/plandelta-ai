@@ -9,9 +9,12 @@ from fastapi.responses import JSONResponse
 
 from plandelta_agent import __version__
 from plandelta_agent.auth import require_internal_token
+from plandelta_agent.graph import GraphExecutionResult
 from plandelta_agent.ingestion import SafeIngestionError
+from plandelta_agent.models.base import ContractModel
 from plandelta_agent.models.health import HealthResponse, ReadinessResponse
 from plandelta_agent.models.requests import (
+    ExecuteAgentRunRequest,
     ExecuteIngestionJobRequest,
     IngestionExecutionResponse,
 )
@@ -30,6 +33,12 @@ app = FastAPI(
     redoc_url=None,
 )
 app.middleware("http")(request_telemetry_middleware)
+
+
+class AgentRunExecutionResponse(ContractModel):
+    run_id: UUID
+    status: str
+    result: GraphExecutionResult
 
 
 @app.exception_handler(SafeIngestionError)
@@ -94,3 +103,34 @@ async def execute_ingestion(
             },
         ) from error
     return IngestionExecutionResponse(job_id=job_id, status="completed")
+
+
+@app.post(
+    "/internal/v1/agent-runs/{run_id}/execute",
+    response_model=AgentRunExecutionResponse,
+    dependencies=[Depends(require_internal_token)],
+)
+async def execute_agent_run(
+    run_id: UUID,
+    request: ExecuteAgentRunRequest,
+    runtime: Annotated[IngestionRuntime, Depends(get_runtime)],
+) -> AgentRunExecutionResponse:
+    if request.run_id != run_id:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
+            detail={
+                "code": "AGENT_RUN_ID_MISMATCH",
+                "message": "The agent run identifiers do not match.",
+            },
+        )
+    try:
+        result = await runtime.execute_agent_run(run_id, request.correlation_id)
+    except AgentRuntimeUnavailableError as error:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={
+                "code": str(error),
+                "message": "The agent run is not ready for execution.",
+            },
+        ) from error
+    return AgentRunExecutionResponse(run_id=run_id, status="completed", result=result)

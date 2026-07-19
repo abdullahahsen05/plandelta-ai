@@ -100,9 +100,11 @@ class SlowFixtureSpecialist(FixtureSpecialist):
         role: SpecialistRole,
         calls: list[SpecialistRole],
         delay_seconds: float,
+        starts: list[float] | None = None,
     ) -> None:
         super().__init__(role, calls)
         self._delay_seconds = delay_seconds
+        self._starts = starts
 
     async def run(
         self,
@@ -111,6 +113,8 @@ class SlowFixtureSpecialist(FixtureSpecialist):
         context: RunContext,
         budget: RunBudget,
     ) -> EvidencePacket:
+        if self._starts is not None:
+            self._starts.append(time.perf_counter())
         await asyncio.sleep(self._delay_seconds)
         return await super().run(
             question=question,
@@ -352,18 +356,20 @@ async def test_graph_executes_allowlisted_tools_through_real_specialists() -> No
 @pytest.mark.anyio
 async def test_specialists_run_in_parallel_and_timeout_is_terminal() -> None:
     calls: list[SpecialistRole] = []
+    starts: list[float] = []
     run_context = context()
-    delayed = {role: SlowFixtureSpecialist(role, calls, 0.08) for role in SpecialistRole}
-    started = time.perf_counter()
+    delayed = {
+        role: SlowFixtureSpecialist(role, calls, 0.08, starts) for role in SpecialistRole
+    }
     result = await AgentWorkflow(
         context=run_context,
         provider=DeterministicChatProvider([response()]),
         specialists=delayed,
     ).execute("What coordination impact could this wall change have?")
-    elapsed = time.perf_counter() - started
 
     assert result.verifier.approved is True
-    assert elapsed < 0.15
+    assert len(starts) == 2
+    assert max(starts) - min(starts) < 0.02
 
     timeout_context = context()
     object.__setattr__(timeout_context.limits, "timeout_seconds", 0.01)

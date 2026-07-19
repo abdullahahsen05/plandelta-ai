@@ -20,9 +20,13 @@ RUN groupadd --gid 1000 plandelta \
 
 WORKDIR /app
 COPY pyproject.toml ./
+RUN mkdir plandelta_agent \
+    && printf '__version__ = "0.2.0"\n' > plandelta_agent/__init__.py \
+    && python -m pip install --upgrade pip \
+    && python -m pip install . \
+    && rm -rf plandelta_agent
 COPY plandelta_agent ./plandelta_agent
-RUN python -m pip install --upgrade pip \
-    && python -m pip install .
+RUN python -m pip install --no-deps --force-reinstall .
 
 RUN mkdir -p /home/plandelta/.cache/fastembed \
     && chown --recursive plandelta:plandelta /home/plandelta

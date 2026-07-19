@@ -21,6 +21,7 @@ class BedrockChatProvider:
         model_id: str,
         region: str,
         timeout_seconds: float,
+        correlation_id: str | None = None,
         client: BedrockRuntimeClient | None = None,
     ) -> None:
         if not model_id.strip():
@@ -29,6 +30,7 @@ class BedrockChatProvider:
             raise ValueError("The provider timeout must be positive.")
         self._model_id = model_id.strip()
         self._timeout_seconds = timeout_seconds
+        self._correlation_id = correlation_id
         self._client = client or cast(
             BedrockRuntimeClient,
             boto3.client(
@@ -73,6 +75,11 @@ class BedrockChatProvider:
                 "maxTokens": request.max_output_tokens,
                 "temperature": request.temperature,
             },
+            **(
+                {"requestMetadata": {"correlationId": self._correlation_id}}
+                if self._correlation_id
+                else {}
+            ),
         )
 
     def _parse_response(self, response: Mapping[str, object]) -> ChatResponse:

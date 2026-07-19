@@ -2,8 +2,22 @@ from __future__ import annotations
 
 import os
 from functools import lru_cache
+from urllib.parse import parse_qsl, urlencode, urlsplit, urlunsplit
 
 from pydantic import BaseModel, Field, SecretStr, model_validator
+
+
+def _psycopg_database_url(value: str) -> str:
+    parsed = urlsplit(value)
+    supported_parameters = {"application_name", "connect_timeout", "sslmode"}
+    query = urlencode(
+        [
+            (name, parameter)
+            for name, parameter in parse_qsl(parsed.query, keep_blank_values=True)
+            if name in supported_parameters
+        ]
+    )
+    return urlunsplit((parsed.scheme, parsed.netloc, parsed.path, query, parsed.fragment))
 
 
 class AgentSettings(BaseModel):
@@ -67,8 +81,12 @@ def load_settings() -> AgentSettings:
         bedrock_model_id=os.getenv("BEDROCK_MODEL_ID") or None,
         bedrock_region=os.getenv("BEDROCK_REGION", "us-east-1"),
         database_url=(
-            SecretStr(os.getenv("DIRECT_DATABASE_URL") or os.environ["DATABASE_URL"])
-            if os.getenv("DIRECT_DATABASE_URL") or os.getenv("DATABASE_URL")
+            SecretStr(
+                _psycopg_database_url(
+                    os.getenv("DATABASE_URL") or os.environ["DIRECT_DATABASE_URL"]
+                )
+            )
+            if os.getenv("DATABASE_URL") or os.getenv("DIRECT_DATABASE_URL")
             else None
         ),
         storage_provider=os.getenv("STORAGE_PROVIDER", "local").lower(),

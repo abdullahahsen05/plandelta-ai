@@ -66,6 +66,7 @@ def test_bedrock_provider_maps_converse_without_exposing_prompts() -> None:
         model_id="amazon.nova-micro-v1:0",
         region="us-east-1",
         timeout_seconds=2,
+        correlation_id="provider-test",
         client=client,
     )
 
@@ -77,6 +78,7 @@ def test_bedrock_provider_maps_converse_without_exposing_prompts() -> None:
     assert response.output_tokens == 8
     assert response.stop_reason == "end_turn"
     assert len(client.calls) == 1
+    assert client.calls[0].get("requestMetadata") == {"correlationId": "provider-test"}
 
 
 def test_bedrock_provider_returns_only_a_safe_error_code() -> None:

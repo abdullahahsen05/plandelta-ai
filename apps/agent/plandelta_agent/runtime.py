@@ -4,9 +4,11 @@ from functools import lru_cache
 from typing import Protocol
 from uuid import UUID
 
+import psycopg
+
 from plandelta_agent.agents import build_specialists
 from plandelta_agent.config import AgentSettings, load_settings
-from plandelta_agent.graph import AgentWorkflow, PostgresGraphResultSink
+from plandelta_agent.graph import AgentWorkflow, GraphExecutionResult, PostgresGraphResultSink
 from plandelta_agent.ingestion import (
     DocumentExtractor,
     IngestionProcessor,
@@ -16,7 +18,8 @@ from plandelta_agent.ingestion import (
     StructureAwareChunker,
     VisionOcrFallback,
 )
-from plandelta_agent.models.state import RunContext
+from plandelta_agent.models.evidence import AnalysisProfileId
+from plandelta_agent.models.state import RunContext, RunLimits
 from plandelta_agent.providers import (
     BedrockChatProvider,
     DeterministicChatProvider,
@@ -32,6 +35,10 @@ class AgentRuntimeUnavailableError(RuntimeError):
 
 class IngestionRuntime(Protocol):
     async def execute_ingestion(self, job_id: UUID, correlation_id: str) -> None: ...
+
+    async def execute_agent_run(
+        self, run_id: UUID, correlation_id: str
+    ) -> GraphExecutionResult: ...
 
 
 class AgentRuntime:
@@ -92,6 +99,82 @@ class AgentRuntime:
         )
         await processor.process(job_id)
 
+    async def execute_agent_run(
+        self,
+        run_id: UUID,
+        correlation_id: str,
+    ) -> GraphExecutionResult:
+        context, question = await self._load_run(run_id, correlation_id)
+        return await self.create_workflow(context).execute(question)
+
+    async def _load_run(
+        self,
+        run_id: UUID,
+        correlation_id: str,
+    ) -> tuple[RunContext, str]:
+        settings = self._settings
+        if settings.database_url is None:
+            raise AgentRuntimeUnavailableError("DATABASE_URL is not configured.")
+        async with await psycopg.AsyncConnection.connect(
+            settings.database_url.get_secret_value()
+        ) as connection:
+            cursor = await connection.execute(
+                """
+                SELECT p.owner_id, r.project_id, r.conversation_id, r.user_message_id,
+                       r.analysis_id, r.analysis_profile::text, r.correlation_id,
+                       r.status::text, r.cancellation_requested, m.content
+                FROM agent_runs r
+                JOIN projects p ON p.id = r.project_id
+                JOIN messages m ON m.id = r.user_message_id
+                WHERE r.id = %s
+                """,
+                (run_id,),
+            )
+            row = await cursor.fetchone()
+        if row is None:
+            raise AgentRuntimeUnavailableError("AGENT_RUN_NOT_FOUND")
+        (
+            owner_id,
+            project_id,
+            conversation_id,
+            message_id,
+            analysis_id,
+            profile_id,
+            persisted_correlation_id,
+            run_status,
+            cancellation_requested,
+            question,
+        ) = row
+        if persisted_correlation_id != correlation_id:
+            raise AgentRuntimeUnavailableError("AGENT_CORRELATION_MISMATCH")
+        if run_status not in {"running", "verifying"}:
+            raise AgentRuntimeUnavailableError("AGENT_RUN_NOT_CLAIMED")
+        if cancellation_requested:
+            raise AgentRuntimeUnavailableError("AGENT_CANCELLED")
+        return (
+            RunContext(
+                owner_id=owner_id,
+                project_id=project_id,
+                conversation_id=conversation_id,
+                message_id=message_id,
+                run_id=run_id,
+                analysis_id=analysis_id,
+                correlation_id=correlation_id,
+                profile_id=AnalysisProfileId(profile_id),
+                limits=RunLimits(
+                    max_model_turns=settings.max_model_turns,
+                    max_tool_calls=settings.max_tool_calls,
+                    max_specialists=3,
+                    max_retrieved_chunks=settings.max_retrieved_chunks,
+                    max_total_tokens=12_000,
+                    max_repair_passes=settings.max_repair_passes,
+                    timeout_seconds=settings.run_timeout_seconds,
+                    max_estimated_cost_usd=settings.max_estimated_cost_usd,
+                ),
+            ),
+            question,
+        )
+
     def create_workflow(self, context: RunContext) -> AgentWorkflow:
         settings = self._settings
         if settings.database_url is None:
@@ -110,6 +193,7 @@ class AgentRuntime:
                 model_id=settings.bedrock_model_id or "",
                 region=settings.bedrock_region,
                 timeout_seconds=min(settings.run_timeout_seconds, 45),
+                correlation_id=context.correlation_id,
             )
             if settings.chat_provider == "bedrock"
             else DeterministicChatProvider()

@@ -44,7 +44,7 @@ class PostgresGraphResultSink:
             )
             if await owned.fetchone() is None:
                 raise GraphPersistenceError("AGENT_RUN_SCOPE_INVALID")
-            for sequence, record in enumerate(result.trace, start=1):
+            for sequence, record in enumerate(result.trace, start=2):
                 await connection.execute(
                     """
                         INSERT INTO agent_steps (
