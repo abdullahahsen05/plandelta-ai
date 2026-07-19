@@ -24,15 +24,17 @@ removing the bucket.
 
 Phase 10 adds:
 
-- `aws/ecr.yaml`: two AES-256-encrypted, scan-on-push repositories with immutable tags and a
+- `aws/ecr.yaml`: three AES-256-encrypted, scan-on-push repositories with immutable tags and a
   five-image lifecycle cap.
 - `aws/runtime.yaml`: one public `t3.small`, encrypted 20 GB gp3, standard CPU credits, IMDSv2,
   SSM-only administration, ports 80/443, seven-day CloudWatch logs, and two low-cost alarms. It
   creates no NAT Gateway, load balancer, database, cache, cluster, or provisioned Bedrock resource.
-- `runtime/docker-compose.prod.yml`: one API, one concurrency-one worker, one private vision
-  service, and one Caddy TLS proxy with bounded CPU/memory and CloudWatch logging.
+- `runtime/docker-compose.prod.yml`: one API, one concurrency-one worker, one private bounded agent
+  service with local embeddings, one private vision service, and one Caddy TLS proxy with bounded
+  CPU/memory and CloudWatch logging.
 - `aws/deploy-phase10.ps1`: verifies Phase 9, stores only an allowlisted encrypted runtime bundle in
-  SSM Parameter Store, builds and pushes immutable Git-SHA images, and deploys the single instance.
+  SSM Parameter Store, builds and pushes three immutable Git-SHA images, and deploys the single
+  instance.
 - `aws/verify-phase10.ps1`: verifies the instance, volume, CPU-credit mode, ingress, SSM, ECR,
   containers, CloudWatch streams, and public HTTPS before availability is claimed.
 
@@ -41,7 +43,9 @@ checks renewal twice daily. The automatic public address is released with instan
 stop/start changes it and requires a runtime replacement, so the intended cost-control action after
 evidence capture is teardown rather than an indefinite stopped instance.
 
-Run Phase 10 only from a clean commit already pushed to `origin/main`:
+Run Phase 10 only from a clean commit already pushed to the public `origin` remote. This permits
+production verification of a reviewed release branch before it is merged, while rejecting local-only
+or dirty revisions:
 
 ```powershell
 .\infrastructure\aws\deploy-phase10.ps1

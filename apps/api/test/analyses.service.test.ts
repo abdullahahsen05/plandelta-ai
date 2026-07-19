@@ -42,7 +42,14 @@ describe("AnalysesService", () => {
   it("queues only a ready baseline/candidate pair from the owned project", async () => {
     const create = vi.fn().mockResolvedValue({ id: "analysis", status: "QUEUED" });
     const database = {
-      project: { findFirst: vi.fn().mockResolvedValue({ id: projectId, status: "ACTIVE" }) },
+      project: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: projectId,
+          status: "ACTIVE",
+          analysisProfile: "ENGINEERING_SCHEMATIC",
+          profileVersion: "1.0",
+        }),
+      },
       planRevision: {
         findMany: vi.fn().mockResolvedValue([
           { id: baselineId, role: "BASELINE", pageCount: 2 },
@@ -67,7 +74,12 @@ describe("AnalysesService", () => {
     const createInput = create.mock.calls[0]?.[0] as {
       data: { projectId: string; requestedBy: string };
     };
-    expect(createInput.data).toMatchObject({ projectId, requestedBy: "owner-a" });
+    expect(createInput.data).toMatchObject({
+      projectId,
+      requestedBy: "owner-a",
+      analysisProfile: "ENGINEERING_SCHEMATIC",
+      profileVersion: "1.0",
+    });
   });
 
   it("rejects analysis creation when active work reaches the owner quota", async () => {

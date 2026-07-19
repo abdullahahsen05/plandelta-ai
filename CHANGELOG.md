@@ -6,6 +6,47 @@ release.
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-07-19
+
+### Added
+
+- Evidence Copilot with durable conversations, resumable run events, interactive visual/document
+  citations, and editable review-only RFI drafts.
+- A bounded LangGraph supervisor with visual, knowledge, and impact specialists; allowlisted typed
+  tools; claim/citation verification; one repair; safe fallback; cancellation; and per-run limits.
+- Supporting-document ingestion with versioned extraction/chunking metadata, local BGE embeddings,
+  Supabase pgvector/full-text hybrid retrieval, stale-source policy, and explicit conflict handling.
+- Construction-drawing and engineering-schematic analysis profiles with committed sample drawings,
+  expected evidence, supporting notes, and labelled cached answers.
+- Frozen 30-case safety/evidence evaluation, redacted trace inspection, user quotas, and CloudWatch
+  alarms for failures, latency, tool loops, token use, spend, queue depth, and invalid citations.
+- A fifth private agent container on the existing cost-controlled `t3.small`, immutable ECR image,
+  concurrency one, and an SSM runtime refresh that handles EC2 public-IP/TLS rotation.
+
+### Verified
+
+- Complete local matrix: migrations/seeds/RLS, all unit/service/integration suites, production
+  builds, three Docker images, real upload-to-report, real ingestion-to-cited-Bedrock/RFI, browser
+  journeys, dependency/container/secret scans, and the frozen evaluation.
+- Production Vercel and AWS journeys for both deterministic drawing comparison/report and
+  supporting-document ingestion/hybrid retrieval/cited chat, including disposable-data cleanup.
+
+### Security
+
+- Server-owned project/analysis scope, duplicate-tool detection, specialist/tool/result/time/token/
+  cost/repair limits, prompt-injection boundaries, citation validation, and redacted persisted
+  traces.
+- Agent port remains private; EC2 administration remains SSM-only; no new paid vendor or prohibited
+  AWS service was introduced.
+
+### Known limitations
+
+- Evaluation scores are curated regression evidence, not field accuracy or engineering approval.
+- Live processing remains a temporary single-instance deployment and depends on source quality,
+  deterministic alignment/OCR, Supabase, and on-demand Bedrock.
+- Only construction drawings and the verified engineering-schematic sample/profile are supported;
+  arbitrary images are out of scope.
+
 ## [0.1.0] - 2026-07-18
 
 ### Added
@@ -71,5 +112,6 @@ release.
   useful when temporary compute is unavailable.
 
 [Unreleased]: https://github.com/abdullahahsen05/plandelta-ai/compare/v0.1.0...HEAD
+[0.2.0]: https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0
 [0.1.0]: https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0
 [0.1.0-rc.1]: https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.1.0-rc.1

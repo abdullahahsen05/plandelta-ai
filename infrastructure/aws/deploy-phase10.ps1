@@ -22,12 +22,12 @@ $accountId = [string]$identity.Account
 $bucketName = "plandelta-$accountId-$Region"
 $boundaryArn = "arn:aws:iam::$accountId`:policy/plandelta-runtime-boundary"
 $headCommit = (git -C $repositoryRoot rev-parse HEAD).Trim()
-$remoteCommit = (
-  git -C $repositoryRoot ls-remote origin refs/heads/main |
+$remoteCommits = @(
+  git -C $repositoryRoot ls-remote origin |
     ForEach-Object { ($_ -split "\s+")[0] }
-).Trim()
-if ($headCommit -notmatch "^[0-9a-f]{40}$" -or $remoteCommit -ne $headCommit) {
-  throw "Deploy only a full commit that is already present on origin/main."
+)
+if ($headCommit -notmatch "^[0-9a-f]{40}$" -or $headCommit -notin $remoteCommits) {
+  throw "Deploy only a full commit that is already present on the origin remote."
 }
 if (-not $ImageTag) {
   $ImageTag = $headCommit
@@ -123,6 +123,15 @@ $apiExists = (
   --query "contains(imageIds[].imageTag, '$ImageTag')" `
   --output text
 ).Trim() -eq "True"
+$agentExists = (
+  aws ecr list-images `
+  --repository-name plandelta-agent `
+  --filter tagStatus=TAGGED `
+  --profile $Profile `
+  --region $Region `
+  --query "contains(imageIds[].imageTag, '$ImageTag')" `
+  --output text
+).Trim() -eq "True"
 $visionExists = (
   aws ecr list-images `
   --repository-name plandelta-vision `
@@ -132,14 +141,14 @@ $visionExists = (
   --query "contains(imageIds[].imageTag, '$ImageTag')" `
   --output text
 ).Trim() -eq "True"
-if ($apiExists -ne $visionExists) {
-  throw "The immutable release tag is present in only one repository."
+if (($apiExists -ne $agentExists) -or ($apiExists -ne $visionExists)) {
+  throw "The immutable release tag is present in only a subset of the three repositories."
 }
 
 $registry = "$accountId.dkr.ecr.$Region.amazonaws.com"
 if (-not $apiExists) {
-  Write-Output "Building the two production images from the verified commit."
-  docker compose -f (Join-Path $repositoryRoot "docker-compose.yml") build api vision
+  Write-Output "Building the three production images from the verified commit."
+  docker compose -f (Join-Path $repositoryRoot "docker-compose.yml") build agent api vision
   if ($LASTEXITCODE -ne 0) { throw "The production image build failed." }
 
   aws ecr get-login-password --profile $Profile --region $Region |
@@ -147,13 +156,16 @@ if (-not $apiExists) {
   if ($LASTEXITCODE -ne 0) { throw "The ECR login failed." }
 
   docker tag plandelta-api:local "$registry/plandelta-api`:$ImageTag"
+  docker tag plandelta-agent:local "$registry/plandelta-agent`:$ImageTag"
   docker tag plandelta-vision:local "$registry/plandelta-vision`:$ImageTag"
   docker push "$registry/plandelta-api`:$ImageTag"
   if ($LASTEXITCODE -ne 0) { throw "The API image push failed." }
+  docker push "$registry/plandelta-agent`:$ImageTag"
+  if ($LASTEXITCODE -ne 0) { throw "The agent image push failed." }
   docker push "$registry/plandelta-vision`:$ImageTag"
   if ($LASTEXITCODE -ne 0) { throw "The vision image push failed." }
 } else {
-  Write-Output "The immutable release tag already exists in both repositories."
+  Write-Output "The immutable release tag already exists in all three repositories."
 }
 
 $rollbackStack = aws cloudformation list-stacks `
@@ -196,4 +208,67 @@ if ($LASTEXITCODE -ne 0) {
   throw "The one-instance PlanDelta runtime stack failed."
 }
 
-Write-Output "Phase 10 resources deployed. Run verify-phase10.ps1 before claiming availability."
+$instanceId = (
+  aws cloudformation describe-stacks `
+    --stack-name plandelta-runtime `
+    --profile $Profile `
+    --region $Region `
+    --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue | [0]" `
+    --output text
+).Trim()
+if ($instanceId -notmatch "^i-[0-9a-f]+$") {
+  throw "The runtime instance ID could not be resolved after deployment."
+}
+
+Write-Output "Refreshing the existing instance with the immutable release."
+$refreshScriptUrl =
+  "https://raw.githubusercontent.com/abdullahahsen05/plandelta-ai/$headCommit/infrastructure/runtime/refresh-runtime.sh"
+$refreshCommand =
+  "curl --fail --silent --show-error --location $refreshScriptUrl --output /tmp/plandelta-refresh-runtime.sh && " +
+  "bash /tmp/plandelta-refresh-runtime.sh $headCommit $ImageTag $EnvironmentParameterName $Region $accountId"
+$refreshParameters = "commands=[`"$refreshCommand`"]"
+$commandId = (
+  aws ssm send-command `
+    --instance-ids $instanceId `
+    --document-name AWS-RunShellScript `
+    --parameters $refreshParameters `
+    --timeout-seconds 900 `
+    --profile $Profile `
+    --region $Region `
+    --query "Command.CommandId" `
+    --output text
+).Trim()
+if ($LASTEXITCODE -ne 0 -or $commandId -notmatch "^[0-9a-f-]+$") {
+  throw "The runtime refresh command could not be started."
+}
+
+$refreshStatus = "InProgress"
+for ($attempt = 0; $attempt -lt 90; $attempt++) {
+  Start-Sleep -Seconds 10
+  $refreshStatus = (
+    aws ssm get-command-invocation `
+      --command-id $commandId `
+      --instance-id $instanceId `
+      --profile $Profile `
+      --region $Region `
+      --query Status `
+      --output text
+  ).Trim()
+  if ($refreshStatus -notin @("Pending", "InProgress", "Delayed")) {
+    break
+  }
+}
+if ($refreshStatus -ne "Success") {
+  $refreshError = (
+    aws ssm get-command-invocation `
+      --command-id $commandId `
+      --instance-id $instanceId `
+      --profile $Profile `
+      --region $Region `
+      --query StandardErrorContent `
+      --output text
+  ).Trim()
+  throw "The runtime refresh failed with status $refreshStatus. $refreshError"
+}
+
+Write-Output "Phase 10 resources and immutable runtime deployed. Run verify-phase10.ps1 before claiming availability."

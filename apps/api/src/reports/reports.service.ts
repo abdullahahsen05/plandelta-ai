@@ -15,7 +15,12 @@ export class ReportsService {
   private async requireOwnedAnalysis(ownerId: string, analysisId: string) {
     const analysis = await this.database.analysis.findFirst({
       where: { id: analysisId, project: { ownerId } },
-      select: { id: true, status: true, project: { select: { name: true } } },
+      select: {
+        id: true,
+        status: true,
+        analysisProfile: true,
+        project: { select: { name: true } },
+      },
     });
     if (!analysis)
       throw new ApiException(
@@ -45,6 +50,8 @@ export class ReportsService {
         id: true,
         status: true,
         engineVersion: true,
+        analysisProfile: true,
+        profileVersion: true,
         metrics: true,
         warnings: true,
         completedAt: true,
@@ -52,6 +59,8 @@ export class ReportsService {
           select: {
             name: true,
             projectCode: true,
+            analysisProfile: true,
+            profileVersion: true,
           },
         },
         baselineRevision: {
@@ -127,7 +136,9 @@ export class ReportsService {
       where: { analysisId },
       orderBy: { sequence: "asc" },
     });
-    const summary = await this.summary.summarizeAnalysis(changes);
+    const summary = await this.summary.summarizeAnalysis(changes, {
+      analysisProfile: analysis.analysisProfile,
+    });
     return this.database.analysisReport.upsert({
       where: { analysisId },
       create: {

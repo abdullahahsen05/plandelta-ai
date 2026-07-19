@@ -1,5 +1,72 @@
 # Release evidence
 
+## v0.2 local release candidate
+
+The complete v0.2 local verification and repair loop passed on 2026-07-19 against feature revision
+`5e8a5b4f8664f23e3d9c08904693c19d9bbcf2ee`. The run included clean migration replay,
+idempotent seeds, RLS and durable queue behavior, static gates, all unit/service suites, explicit
+Supabase RAG and AWS provider integrations, all production builds and images, browser E2E, and the
+30-case frozen evaluation.
+
+Two real disposable journeys passed and cleaned up:
+
+- construction drawings uploaded through the deterministic CV/OCR/ONNX worker to linked evidence
+  and a printable report;
+- an engineering-schematic technical note ingested through local BGE embeddings and hybrid search
+  to a Bedrock-grounded answer, verified document citation, and review-only RFI draft.
+
+Normal suites passed 66 agent tests plus the separately enabled real RAG test, 56 API tests plus the
+two separately enabled AWS tests, 32 vision tests, 15 web tests, and 8 contract tests. All seven
+browser cases passed when the authenticated live case was enabled. The normal opt-in skips therefore
+do not represent skipped release requirements.
+
+`pnpm audit` and `pip-audit` found no published dependency vulnerability. Docker Scout found no
+fixable high/critical image issue; the three vendor-unfixed Debian Perl findings recorded below
+remain accepted and monitored. The images run non-root, the browser bundle contains none of the
+checked server-only variable names, and the full-history secret scan is required immediately before
+each push.
+
+## v0.2 production release evidence
+
+The production candidate was verified on 2026-07-19:
+
+- Vercel production and alias are Ready at
+  [`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app).
+- AWS Phase 9 and Phase 10 verifiers passed at `https://100.58.166.134` after a forced EC2 restart.
+  The deployment refresh downloaded the exact Git revision, restored the immutable Compose bundle,
+  detected the changed public IP, issued a new short-lived IP certificate, and brought all five
+  services back healthy.
+- Agent, API, and vision ECR repositories contain immutable image tag
+  `70c02f0dab5bb6282c7134e19a2d33323a940fa1`.
+- Production has all 12 migrations. The production database behavior check passed cross-user RLS,
+  analysis/ingestion/agent leases, stale recovery, hybrid conflicts, and project knowledge scope.
+- A disposable production supporting-document journey completed local BGE embedding, pgvector/full-
+  text retrieval, on-demand Nova Micro synthesis, one verified citation, a review-only RFI, and
+  cleanup.
+- A disposable final-image production browser journey completed authentication, two drawing
+  uploads, durable CV/OCR/ONNX analysis, linked evidence and crop, printable report, and cleanup in
+  46.5 seconds.
+- Real-browser public checks passed for both labelled samples, mobile layout, cached cited response,
+  citation-to-ledger focus, and no console warnings/errors.
+- All nine CloudWatch alarms were `OK`. Log streams were present for API, worker, agent, vision, and
+  proxy.
+
+The retained `t3.small` did not require resizing. After deployment it had 1,913 MB total memory,
+843 MB used, 885 MB available, and only 2.8 MB of 2 GB swap used. The agent used approximately
+87 MB idle. The encrypted 20 GB gp3 root volume was 49% used.
+
+AWS Budgets reported USD 0.589 actual against the USD 25 teardown gate. Cost Explorer remained
+lagged and returned effectively zero unblended cost; AWS rejected the forecast request with
+`DataUnavailableException` because there was insufficient history. No forecast is claimed. Gross
+USD 10/15/20/25 alerts and the teardown gate remain binding.
+
+One interrupted browser smoke test created a disposable synthetic identity before local network
+access to Supabase timed out. The smallest journey rerun passed. A direct scoped cleanup removed
+that identity plus four older `plandelta-playwright-…@example.invalid` test projects/users and their
+private S3 objects; no non-synthetic owner was in scope.
+
+## Preserved v0.1 release evidence
+
 This record began with the local `v0.1.0-rc.1` candidate and now includes the
 verified Vercel production deployment and AWS runtime evidence captured on
 2026-07-18. Passwordless authentication, live uploads, deterministic analysis,

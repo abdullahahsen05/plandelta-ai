@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import base64
+import binascii
 import importlib.util
+import os
 import re
 from importlib.metadata import version
 
@@ -13,6 +16,7 @@ from fastapi.responses import JSONResponse
 from plandelta_vision import __version__
 from plandelta_vision.config import load_settings
 from plandelta_vision.errors import VisionError
+from plandelta_vision.image_io import decode_drawing
 from plandelta_vision.models import (
     AnalysisRequest,
     AnalysisResponse,
@@ -20,8 +24,12 @@ from plandelta_vision.models import (
     ErrorBody,
     ErrorResponse,
     HealthResponse,
+    OcrPageResult,
+    OcrPagesRequest,
+    OcrPagesResponse,
     ReadinessResponse,
 )
+from plandelta_vision.ocr import extract_crop_text
 from plandelta_vision.onnx_classifier import read_model_metadata
 from plandelta_vision.pipeline import analyze
 from plandelta_vision.security import require_internal_secret
@@ -139,3 +147,51 @@ def engine() -> EngineResponse:
 )
 def analyze_revision(request: AnalysisRequest) -> AnalysisResponse:
     return analyze(request, load_settings())
+
+
+@app.post(
+    "/internal/v1/ocr/pages",
+    response_model=OcrPagesResponse,
+    responses={
+        400: {"model": ErrorResponse},
+        401: {"model": ErrorResponse},
+        422: {"model": ErrorResponse},
+    },
+    dependencies=[Depends(require_internal_secret)],
+)
+def extract_document_pages(request: OcrPagesRequest) -> OcrPagesResponse:
+    settings = load_settings()
+    if not settings.ocr_enabled:
+        raise VisionError("OCR_DISABLED", "OCR is not enabled.", 503)
+    try:
+        document_bytes = base64.b64decode(request.document_base64, validate=True)
+    except (binascii.Error, ValueError) as error:
+        raise VisionError("OCR_INPUT_INVALID", "The OCR document payload is invalid.") from error
+    max_bytes = int(os.getenv("KNOWLEDGE_MAX_FILE_BYTES", str(settings.max_upload_bytes)))
+    if not 0 < len(document_bytes) <= max_bytes or not document_bytes.startswith(b"%PDF-"):
+        raise VisionError(
+            "OCR_INPUT_INVALID",
+            "OCR accepts only a bounded PDF document.",
+        )
+    ocr_settings = settings.model_copy(
+        update={"max_pdf_pages": int(os.getenv("KNOWLEDGE_MAX_PAGES", str(settings.max_pdf_pages)))}
+    )
+    pages: list[OcrPageResult] = []
+    for page_number in request.page_numbers:
+        image = decode_drawing(document_bytes, page_number, ocr_settings)
+        try:
+            evidence = extract_crop_text(image, settings.ocr_language)
+        except Exception as error:
+            raise VisionError(
+                "OCR_FAILED",
+                "The configured OCR engine could not process a document page.",
+                503,
+            ) from error
+        pages.append(
+            OcrPageResult(
+                page_number=page_number,
+                text=evidence.text or "",
+                confidence=evidence.confidence,
+            )
+        )
+    return OcrPagesResponse(provider_version=version("paddleocr"), pages=pages)

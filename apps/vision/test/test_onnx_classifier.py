@@ -82,3 +82,23 @@ def test_feature_flag_disables_explicit_onnx_request() -> None:
 
     assert decision.source == "RULES"
     assert decision.warning == "ONNX classifier is disabled; deterministic rules retained."
+
+
+def test_schematic_profile_uses_bounded_profile_rules() -> None:
+    baseline, candidate = crops()
+    decision = classify_change(
+        PixelRegion(4, 28, 56, 7, "ADDED", 0.9),
+        None,
+        None,
+        baseline,
+        candidate,
+        "onnx",
+        True,
+        MODEL_PATH,
+        0.5,
+        "engineering_schematic",
+    )
+
+    assert decision.source == "RULES"
+    assert decision.category == "CONNECTION_LINE"
+    assert "electrical" in decision.trades

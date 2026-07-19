@@ -1,0 +1,21 @@
+{
+  "profile": "engineering_schematic",
+  "profileVersion": "1.0",
+  "expectedChanges": [
+    {
+      "title": "R2 value label revised",
+      "category": "LABEL",
+      "box": [0.39, 0.57, 0.13, 0.1]
+    },
+    {
+      "title": "R3 pull-down component and connections added",
+      "category": "COMPONENT",
+      "box": [0.58, 0.45, 0.1, 0.28]
+    },
+    {
+      "title": "Revision note updated",
+      "category": "NOTE",
+      "box": [0.53, 0.84, 0.38, 0.06]
+    }
+  ]
+}

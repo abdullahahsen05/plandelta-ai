@@ -39,4 +39,18 @@ describe("loadEnvironment", () => {
       }).SUMMARY_PROVIDER,
     ).toBe("bedrock");
   });
+
+  it("requires an internal token only when the agent is enabled", () => {
+    expect(() => loadEnvironment({ ...baseEnvironment, AGENT_ENABLED: "true" })).toThrow(
+      "AGENT_INTERNAL_TOKEN",
+    );
+    expect(
+      loadEnvironment({
+        ...baseEnvironment,
+        AGENT_ENABLED: "true",
+        AGENT_INTERNAL_TOKEN: "b".repeat(32),
+      }).AGENT_ENABLED,
+    ).toBe(true);
+    expect(loadEnvironment(baseEnvironment).AGENT_ENABLED).toBe(false);
+  });
 });

@@ -75,7 +75,7 @@ if ((Compare-Object -ReferenceObject @(80, 443) -DifferenceObject $ports)) {
   throw "Only ports 80 and 443 may be public."
 }
 
-foreach ($repositoryName in @("plandelta-api", "plandelta-vision")) {
+foreach ($repositoryName in @("plandelta-agent", "plandelta-api", "plandelta-vision")) {
   $repository = aws ecr describe-repositories `
     --repository-names $repositoryName `
     --profile $Profile `
@@ -139,7 +139,7 @@ $containerStatus = aws ssm get-command-invocation `
   --query "StandardOutputContent" `
   --output text
 $runningServices = @($containerStatus -split "\s+" | Where-Object { $_ })
-foreach ($serviceName in @("api", "worker", "vision", "proxy")) {
+foreach ($serviceName in @("agent", "api", "worker", "vision", "proxy")) {
   if ($serviceName -notin $runningServices) {
     throw "The remote $serviceName container is not confirmed running."
   }
@@ -203,9 +203,9 @@ $streamCount = aws logs describe-log-streams `
   --region $Region `
   --query "length(logStreams)" `
   --output text
-if ([int]$streamCount -lt 4) {
-  throw "CloudWatch does not contain streams for all four runtime services."
+if ([int]$streamCount -lt 5) {
+  throw "CloudWatch does not contain streams for all five runtime services."
 }
 
-Write-Output "Phase 10 runtime verified: one bounded t3.small, encrypted gp3, SSM, immutable images, four running services, CloudWatch logs, and public HTTPS."
+Write-Output "Phase 10 runtime verified: one bounded t3.small, encrypted gp3, SSM, immutable images, five running services, CloudWatch logs, and public HTTPS."
 Write-Output "Verified API URL: https://$publicIp"

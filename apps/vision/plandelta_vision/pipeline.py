@@ -8,6 +8,7 @@ import numpy as np
 
 from plandelta_vision.alignment import align_candidate
 from plandelta_vision.artifacts import ArtifactStore
+from plandelta_vision.classify import AnalysisProfile
 from plandelta_vision.config import VisionSettings
 from plandelta_vision.differ import PixelRegion, calculate_differences
 from plandelta_vision.errors import VisionError
@@ -155,6 +156,7 @@ def _change_result(
     candidate_crop: ColorImage,
     classifier: str,
     settings: VisionSettings,
+    request_profile: AnalysisProfile,
 ) -> tuple[DetectedChangeResult, str | None]:
     text_changed = _normalize_text(old_ocr.text) != _normalize_text(new_ocr.text) and bool(
         old_ocr.text or new_ocr.text
@@ -170,6 +172,7 @@ def _change_result(
         settings.onnx_classifier_enabled,
         settings.onnx_model_path,
         settings.onnx_confidence_threshold,
+        request_profile,
     )
     text_scores = [value for value in [old_ocr.confidence, new_ocr.confidence] if value is not None]
     text_confidence = round(sum(text_scores) / len(text_scores), 4) if text_scores else None
@@ -277,6 +280,7 @@ def analyze(request: AnalysisRequest, settings: VisionSettings) -> AnalysisRespo
             candidate_crop,
             request.configuration.classifier,
             settings,
+            request.analysis_profile,
         )
         changes.append(change)
         if classifier_warning:

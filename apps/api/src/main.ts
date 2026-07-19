@@ -6,6 +6,15 @@ import type { NestExpressApplication } from "@nestjs/platform-express";
 import { DocumentBuilder, SwaggerModule } from "@nestjs/swagger";
 
 import { AppModule } from "./app.module.js";
+import {
+  AgentRunEventDto,
+  CitationDto,
+  CreateAgentMessageDto,
+  CreateConversationDto,
+  ExecuteAgentRunDto,
+  IngestionProgressDto,
+  VerifiedAgentAnswerDto,
+} from "./agentic/agentic.dto.js";
 import { ApiExceptionFilter } from "./common/api-exception.filter.js";
 import { JsonResponseInterceptor } from "./common/json-response.interceptor.js";
 import { loadEnvironment } from "./config/environment.js";
@@ -51,11 +60,27 @@ async function bootstrap(): Promise<void> {
 
   const swaggerConfig = new DocumentBuilder()
     .setTitle("PlanDelta API")
-    .setDescription("Evidence-based construction blueprint revision analysis API")
-    .setVersion("0.1.0")
+    .setDescription(
+      "Evidence-based construction blueprint revision analysis and Evidence Copilot API",
+    )
+    .setVersion("0.2.0")
     .addBearerAuth()
     .build();
-  SwaggerModule.setup("docs", app, SwaggerModule.createDocument(app, swaggerConfig));
+  SwaggerModule.setup(
+    "docs",
+    app,
+    SwaggerModule.createDocument(app, swaggerConfig, {
+      extraModels: [
+        CreateConversationDto,
+        CreateAgentMessageDto,
+        ExecuteAgentRunDto,
+        IngestionProgressDto,
+        CitationDto,
+        AgentRunEventDto,
+        VerifiedAgentAnswerDto,
+      ],
+    }),
+  );
 
   await app.listen(environment.API_PORT, "0.0.0.0");
 }

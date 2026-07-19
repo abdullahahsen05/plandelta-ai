@@ -25,6 +25,9 @@
     },
     "@plandelta/vision#build": {
       "outputs": []
+    },
+    "@plandelta/agent#build": {
+      "outputs": []
     }
   }
 }

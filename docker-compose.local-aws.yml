@@ -1,0 +1,8 @@
+services:
+  agent:
+    environment:
+      AGENT_CHAT_PROVIDER: bedrock
+      AWS_PROFILE: plandelta
+      AWS_SDK_LOAD_CONFIG: "1"
+    volumes:
+      - ${USERPROFILE}/.aws:/home/plandelta/.aws

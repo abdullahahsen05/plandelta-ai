@@ -126,6 +126,12 @@ export default function Home() {
               >
                 Open labelled sample
               </Link>
+              <Link
+                className="inline-flex min-h-11 items-center justify-center border border-[#294C64] px-5 font-semibold text-[#294C64] transition-colors hover:bg-[#294C64] hover:text-white"
+                href="/app/analyses/schematic-sample"
+              >
+                Open schematic sample
+              </Link>
               {liveProcessingEnabled ? (
                 <Link
                   className="inline-flex min-h-11 items-center justify-center border border-[#171A1C] px-5 font-semibold transition-colors hover:bg-[#171A1C] hover:text-white"

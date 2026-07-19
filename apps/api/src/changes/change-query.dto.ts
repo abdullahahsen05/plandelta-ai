@@ -10,6 +10,10 @@ const categories = [
   "DIMENSION",
   "TEXT_NOTE",
   "ROOM_LABEL",
+  "COMPONENT",
+  "CONNECTION_LINE",
+  "LABEL",
+  "NOTE",
   "UNKNOWN",
 ] as const;
 

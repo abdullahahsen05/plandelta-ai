@@ -25,6 +25,15 @@ const applicationTables = [
   "detected_changes",
   "analysis_reports",
   "audit_events",
+  "knowledge_documents",
+  "knowledge_document_versions",
+  "knowledge_chunks",
+  "ingestion_jobs",
+  "conversations",
+  "messages",
+  "agent_runs",
+  "agent_steps",
+  "citations",
 ] as const;
 
 const migrationsDirectory = resolve(import.meta.dirname, "migrations");
@@ -85,7 +94,21 @@ try {
      JOIN pg_namespace n ON n.oid = p.pronamespace
      WHERE n.nspname = $1
        AND p.proname = ANY($2::text[])`,
-    [verificationSchema, ["claim_analysis", "heartbeat_analysis", "recover_stale_analyses"]],
+    [
+      verificationSchema,
+      [
+        "claim_analysis",
+        "heartbeat_analysis",
+        "recover_stale_analyses",
+        "hybrid_search_knowledge",
+        "claim_ingestion_job",
+        "heartbeat_ingestion_job",
+        "recover_stale_ingestion_jobs",
+        "claim_agent_run",
+        "heartbeat_agent_run",
+        "recover_stale_agent_runs",
+      ],
+    ],
   );
 
   const tableCount = tables.rows[0]?.count ?? 0;
@@ -95,11 +118,11 @@ try {
   if (tableCount !== applicationTables.length) {
     throw new Error(`Expected ${applicationTables.length} PlanDelta tables; found ${tableCount}.`);
   }
-  if (policyCount < 10) {
+  if (policyCount < 24) {
     throw new Error(`Expected ownership RLS policies; found only ${policyCount}.`);
   }
-  if (queueFunctionCount !== 3) {
-    throw new Error(`Expected 3 queue functions; found ${queueFunctionCount}.`);
+  if (queueFunctionCount !== 10) {
+    throw new Error(`Expected 10 queue/retrieval functions; found ${queueFunctionCount}.`);
   }
 
   await client.query("ROLLBACK");
@@ -112,7 +135,7 @@ try {
     throw new Error("The isolated migration verification schema survived rollback.");
   }
   process.stdout.write(
-    `Clean isolated migration passed: ${tableCount} tables, ${policyCount} policies, ${queueFunctionCount} queue functions; transaction rolled back.\n`,
+    `Clean isolated migration passed: ${tableCount} tables, ${policyCount} policies, ${queueFunctionCount} queue/retrieval functions; transaction rolled back.\n`,
   );
 } finally {
   if (!rolledBack) {

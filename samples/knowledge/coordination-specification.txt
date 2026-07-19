@@ -1,0 +1,18 @@
+SECTION 01 10 00 GENERAL REQUIREMENTS
+
+Coordinate new partition locations with the reflected ceiling plan, lighting layout, fire alarm
+devices, sprinkler heads, and mechanical diffusers before construction. Report unresolved
+clearance conflicts to the design team before procurement or installation.
+
+SECTION 08 71 00 DOOR HARDWARE
+
+Provide lever hardware sets at the revised conference-room doors. Confirm handing, frame
+preparation, access-control power, and hardware schedule references against the current issued
+revision. Where the drawing and hardware schedule disagree, preserve both records and request
+written clarification before ordering.
+
+SECTION 26 05 00 ELECTRICAL COORDINATION
+
+Relocated partitions require review of receptacles, switches, data outlets, and life-safety
+devices. Field dimensions and detected drawing changes are decision-support evidence only and
+must be verified against the source documents.

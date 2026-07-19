@@ -1,10 +1,18 @@
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
 import type { DatabaseService } from "../src/database/database.service.js";
 import { HealthController } from "../src/health/health.controller.js";
 
 describe("HealthController", () => {
+  beforeEach(() => {
+    vi.stubEnv("AGENT_ENABLED", "false");
+    vi.stubEnv("INTERNAL_SERVICE_SECRET", "ci-internal-service-secret-000000");
+    vi.stubEnv("JWT_AUDIENCE", "authenticated");
+    vi.stubEnv("JWT_ISSUER", "https://example.supabase.co/auth/v1");
+  });
+
   afterEach(() => {
+    vi.unstubAllEnvs();
     vi.unstubAllGlobals();
   });
 
@@ -13,7 +21,7 @@ describe("HealthController", () => {
     expect(new HealthController(database).live()).toEqual({
       service: "api",
       status: "ok",
-      version: "0.1.0",
+      version: "0.2.0",
     });
   });
 
@@ -26,7 +34,8 @@ describe("HealthController", () => {
     await expect(new HealthController(database).ready()).resolves.toEqual({
       service: "api",
       status: "ok",
-      version: "0.1.0",
+      version: "0.2.0",
+      agent: "disabled",
       database: "ok",
       vision: "ok",
     });

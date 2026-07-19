@@ -9,6 +9,8 @@ services:
     command: ["node", "apps/api/dist/main.js"]
     env_file: .env.local
     environment:
+      AGENT_ENABLED: "true"
+      AGENT_SERVICE_URL: http://agent:8100
       LOCAL_STORAGE_ROOT: /data
       VISION_SERVICE_URL: http://vision:8000
     ports:
@@ -16,6 +18,8 @@ services:
     volumes:
       - plandelta-data:/data
     depends_on:
+      agent:
+        condition: service_healthy
       vision:
         condition: service_healthy
     healthcheck:
@@ -30,18 +34,58 @@ services:
       timeout: 5s
       retries: 5
 
+  agent:
+    image: plandelta-agent:local
+    build:
+      context: apps/agent
+      dockerfile: Dockerfile
+    env_file: .env.local
+    environment:
+      HF_HOME: /home/plandelta/.cache/fastembed/huggingface
+      HF_HUB_DISABLE_XET: "1"
+      XDG_CACHE_HOME: /home/plandelta/.cache/fastembed
+    expose:
+      - "8100"
+    volumes:
+      - plandelta-data:/data
+      - plandelta-agent-models:/home/plandelta/.cache/fastembed
+    mem_limit: 768m
+    cpus: 0.75
+    read_only: true
+    tmpfs:
+      - /tmp
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8100/health/ready')",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+
   worker:
     image: plandelta-api:local
     pull_policy: never
     command: ["node", "apps/api/dist/worker.js"]
     env_file: .env.local
     environment:
+      AGENT_ENABLED: "true"
+      AGENT_SERVICE_URL: http://agent:8100
       LOCAL_STORAGE_ROOT: /data
       VISION_SERVICE_URL: http://vision:8000
     volumes:
       - plandelta-data:/data
     depends_on:
       api:
+        condition: service_healthy
+      agent:
         condition: service_healthy
     restart: unless-stopped
 
@@ -72,5 +116,6 @@ services:
       retries: 5
 
 volumes:
+  plandelta-agent-models:
   plandelta-data:
   plandelta-vision-models:

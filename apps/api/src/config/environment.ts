@@ -15,6 +15,19 @@ const environmentSchema = z
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
     WEB_ORIGINS: z.string().default("http://localhost:3000"),
     INTERNAL_SERVICE_SECRET: z.string().min(32),
+    AGENT_ENABLED: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
+    AGENT_SERVICE_URL: z.string().url().default("http://agent:8100"),
+    AGENT_INTERNAL_TOKEN: z.string().min(32).optional(),
+    AGENT_JOB_LEASE_SECONDS: z.coerce.number().int().min(30).max(3600).default(120),
+    AGENT_QUEUE_DEADLINE_SECONDS: z.coerce.number().int().min(60).max(3600).default(600),
+    AGENT_REQUEST_TIMEOUT_MS: z.coerce.number().int().min(5_000).max(120_000).default(75_000),
+    AGENT_MAX_ATTEMPTS: z.coerce.number().int().min(1).max(3).default(3),
+    AGENT_MAX_MESSAGES_PER_DAY: z.coerce.number().int().min(1).max(100).default(20),
+    AGENT_MAX_TOKENS_PER_DAY: z.coerce.number().int().min(1_000).max(1_000_000).default(100_000),
+    AGENT_MAX_COST_USD_PER_DAY: z.coerce.number().positive().max(5).default(0.25),
     VISION_SERVICE_URL: z.string().url().default("http://localhost:8000"),
     STORAGE_PROVIDER: z.enum(["local", "s3"]).default("local"),
     LOCAL_STORAGE_ROOT: z.string().min(1).default("data"),
@@ -44,6 +57,13 @@ const environmentSchema = z
       .default(20 * 1024 * 1024),
     MAX_PDF_PAGES: z.coerce.number().int().positive().max(200).default(50),
     MAX_IMAGE_PIXELS: z.coerce.number().int().positive().max(120_000_000).default(60_000_000),
+    KNOWLEDGE_MAX_FILE_BYTES: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(50 * 1024 * 1024)
+      .default(20 * 1024 * 1024),
+    KNOWLEDGE_MAX_PAGES: z.coerce.number().int().positive().max(200).default(100),
     WORKER_ID: z.string().min(1).max(100).default("local-worker-1"),
     WORKER_CONCURRENCY: z.coerce.number().int().min(1).max(1).default(1),
     JOB_LEASE_SECONDS: z.coerce.number().int().min(30).max(3600).default(300),
@@ -75,6 +95,13 @@ const environmentSchema = z
         code: "custom",
         path: ["BEDROCK_MODEL_ID"],
         message: "BEDROCK_MODEL_ID is required when SUMMARY_PROVIDER=bedrock.",
+      });
+    }
+    if (environment.AGENT_ENABLED && !environment.AGENT_INTERNAL_TOKEN) {
+      context.addIssue({
+        code: "custom",
+        path: ["AGENT_INTERNAL_TOKEN"],
+        message: "AGENT_INTERNAL_TOKEN is required when AGENT_ENABLED=true.",
       });
     }
   });

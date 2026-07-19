@@ -18,9 +18,7 @@ describe("ChangeLedger", () => {
       />,
     );
 
-    expect(
-      screen.getByRole("heading", { name: "Conference room partition added" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("heading", { name: sampleChanges[0]!.title })).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Removed" }));
     expect(onFilterChange).toHaveBeenCalledWith("removed");
   });

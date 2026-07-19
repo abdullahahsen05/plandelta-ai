@@ -6,6 +6,7 @@ node_modules
 .venv
 pnpm-lock.yaml
 apps/api/src/generated
+apps/agent/evals/results/
 AGENTS.md
 START_HERE.md
 PLAN.md

@@ -11,7 +11,13 @@ const parsed = loadDotenv({
 
 if (!parsed) throw new Error("The ignored .env.local file could not be loaded.");
 
-const required = ["DATABASE_URL", "JWT_AUDIENCE", "JWT_ISSUER", "INTERNAL_SERVICE_SECRET"];
+const required = [
+  "AGENT_INTERNAL_TOKEN",
+  "DATABASE_URL",
+  "JWT_AUDIENCE",
+  "JWT_ISSUER",
+  "INTERNAL_SERVICE_SECRET",
+];
 const missing = required.filter((name) => !parsed[name]?.trim());
 if (missing.length) throw new Error(`Missing required production variables: ${missing.join(", ")}`);
 
@@ -25,6 +31,7 @@ const apiValues = {
   DATABASE_URL: parsed.DATABASE_URL,
   JWT_AUDIENCE: parsed.JWT_AUDIENCE,
   JWT_ISSUER: parsed.JWT_ISSUER,
+  AGENT_INTERNAL_TOKEN: parsed.AGENT_INTERNAL_TOKEN,
   INTERNAL_SERVICE_SECRET: parsed.INTERNAL_SERVICE_SECRET,
   LOG_LEVEL: "info",
   WEB_ORIGINS: webOrigin,
@@ -51,6 +58,34 @@ const apiValues = {
   MAX_PDF_PAGES: "50",
   MAX_IMAGE_PIXELS: "60000000",
 };
+const agentValues = {
+  AGENT_INTERNAL_TOKEN: parsed.AGENT_INTERNAL_TOKEN,
+  AGENT_CHAT_PROVIDER: "bedrock",
+  AGENT_EMBEDDING_PROVIDER: "local",
+  AGENT_EMBEDDING_MODEL: "BAAI/bge-small-en-v1.5",
+  AGENT_EMBEDDING_DIMENSION: "384",
+  AGENT_MAX_MODEL_TURNS: "8",
+  AGENT_MAX_TOOL_CALLS: "12",
+  AGENT_MAX_RETRIEVED_CHUNKS: "12",
+  AGENT_MAX_REPAIR_PASSES: "1",
+  AGENT_RUN_TIMEOUT_SECONDS: "60",
+  AGENT_MAX_ESTIMATED_COST_USD: "0.02",
+  AGENT_WORKER_CONCURRENCY: "1",
+  AGENT_TRACE_CONTENT_ENABLED: "false",
+  DATABASE_URL: parsed.DATABASE_URL,
+  STORAGE_PROVIDER: "s3",
+  AWS_REGION: region,
+  S3_REGION: region,
+  S3_BUCKET: bucket,
+  S3_PREFIX: "plandelta",
+  BEDROCK_REGION: region,
+  BEDROCK_MODEL_ID: "amazon.nova-micro-v1:0",
+  INTERNAL_SERVICE_SECRET: parsed.INTERNAL_SERVICE_SECRET,
+  KNOWLEDGE_MAX_FILE_BYTES: "20971520",
+  KNOWLEDGE_MAX_PAGES: "100",
+  KNOWLEDGE_CHUNK_SIZE: "1200",
+  KNOWLEDGE_CHUNK_OVERLAP: "180",
+};
 const visionValues = {
   APP_ENV: "production",
   INTERNAL_SERVICE_SECRET: parsed.INTERNAL_SERVICE_SECRET,
@@ -74,6 +109,7 @@ function encodeEnvironment(values) {
 }
 
 const bundle = {
+  agent: encodeEnvironment(agentValues),
   api: encodeEnvironment(apiValues),
   vision: encodeEnvironment(visionValues),
 };

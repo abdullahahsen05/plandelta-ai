@@ -18,8 +18,12 @@ RUN groupadd --gid 1000 plandelta \
       plandelta
 WORKDIR /app
 COPY pyproject.toml ./
+RUN mkdir plandelta_vision \
+    && printf '__version__ = "0.2.0"\n' > plandelta_vision/__init__.py \
+    && python -m pip install . \
+    && rm -rf plandelta_vision
 COPY plandelta_vision ./plandelta_vision
-RUN python -m pip install --upgrade pip && python -m pip install .
+RUN python -m pip install --no-deps --force-reinstall .
 COPY models ./models
 RUN apt-get update \
     && apt-get install --yes --no-install-recommends libgomp1 \

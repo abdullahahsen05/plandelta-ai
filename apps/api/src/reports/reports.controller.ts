@@ -112,6 +112,11 @@ export class ReportsController {
     const summarySource =
       report.provider === "BEDROCK" ? "AI-generated via Amazon Bedrock" : "Deterministic evidence";
     const shortId = context.id.slice(0, 8).toUpperCase();
+    const profileLabel =
+      context.analysisProfile === "ENGINEERING_SCHEMATIC"
+        ? "Engineering schematic"
+        : "Construction drawing";
+    const profileVersion = context.profileVersion || "1.0";
     const changeRecords = context.changes
       .map((change) => {
         const category = titleCase(change.category);
@@ -246,16 +251,16 @@ export class ReportsController {
   <div class="screen-note"><strong>Print-ready coordination report.</strong> Use your browser’s Print command (Ctrl+P) to save as PDF or print.</div>
   <main class="report">
     <header class="report-header">
-      <div class="eyebrow">PlanDelta · verified drawing evidence</div>
+      <div class="eyebrow">PlanDelta · verified revision evidence</div>
       <h1>Revision comparison report</h1>
-      <p class="report-subtitle">${escapeHtml(context.project.name)} · Baseline against revised drawing</p>
+      <p class="report-subtitle">${escapeHtml(context.project.name)} · ${escapeHtml(profileLabel)} profile v${escapeHtml(profileVersion)}</p>
       <div class="report-id technical">Report ${escapeHtml(shortId)} · Generated ${escapeHtml(formatDate(report.generatedAt, true))} UTC</div>
     </header>
 
     <dl class="project-band">
       <div><dt>Project</dt><dd>${escapeHtml(context.project.name)}</dd></div>
       <div><dt>Project code</dt><dd>${escapeHtml(context.project.projectCode ?? "Not assigned")}</dd></div>
-      <div><dt>Analysis status</dt><dd>Complete</dd></div>
+      <div><dt>Analysis profile</dt><dd>${escapeHtml(profileLabel)}</dd></div>
       <div><dt>Completed</dt><dd>${escapeHtml(formatDate(context.completedAt))}</dd></div>
     </dl>
 
@@ -271,7 +276,7 @@ export class ReportsController {
     </section>
 
     <section class="report-section">
-      <div class="section-heading"><h2>Drawing pair</h2><p>Selected pages used for this analysis</p></div>
+      <div class="section-heading"><h2>Source revision pair</h2><p>Selected pages used for this analysis</p></div>
       <div class="revision-pair">
         <article class="revision">
           <div class="revision-key">A</div>

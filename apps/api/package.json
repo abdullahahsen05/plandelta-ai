@@ -1,6 +1,6 @@
 {
   "name": "@plandelta/api",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "type": "module",
   "scripts": {
@@ -16,6 +16,9 @@
     "db:generate": "prisma generate",
     "db:migrate": "prisma migrate deploy",
     "db:verify-behavior": "tsx prisma/verify-database-behavior.ts",
+    "db:verify-agentic": "tsx prisma/verify-agentic-execution.ts",
+    "db:verify-schematic": "tsx prisma/verify-agentic-execution.ts --schematic",
+    "db:inspect-agent-run": "tsx prisma/inspect-agent-run.ts",
     "db:verify-clean": "tsx prisma/verify-clean-migration.ts",
     "db:seed": "prisma db seed"
   },

@@ -1,0 +1,9 @@
+ADDENDUM 02 PARTITION COORDINATION
+
+The revised partition layout supersedes the earlier general note. Coordinate relocated walls with
+door frames, ceiling grids, lighting controls, data outlets, fire alarm devices, sprinkler heads,
+and supply-air diffusers. The hardware schedule remains subject to written clarification where its
+revision label conflicts with the current addendum.
+
+Do not order affected hardware or begin concealed-services installation until the responsible
+design discipline confirms the coordinated locations against the issued drawing revision.

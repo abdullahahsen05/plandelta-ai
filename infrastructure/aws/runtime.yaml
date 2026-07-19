@@ -141,9 +141,10 @@ Resources:
             --query Parameter.Value \
             --output text | base64 --decode > .env.bundle.json
           jq --raw-output .api .env.bundle.json | base64 --decode > .env.api
+          jq --raw-output .agent .env.bundle.json | base64 --decode > .env.agent
           jq --raw-output .vision .env.bundle.json | base64 --decode > .env.vision
           rm --force .env.bundle.json
-          chmod 0600 .env.api .env.vision
+          chmod 0600 .env.agent .env.api .env.vision
 
           TOKEN=$(curl --fail --silent --show-error --request PUT \
             --header "X-aws-ec2-metadata-token-ttl-seconds: 300" \
@@ -162,7 +163,7 @@ Resources:
           echo "Authenticating to immutable PlanDelta repositories."
           aws ecr get-login-password --region ${AWS::Region} |
             docker login --username AWS --password-stdin ${AWS::AccountId}.dkr.ecr.${AWS::Region}.amazonaws.com
-          docker compose --env-file .env.runtime -f docker-compose.prod.yml pull api worker vision proxy
+          docker compose --env-file .env.runtime -f docker-compose.prod.yml pull agent api worker vision proxy
 
           echo "Requesting a short-lived public IP certificate."
           docker run --rm --network host \
@@ -175,7 +176,7 @@ Resources:
             --agree-tos \
             --register-unsafely-without-email
 
-          echo "Starting one API, one worker, one vision service, and the TLS proxy."
+          echo "Starting one API, one worker, one agent, one vision service, and the TLS proxy."
           docker compose --env-file .env.runtime -f docker-compose.prod.yml up --detach --wait --wait-timeout 300
           curl --fail --silent --show-error --retry 20 --retry-delay 5 --retry-all-errors \
             --resolve "$PUBLIC_IP:443:127.0.0.1" \
@@ -280,6 +281,190 @@ Resources:
       Threshold: 10
       ComparisonOperator: LessThanThreshold
       TreatMissingData: missing
+
+  AgentFailureMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "agent_run_failed" }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: AgentRunFailures
+          MetricValue: "1"
+          DefaultValue: 0
+
+  AgentLatencyMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "agent_run_completed" && $.durationMs = * }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: AgentRunLatencyMs
+          MetricValue: $.durationMs
+
+  AgentToolLoopMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.failureCode = "AGENT_DUPLICATE_TOOL_CALL" }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: ToolLoopBlocks
+          MetricValue: "1"
+          DefaultValue: 0
+
+  AgentOutputTokenMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "agent_run_completed" && $.outputTokens = * }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: OutputTokens
+          MetricValue: $.outputTokens
+
+  AgentEstimatedSpendMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "agent_run_completed" && $.estimatedCostUsd = * }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: EstimatedBedrockSpendUsd
+          MetricValue: $.estimatedCostUsd
+
+  AgentQueueDepthMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "agentic_queue_depth" && $.agentRunDepth = * }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: AgentRunQueueDepth
+          MetricValue: $.agentRunDepth
+
+  InvalidCitationMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "agent_run_completed" && $.invalidCitationCount = * }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: InvalidCitationAttempts
+          MetricValue: $.invalidCitationCount
+
+  PromptInjectionMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: "{ $.injectionSignalCount > 0 }"
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: PromptInjectionDetections
+          MetricValue: $.injectionSignalCount
+
+  AgentQuotaDenialMetric:
+    Type: AWS::Logs::MetricFilter
+    Properties:
+      LogGroupName: /plandelta/production
+      FilterPattern: '{ $.event = "http_request_completed" && $.statusCode = 429 }'
+      MetricTransformations:
+        - MetricNamespace: PlanDelta/Agentic
+          MetricName: QuotaDenials
+          MetricValue: "1"
+          DefaultValue: 0
+
+  AgentFailureAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-failure-surge
+      Namespace: PlanDelta/Agentic
+      MetricName: AgentRunFailures
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 3
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  AgentLatencyAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-high-latency
+      Namespace: PlanDelta/Agentic
+      MetricName: AgentRunLatencyMs
+      ExtendedStatistic: p95
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 45000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  AgentToolLoopAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-tool-loop
+      Namespace: PlanDelta/Agentic
+      MetricName: ToolLoopBlocks
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
+
+  AgentTokenAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-token-surge
+      Namespace: PlanDelta/Agentic
+      MetricName: OutputTokens
+      Statistic: Sum
+      Period: 3600
+      EvaluationPeriods: 1
+      Threshold: 5000
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  AgentSpendAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-estimated-spend
+      Namespace: PlanDelta/Agentic
+      MetricName: EstimatedBedrockSpendUsd
+      Statistic: Sum
+      Period: 86400
+      EvaluationPeriods: 1
+      Threshold: 0.25
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  AgentQueueDepthAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-queue-depth
+      Namespace: PlanDelta/Agentic
+      MetricName: AgentRunQueueDepth
+      Statistic: Maximum
+      Period: 300
+      EvaluationPeriods: 2
+      Threshold: 5
+      ComparisonOperator: GreaterThanThreshold
+      TreatMissingData: notBreaching
+
+  InvalidCitationAlarm:
+    Type: AWS::CloudWatch::Alarm
+    Properties:
+      AlarmName: plandelta-agent-invalid-citation
+      Namespace: PlanDelta/Agentic
+      MetricName: InvalidCitationAttempts
+      Statistic: Sum
+      Period: 300
+      EvaluationPeriods: 1
+      Threshold: 1
+      ComparisonOperator: GreaterThanOrEqualToThreshold
+      TreatMissingData: notBreaching
 
 Outputs:
   InstanceId:

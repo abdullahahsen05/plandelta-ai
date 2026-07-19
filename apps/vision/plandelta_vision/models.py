@@ -79,8 +79,36 @@ class AnalysisRequest(ContractModel):
     baseline: ReadReference
     candidate: ReadReference
     selected_page: int = Field(default=1, ge=1)
+    analysis_profile: Literal["construction_drawing", "engineering_schematic"] = (
+        "construction_drawing"
+    )
     configuration: ProcessingConfiguration = Field(default_factory=ProcessingConfiguration)
     artifact_output: ArtifactOutput
+
+
+class OcrPagesRequest(ContractModel):
+    correlation_id: str = Field(min_length=1, max_length=100)
+    document_base64: str = Field(min_length=8, max_length=28_000_000)
+    page_numbers: list[int] = Field(min_length=1, max_length=20)
+
+    @field_validator("page_numbers")
+    @classmethod
+    def validate_page_numbers(cls, value: list[int]) -> list[int]:
+        if any(page < 1 or page > 200 for page in value) or len(set(value)) != len(value):
+            raise ValueError("OCR page numbers must be unique and between 1 and 200.")
+        return sorted(value)
+
+
+class OcrPageResult(ContractModel):
+    page_number: int = Field(ge=1, le=200)
+    text: str = Field(max_length=250_000)
+    confidence: float | None = Field(default=None, ge=0, le=1)
+
+
+class OcrPagesResponse(ContractModel):
+    provider: Literal["paddleocr"] = "paddleocr"
+    provider_version: str
+    pages: list[OcrPageResult] = Field(min_length=1, max_length=20)
 
 
 class NormalizedPoint(ContractModel):
@@ -142,6 +170,10 @@ class DetectedChangeResult(ContractModel):
         "DIMENSION",
         "TEXT_NOTE",
         "ROOM_LABEL",
+        "COMPONENT",
+        "CONNECTION_LINE",
+        "LABEL",
+        "NOTE",
         "UNKNOWN",
     ]
     source: Literal["RULES", "ONNX", "OCR", "HYBRID"]

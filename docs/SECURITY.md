@@ -6,6 +6,8 @@
 - Public NestJS API validates JWT, ownership, content, and limits.
 - Worker is trusted application code but must still validate database state.
 - FastAPI is internal and authenticates the calling service.
+- Agent FastAPI is internal, requires a separate service token, and reloads
+  server-authorized run context instead of accepting browser-selected scope.
 - Supabase service role and AWS credentials are server-only.
 
 ## Secrets
@@ -34,30 +36,41 @@
 - RLS provides defense in depth.
 - Never accept owner_id from browser payloads.
 - Artifact download is authorized before a short-lived URL is issued.
+- Knowledge previews and every visual/document citation are re-authorized
+  against the current owner and project before resolution.
+- Tool arguments cannot contain owner, user, project, or analysis scope; those
+  fields come from the server-created run context.
 - Demo resources are isolated and rate limited.
 
 ## Service security
 
-- FastAPI binds privately where possible.
+- Vision and agent FastAPI services bind privately where possible.
 - If it must share a host network, require an internal secret and restrict
   security groups/firewall.
 - Public API uses HTTPS only in production.
 - Configure strict CORS for known Vercel/local origins.
 - The API applies security headers, a 30-second default request timeout,
   separate per-IP read/write minute limits, and PostgreSQL-backed per-user
-  upload/analysis quotas. Defaults and multi-instance limitations are recorded
-  in [OPERATIONS.md](./OPERATIONS.md).
+  upload/analysis quotas plus database-backed agent message, cost, and
+  concurrency quotas. Defaults and multi-instance limitations are recorded in
+  [OPERATIONS.md](./OPERATIONS.md).
 - Containers run as non-root with read-only filesystem where feasible.
 
 ## AI safety
 
-- Bedrock receives only the minimum evidence needed.
-- Prompt instructs the model to use supplied evidence and return strict JSON.
-- Validate model output with a schema.
-- Treat blueprint text as untrusted data, not instructions.
-- Do not let OCR text override system behavior or select tools.
-- Mark AI summaries and uncertainty.
-- Fall back to deterministic summaries on invalid or failed AI output.
+- Bedrock receives only the bounded evidence packet needed for the current
+  authorized run.
+- Supervisor and synthesis output are schema constrained; specialists and
+  tools are allowlisted.
+- OCR and supporting-document text are untrusted data. Injection signals cannot
+  override policy, select tools, expand scope, or reveal prompts.
+- Duplicate tool fingerprints, unique tool count, specialists, retrieved
+  chunks, model turns, deadline, tokens, estimated cost, and repair passes are
+  capped.
+- Answers are not published until citations resolve to returned, in-scope,
+  active evidence. Conflicts require both sides and a visible conflict status.
+- Invalid output receives at most one repair and then a safe
+  insufficient-evidence/failure response.
 
 ## Data lifecycle
 
@@ -69,7 +82,8 @@
 - The AWS phase adds S3 lifecycle cleanup for abandoned multipart uploads and
   temporary/demo prefixes.
 - CloudWatch logs use finite retention; structured records contain identifiers
-  and metrics, not raw drawings, tokens, signed URLs, or OCR text.
+  and metrics, not raw drawings, tokens, signed URLs, OCR text, prompts,
+  answers, or retrieved chunks.
 - User uploads are never training data. Full operational behavior is recorded
   in [OPERATIONS.md](./OPERATIONS.md).
 
@@ -82,3 +96,7 @@
 - CORS and security-header inspection.
 - Verify S3 public access block.
 - Verify IAM policy contains only required bucket/model/log actions.
+- Verify the private agent port has no security-group ingress and the instance
+  role permits only the configured on-demand Bedrock model.
+- Run the frozen prompt-injection, cross-project, stale/conflict, timeout,
+  cancellation, tool-loop, token, cost, and citation evaluation cases.

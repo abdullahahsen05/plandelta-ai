@@ -1,7 +1,9 @@
 # PlanDelta AI
 
-PlanDelta compares a baseline construction drawing with a revised drawing, aligns the sheets,
-detects visual and textual changes, and turns every finding into traceable review evidence.
+PlanDelta compares a baseline drawing with a revised drawing, aligns the sheets, detects visual and
+textual changes, and turns every finding into traceable review evidence. Its Evidence Copilot
+answers project questions only from authorized drawing regions and ingested project documents, with
+clickable citations and review-only RFI drafts.
 
 The product is a serious construction-intelligence workspace—not an estimation claim, automatic
 takeoff, or generic analytics dashboard. User-uploaded results come from a real deterministic
@@ -9,11 +11,16 @@ OpenCV/OCR pipeline. The built-in sample is always identified as sample data.
 
 ## Current status
 
-The product is verified locally and on its cost-controlled AWS runtime from two validated blueprint
-uploads through durable job processing, OpenCV alignment and directional differencing, PaddleOCR,
-normalized evidence regions, private S3 artifacts, an evidence-constrained Bedrock summary, and a
-printable report. One `t3.small`, one worker, and the public HTTPS API are live with budget alerts
-and a USD 25 teardown gate.
+The v0.2 release candidate is verified locally and on its cost-controlled AWS runtime from two
+validated blueprint uploads through durable job processing, OpenCV alignment and directional
+differencing, PaddleOCR, normalized evidence regions, private S3 artifacts, an evidence-constrained
+Bedrock summary, and a printable report. A second production journey ingested an
+engineering-schematic technical note, generated local BGE embeddings, retrieved it through Supabase
+pgvector hybrid search, and produced a Bedrock answer with a verified document citation and
+review-only RFI.
+
+One `t3.small` runs one API, worker, agent, vision service, and TLS proxy with concurrency one,
+bounded Nova Micro usage, CloudWatch alarms, and a USD 25 teardown gate.
 
 The [public Vercel workspace](https://plandelta-ai.vercel.app) has verified passwordless sign-in and
 live uploads connected to the AWS runtime. The production journey has completed from two uploaded
@@ -22,7 +29,9 @@ The clearly labelled sample remains available without signing in and will remain
 temporary AWS compute is later stopped. Live processing is intentionally retained for the portfolio
 demo under USD 10/15/20/25 gross-cost alerts and the documented teardown gate.
 
-Progress and evidence are recorded in [PHASES.md](./PHASES.md).
+Agentic progress and source-to-test evidence are recorded in
+[PHASES_AGENTIC_V0_2.md](./PHASES_AGENTIC_V0_2.md) and
+[docs/APPLICATION_EVIDENCE_V0_2.md](./docs/APPLICATION_EVIDENCE_V0_2.md).
 
 ## Product
 
@@ -45,42 +54,49 @@ flowchart LR
     API --> DB["Supabase PostgreSQL + Auth"]
     Worker["NestJS worker"] --> DB
     Worker --> Vision["FastAPI CV/OCR"]
+    Worker --> Agent["FastAPI bounded agent graph"]
+    Agent --> DB
+    Agent --> Embeddings["Local BGE embeddings"]
     API --> Storage["Storage provider"]
     Worker --> Storage
-    Worker --> Bedrock["Bedrock Nova Micro"]
-    API --> Logs["CloudWatch"]
+    Agent --> Bedrock["Bedrock Nova Micro"]
+    Agent --> Logs["CloudWatch"]
 ```
 
 - `apps/web`: Next.js App Router interface and blueprint workbench.
 - `apps/api`: NestJS HTTP API and separate durable worker entry point.
+- `apps/agent`: FastAPI/LangGraph ingestion, hybrid retrieval, bounded specialist orchestration,
+  verification, citations, and traces.
 - `apps/vision`: stateless FastAPI computer-vision and OCR service.
 - `packages/contracts`: shared Zod contracts and normalized geometry.
 - `packages/ui`: PlanDelta-specific reusable interface utilities.
 - `infrastructure`: deployment assets created only after the local release gate.
 
-Supabase PostgreSQL is the source of truth and durable queue. Local development uses a shared
-storage volume; the verified production provider uses private S3. Bedrock summaries remain optional
-and never replace deterministic evidence.
+Supabase PostgreSQL is the source of truth, durable queue, conversation store, and pgvector hybrid
+retrieval layer. Local development uses a shared storage volume; the verified production provider
+uses private S3. Bedrock synthesis remains bounded and never replaces deterministic evidence.
 
 Production uses one encrypted 20 GB `t3.small` with 2 GB swap, IMDSv2, standard T3 credits, SSM-only
 administration, ports 80/443, one concurrency-one worker, and seven-day logs. It does not use a NAT
 Gateway, load balancer, RDS, cache, cluster, or provisioned Bedrock capacity.
 
 The public API applies strict input validation, security headers, request timeouts, per-IP traffic
-limits, and database-backed per-user upload and analysis quotas. Readiness checks cover PostgreSQL
-and the vision service; structured logs use correlation IDs without recording tokens, drawing
-content, or OCR text. Defaults, cleanup behavior, and incident checks are documented in
-[docs/OPERATIONS.md](./docs/OPERATIONS.md).
+limits, and database-backed per-user upload, analysis, message, token, and estimated-cost quotas.
+Readiness checks cover PostgreSQL, the agent, and the vision service; structured logs use
+correlation IDs without recording prompts, answers, chunks, drawing content, or OCR text. Defaults,
+cleanup behavior, and incident checks are documented in [docs/OPERATIONS.md](./docs/OPERATIONS.md).
 
 ## Verified evidence
 
-| Gate                     | Recorded result                                                                      |
-| ------------------------ | ------------------------------------------------------------------------------------ |
-| Unit suites              | 3 contract, 9 web, 41 API, and 27 vision tests                                       |
-| Deployed analysis        | 1 real CV/OCR change, 7 private artifacts, Bedrock report, cleanup passed            |
-| Recovery                 | API restart recovered; natural 3/3 job failure completed through the real retry path |
-| ONNX synthetic benchmark | 1.000 macro-F1 versus 0.667 rules; 0.1697 ms single-crop CPU p95                     |
-| AWS billing snapshot     | USD 0.00 actual/estimated at capture; alerts at USD 10/15/20/25                      |
+| Gate                     | Recorded result                                                               |
+| ------------------------ | ----------------------------------------------------------------------------- |
+| Unit/service suites      | 66 agent, 56 API, 32 vision, 15 web, and 8 contract tests                     |
+| Provider integrations    | Real Supabase RAG plus two AWS provider tests passed separately               |
+| Agent evaluation         | 30/30 cases; citation/routing/conflict/refusal 100%; injection overrides 0    |
+| Deployed drawing journey | CV/OCR/ONNX evidence, private artifacts, printable report, and cleanup passed |
+| Deployed RAG journey     | Ingestion, BGE, retrieval, Bedrock, verified citation/RFI, and cleanup passed |
+| AWS runtime              | Five services healthy; agent 87 MB idle; 885 MB available; nine alarms `OK`   |
+| AWS billing snapshot     | Budget actual USD 0.589; forecast unavailable; alerts at USD 10/15/20/25      |
 
 The ONNX numbers use a seed-generated synthetic validation set and are not field-accuracy claims.
 Billing data can lag resource use. Full commands, caveats, and evidence are recorded in
@@ -110,12 +126,14 @@ pnpm db:seed
 ```
 
 Copy `.env.example` to `.env.local` and configure values locally. Never commit or paste the
-resulting file. The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, and
-the vision service at `http://localhost:8000`. Start the complete non-containerized stack in four
-terminals so the API and durable worker remain separate:
+resulting file. The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, the
+vision service at `http://localhost:8000`, and the internal agent at `http://localhost:8100`. Start
+the complete non-containerized stack in five terminals so the API and durable worker remain
+separate:
 
 ```powershell
 pnpm --filter @plandelta/vision dev
+pnpm --filter @plandelta/agent dev
 pnpm --filter @plandelta/api dev
 pnpm --filter @plandelta/api dev:worker
 pnpm --filter @plandelta/web dev
@@ -166,6 +184,8 @@ pnpm test          Run unit and service tests
 pnpm test:e2e      Run browser and service-boundary smoke tests
 pnpm verify:local-stack  Run a disposable authenticated upload-to-report integration journey
 pnpm verify:local-e2e    Run Playwright against the real API, worker, vision, and Supabase stack
+pnpm verify:local-agentic  Run ingestion through cited Bedrock answer and review-only RFI
+pnpm eval:release  Run the frozen 30-case agentic release evaluation
 pnpm start:local    Start the built web, API, worker, and vision stack until Ctrl+C
 pnpm format        Format supported source and documentation
 pnpm db:generate   Generate the Prisma client
@@ -197,6 +217,10 @@ pnpm docker:down   Stop local service containers
   code compliance.
 - Uploaded drawings are private runtime data and never training material.
 - Low-confidence alignment or OCR remains visibly uncertain.
+- RAG can miss poorly extracted or ambiguous source text; stale/conflicting sources remain visible
+  and require human review.
+- Construction and engineering-schematic profiles do not imply arbitrary-image support.
+- Curated agent evaluation scores are regression evidence, not field accuracy.
 - The small ONNX changed-region classifier is confidence-gated and falls back visibly to
   deterministic rules; its published metrics are synthetic-set measurements, not real-world
   accuracy.

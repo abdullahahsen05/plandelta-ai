@@ -11,7 +11,12 @@ from typing import Literal, Protocol, cast
 import cv2
 import numpy as np
 
-from plandelta_vision.classify import Category, classification_details, classify_region
+from plandelta_vision.classify import (
+    AnalysisProfile,
+    Category,
+    classification_details,
+    classify_region,
+)
 from plandelta_vision.differ import PixelRegion
 from plandelta_vision.image_io import ColorImage
 
@@ -133,8 +138,18 @@ def classify_change(
     enabled: bool,
     model_path: Path,
     confidence_threshold: float,
+    profile: AnalysisProfile = "construction_drawing",
 ) -> ClassificationDecision:
-    rules_category, rules_trades, rules_impact = classify_region(region, old_text, new_text)
+    rules_category, rules_trades, rules_impact = classify_region(
+        region, old_text, new_text, profile
+    )
+    if profile == "engineering_schematic":
+        return ClassificationDecision(
+            rules_category,
+            rules_trades,
+            rules_impact,
+            "RULES",
+        )
     if requested == "rules":
         return ClassificationDecision(rules_category, rules_trades, rules_impact, "RULES")
     if not enabled:
@@ -186,7 +201,7 @@ def classify_change(
                     "deterministic rules retained."
                 ),
             )
-        trades, impact = classification_details(category)
+        trades, impact = classification_details(category, profile)
         return ClassificationDecision(
             category,
             trades,

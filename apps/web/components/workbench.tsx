@@ -16,10 +16,16 @@ import dynamic from "next/dynamic";
 import Link from "next/link";
 import { useState } from "react";
 
-import { sampleChanges, sampleProject } from "../lib/sample-data";
+import {
+  sampleChanges,
+  sampleProject,
+  schematicSampleChanges,
+  schematicSampleProject,
+} from "../lib/sample-data";
 import type { SampleChange } from "../lib/sample-data";
 import type { CompareMode } from "./blueprint-canvas";
 import { ChangeLedger, type ChangeFilter } from "./change-ledger";
+import { EvidenceCopilot } from "./evidence-copilot/evidence-copilot";
 
 const BlueprintCanvas = dynamic(
   () => import("./blueprint-canvas").then((module) => module.BlueprintCanvas),
@@ -36,8 +42,11 @@ const BlueprintCanvas = dynamic(
 
 export type WorkbenchData = {
   sample: boolean;
+  analysisId?: string | undefined;
   projectId: string;
   projectName: string;
+  analysisProfile: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
+  profileLabel: string;
   comparisonLabel: string;
   sheet: string;
   sheetTitle: string;
@@ -59,6 +68,7 @@ export type WorkbenchData = {
 
 const sampleWorkbench: WorkbenchData = {
   sample: true,
+  analysisId: sampleProject.analysis.id,
   projectId: sampleProject.id,
   projectName: sampleProject.name,
   comparisonLabel: "A2.14 · Rev 03 → 04",
@@ -71,13 +81,44 @@ const sampleWorkbench: WorkbenchData = {
   reprojectionError: sampleProject.analysis.reprojectionError,
   changes: sampleChanges,
   summaryProvider: "DETERMINISTIC",
+  analysisProfile: sampleProject.analysisProfile,
+  profileLabel: sampleProject.profileLabel,
+  baselineImageUrl: "/samples/construction-baseline.png",
+  candidateImageUrl: "/samples/construction-candidate.png",
+  alignedCandidateImageUrl: "/samples/construction-candidate.png",
+  documentWidth: 800,
+  documentHeight: 600,
+};
+
+export const schematicSampleWorkbench: WorkbenchData = {
+  sample: true,
+  analysisId: schematicSampleProject.analysis.id,
+  projectId: schematicSampleProject.id,
+  projectName: schematicSampleProject.name,
+  analysisProfile: schematicSampleProject.analysisProfile,
+  profileLabel: schematicSampleProject.profileLabel,
+  comparisonLabel: "S-101 · Rev A → B",
+  sheet: schematicSampleProject.baseline.sheet,
+  sheetTitle: schematicSampleProject.baseline.title,
+  baseline: schematicSampleProject.baseline,
+  candidate: schematicSampleProject.candidate,
+  engine: schematicSampleProject.analysis.engine,
+  alignment: schematicSampleProject.analysis.alignment,
+  reprojectionError: schematicSampleProject.analysis.reprojectionError,
+  changes: schematicSampleChanges,
+  baselineImageUrl: "/samples/schematic-baseline.png",
+  candidateImageUrl: "/samples/schematic-candidate.png",
+  alignedCandidateImageUrl: "/samples/schematic-candidate.png",
+  documentWidth: 800,
+  documentHeight: 600,
+  summaryProvider: "DETERMINISTIC",
 };
 
 function RevisionRail({ data }: { data: WorkbenchData }) {
   return (
     <aside aria-label="Revision rail" className="revision-rail">
       <div className="revision-rail-heading">
-        <p className="eyebrow">DRAWINGS BEING COMPARED</p>
+        <p className="eyebrow">SOURCE REVISIONS BEING COMPARED</p>
         <h2>Before and revised</h2>
         <p>
           {data.sheet} · {data.sheetTitle}
@@ -101,8 +142,8 @@ function RevisionRail({ data }: { data: WorkbenchData }) {
         </article>
       ))}
       <p className="revision-explainer">
-        PlanDelta compares drawing B against drawing A. Change markers appear on the revised
-        drawing.
+        PlanDelta compares revision B against revision A using the {data.profileLabel.toLowerCase()}{" "}
+        profile. Change markers appear on the revised source.
       </p>
       <dl className="alignment-data">
         <div>
@@ -174,6 +215,7 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           <span className={data.sample ? "sample-flag" : "live-flag"}>
             {data.sample ? "PRECOMPUTED SAMPLE" : "LIVE ANALYSIS"}
           </span>
+          <span className="profile-flag">{data.profileLabel}</span>
         </div>
         <div className="analysis-state">
           <span className="status-dot" />
@@ -343,6 +385,14 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           onFilterChange={setFilter}
           onSelect={selectChange}
           selectedId={selectedId}
+        />
+        <EvidenceCopilot
+          analysisId={data.analysisId}
+          changes={data.changes}
+          onSelectChange={selectChange}
+          projectId={data.projectId}
+          profile={data.analysisProfile}
+          sample={data.sample}
         />
       </div>
     </main>

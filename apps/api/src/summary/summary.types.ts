@@ -19,8 +19,12 @@ export type GeneratedSummary = {
   warning?: string;
 };
 
+export type SummaryContext = {
+  analysisProfile?: "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
+};
+
 export interface SummaryProvider {
-  summarizeAnalysis(changes: SummaryChange[]): Promise<GeneratedSummary>;
+  summarizeAnalysis(changes: SummaryChange[], context?: SummaryContext): Promise<GeneratedSummary>;
 }
 
 export const SUMMARY_PROVIDER = Symbol("SUMMARY_PROVIDER");
