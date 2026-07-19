@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 19 — Analysis profiles and second domain
-- Current task: Preserve the construction profile while adding a verified engineering-schematic
-  profile, fixtures, and public cached sample
+- Current phase: Phase 20 — Guardrails, observability, evaluations, and cost controls
+- Current task: Complete executable failure-mode fixtures, versioned evaluations, redacted trace
+  inspection, rate limits, metrics, alarms, and documented release thresholds
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -242,25 +242,41 @@ Completion evidence (2026-07-19):
 
 ## Phase 19 — Analysis profiles and second domain
 
-- [ ] Define typed `AnalysisProfile` registry and configuration contract.
-- [ ] Move construction-specific category, affected-trade, vocabulary, prompt, and impact rules
+- [x] Define typed `AnalysisProfile` registry and configuration contract.
+- [x] Move construction-specific category, affected-trade, vocabulary, prompt, and impact rules
       behind the construction profile without changing its current verified behavior.
-- [ ] Implement the `engineering_schematic` profile with component, connection/line, label, note,
+- [x] Implement the `engineering_schematic` profile with component, connection/line, label, note,
       dimension, and unknown categories.
-- [ ] Add profile selection at project creation and display it throughout the workspace/report/chat
+- [x] Add profile selection at project creation and display it throughout the workspace/report/chat
       context.
-- [ ] Prevent profile changes after incompatible evidence exists unless a safe
+- [x] Prevent profile changes after incompatible evidence exists unless a safe
       re-analysis/re-ingestion path is used.
-- [ ] Commit a non-sensitive baseline/candidate schematic fixture, expected change regions,
+- [x] Commit a non-sensitive baseline/candidate schematic fixture, expected change regions,
       supporting document, grounded questions, and citations.
-- [ ] Add a clearly labelled public cached schematic sample.
-- [ ] Document mechanical drawing and packaging artwork only as future profiles unless fully
+- [x] Add a clearly labelled public cached schematic sample.
+- [x] Document mechanical drawing and packaging artwork only as future profiles unless fully
       verified during this phase.
 
 Implementation checkpoint:
 
-- [ ] Construction golden behavior remains within existing tolerance.
-- [ ] The schematic sample completes comparison, retrieval, and cited chat.
+- [x] Construction golden behavior remains within existing tolerance.
+- [x] The schematic sample completes comparison, retrieval, and cited chat.
+
+Completion evidence (2026-07-19):
+
+- Project creation persists either typed profile, analyses snapshot the project profile, and profile
+  changes are rejected after revisions, analyses, or knowledge evidence exist.
+- The deterministic CV pipeline receives the profile and uses bounded schematic component,
+  connection-line, label, note, dimension, and unknown categories; construction rules and the
+  committed ONNX path remain unchanged.
+- Committed synthetic S-101 baseline/candidate images, expected regions, supporting notes, public
+  cached workspace, profile-aware report/chat context, and interactive cached citations are present.
+- The real Supabase enum migration applied. Vision tests pass `32`, agent tests pass `61` with one
+  explicit integration skip, API tests pass `55` with two explicit skips, web tests pass `15`, and
+  API/web lint, typechecks, builds pass.
+- A real durable `engineering_schematic` Amazon Bedrock run completed in `25974 ms` with seven safe
+  trace steps and one verified visual citation; the construction golden pipeline remains within its
+  existing tolerance.
 
 ## Phase 20 — Guardrails, observability, evaluations, and cost controls
 
