@@ -30,6 +30,11 @@ each push.
 
 The production candidate was verified on 2026-07-19:
 
+- Final branch CI
+  [`29697136227`](https://github.com/abdullahahsen05/plandelta-ai/actions/runs/29697136227)
+  passed every required job, and reviewed
+  [PR #15](https://github.com/abdullahahsen05/plandelta-ai/pull/15) merged to `main` as
+  `ba9d1138dec87e347cc2c6a418809685fc874a08`.
 - Vercel production and alias are Ready at
   [`https://plandelta-ai.vercel.app`](https://plandelta-ai.vercel.app).
 - AWS Phase 9 and Phase 10 verifiers passed at `https://100.58.166.134` after a forced EC2 restart.
