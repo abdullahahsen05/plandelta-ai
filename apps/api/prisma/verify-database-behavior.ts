@@ -236,9 +236,18 @@ async function verifyQueueLeasing() {
     const recovery = await setupClient.query<{ requeued_count: number; failed_count: number }>(
       "SELECT * FROM public.recover_stale_analyses()",
     );
+    const recoveredFixtures = await setupClient.query<{ count: number }>(
+      `SELECT count(*)::integer AS count
+       FROM public.analyses
+       WHERE project_id = $1
+         AND status = 'RETRYING'
+         AND lease_owner IS NULL
+         AND lease_expires_at IS NULL`,
+      [projectId],
+    );
     if (
       (recovery.rows[0]?.requeued_count ?? 0) < 2 ||
-      (recovery.rows[0]?.failed_count ?? 0) !== 0
+      (recoveredFixtures.rows[0]?.count ?? 0) !== 2
     ) {
       throw new Error("Stale leases did not recover to RETRYING as expected.");
     }
@@ -396,9 +405,182 @@ async function verifyAgenticDataBoundaries() {
   }
 }
 
+async function verifyAgenticQueueLeasing() {
+  const client = createClient();
+  const ownerId = randomUUID();
+  const projectId = randomUUID();
+  const documentId = randomUUID();
+  const versionId = randomUUID();
+  const ingestionJobId = randomUUID();
+  const conversationId = randomUUID();
+  const messageId = randomUUID();
+  const runId = randomUUID();
+  await client.connect();
+  try {
+    await insertSyntheticAuthUser(client, ownerId, "agentic-queue");
+    await client.query(
+      `INSERT INTO public.projects (id, owner_id, name, project_code)
+       VALUES ($1, $2, 'Agentic queue verification', 'AGENTIC-QUEUE-VERIFY')`,
+      [projectId, ownerId],
+    );
+    await client.query(
+      `INSERT INTO public.knowledge_documents (
+        id, project_id, owner_id, original_filename, detected_mime_type, byte_size,
+        checksum_sha256, storage_provider, storage_key, document_type
+      ) VALUES ($1, $2, $3, 'queue.txt', 'text/plain', 32, $4, 'LOCAL', $5, 'technical_note')`,
+      [documentId, projectId, ownerId, "a".repeat(64), `queue/${documentId}.txt`],
+    );
+    await client.query(
+      `INSERT INTO public.knowledge_document_versions (
+        id, document_id, project_id, checksum_sha256, detected_mime_type, byte_size,
+        storage_provider, storage_key, page_count, parser_name, parser_version, chunker_version,
+        embedding_provider, embedding_model, embedding_dimension
+      ) VALUES (
+        $1, $2, $3, $4, 'text/plain', 32, 'LOCAL', $5, 1, 'utf8', '1',
+        'plandelta-structure-v1', 'local', 'BAAI/bge-small-en-v1.5', 384
+      )`,
+      [
+        versionId,
+        documentId,
+        projectId,
+        "a".repeat(64),
+        `queue/${documentId}/${versionId}.txt`,
+      ],
+    );
+    await client.query(
+      `INSERT INTO public.ingestion_jobs (
+        id, document_id, document_version_id, project_id, idempotency_key
+      ) VALUES ($1, $2, $3, $4, $5)`,
+      [ingestionJobId, documentId, versionId, projectId, randomUUID()],
+    );
+    await client.query(
+      `INSERT INTO public.conversations (id, project_id, owner_id, title)
+       VALUES ($1, $2, $3, 'Queue verification')`,
+      [conversationId, projectId, ownerId],
+    );
+    await client.query(
+      `INSERT INTO public.messages (
+        id, conversation_id, author_id, role, message_type, status, content, idempotency_key
+      ) VALUES ($1, $2, $3, 'user', 'question', 'completed', 'What changed?', $4)`,
+      [messageId, conversationId, ownerId, randomUUID()],
+    );
+    await client.query(
+      `INSERT INTO public.agent_runs (
+        id, conversation_id, user_message_id, project_id, analysis_profile, profile_version,
+        deadline_at, correlation_id
+      ) VALUES (
+        $1, $2, $3, $4, 'construction_drawing', '1.0',
+        clock_timestamp() + interval '10 minutes', $5
+      )`,
+      [runId, conversationId, messageId, projectId, randomUUID()],
+    );
+
+    const ingestionClaim = await client.query<{ id: string }>(
+      "SELECT id FROM public.claim_ingestion_job('agentic-verifier', 60, $1)",
+      [projectId],
+    );
+    const secondIngestionClaim = await client.query<{ id: string }>(
+      "SELECT id FROM public.claim_ingestion_job('agentic-verifier-2', 60, $1)",
+      [projectId],
+    );
+    if (
+      ingestionClaim.rows[0]?.id !== ingestionJobId ||
+      secondIngestionClaim.rows.length !== 0
+    ) {
+      throw new Error("Ingestion lease was missing or duplicated.");
+    }
+    const wrongIngestionHeartbeat = await client.query<{ heartbeat_ingestion_job: boolean }>(
+      "SELECT public.heartbeat_ingestion_job($1, 'wrong-worker', 60)",
+      [ingestionJobId],
+    );
+    const validIngestionHeartbeat = await client.query<{ heartbeat_ingestion_job: boolean }>(
+      "SELECT public.heartbeat_ingestion_job($1, 'agentic-verifier', 60)",
+      [ingestionJobId],
+    );
+    if (
+      wrongIngestionHeartbeat.rows[0]?.heartbeat_ingestion_job !== false ||
+      validIngestionHeartbeat.rows[0]?.heartbeat_ingestion_job !== true
+    ) {
+      throw new Error("Ingestion heartbeat ownership was not enforced.");
+    }
+    await client.query(
+      "UPDATE public.ingestion_jobs SET lease_expires_at = clock_timestamp() - interval '1 second' WHERE id = $1",
+      [ingestionJobId],
+    );
+    const ingestionRecovery = await client.query<{ requeued_count: number }>(
+      "SELECT * FROM public.recover_stale_ingestion_jobs()",
+    );
+    if ((ingestionRecovery.rows[0]?.requeued_count ?? 0) !== 1) {
+      throw new Error("Stale ingestion did not return to the retry queue.");
+    }
+
+    const runClaim = await client.query<{ id: string }>(
+      "SELECT id FROM public.claim_agent_run('agentic-verifier', 60, $1)",
+      [projectId],
+    );
+    const secondRunClaim = await client.query<{ id: string }>(
+      "SELECT id FROM public.claim_agent_run('agentic-verifier-2', 60, $1)",
+      [projectId],
+    );
+    if (runClaim.rows[0]?.id !== runId || secondRunClaim.rows.length !== 0) {
+      throw new Error("Agent run lease was missing or duplicated.");
+    }
+    const wrongRunHeartbeat = await client.query<{ heartbeat_agent_run: boolean }>(
+      "SELECT public.heartbeat_agent_run($1, 'wrong-worker', 60)",
+      [runId],
+    );
+    const validRunHeartbeat = await client.query<{ heartbeat_agent_run: boolean }>(
+      "SELECT public.heartbeat_agent_run($1, 'agentic-verifier', 60)",
+      [runId],
+    );
+    if (
+      wrongRunHeartbeat.rows[0]?.heartbeat_agent_run !== false ||
+      validRunHeartbeat.rows[0]?.heartbeat_agent_run !== true
+    ) {
+      throw new Error("Agent heartbeat ownership was not enforced.");
+    }
+    await client.query(
+      "UPDATE public.agent_runs SET lease_expires_at = clock_timestamp() - interval '1 second' WHERE id = $1",
+      [runId],
+    );
+    const runRecovery = await client.query<{ requeued_count: number }>(
+      "SELECT * FROM public.recover_stale_agent_runs()",
+    );
+    if ((runRecovery.rows[0]?.requeued_count ?? 0) !== 1) {
+      throw new Error("Stale agent run did not return to the queue.");
+    }
+    await client.query(
+      "UPDATE public.agent_runs SET next_attempt_at = NULL WHERE id = $1",
+      [runId],
+    );
+    await client.query(
+      "SELECT id FROM public.claim_agent_run('agentic-verifier', 60, $1)",
+      [projectId],
+    );
+    await client.query(
+      `UPDATE public.agent_runs
+       SET cancellation_requested = true,
+           lease_expires_at = clock_timestamp() - interval '1 second'
+       WHERE id = $1`,
+      [runId],
+    );
+    const cancellationRecovery = await client.query<{ cancelled_count: number }>(
+      "SELECT * FROM public.recover_stale_agent_runs()",
+    );
+    if ((cancellationRecovery.rows[0]?.cancelled_count ?? 0) !== 1) {
+      throw new Error("A cancelled stale run was not terminally cancelled.");
+    }
+  } finally {
+    await client.query("DELETE FROM public.projects WHERE id = $1", [projectId]);
+    await client.query("DELETE FROM auth.users WHERE id = $1", [ownerId]);
+    await client.end();
+  }
+}
+
 await verifyRlsIsolation();
 await verifyQueueLeasing();
 await verifyAgenticDataBoundaries();
+await verifyAgenticQueueLeasing();
 process.stdout.write(
-  "Database behavior passed: cross-user RLS denied, queue leases isolated, hybrid conflicts preserved, and cross-project knowledge scope enforced.\n",
+  "Database behavior passed: cross-user RLS denied, analysis/ingestion/agent leases isolated, hybrid conflicts preserved, and cross-project knowledge scope enforced.\n",
 );
