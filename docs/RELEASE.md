@@ -1,5 +1,31 @@
 # Release evidence
 
+## v0.2 local release candidate
+
+The complete v0.2 local verification and repair loop passed on 2026-07-19 against feature revision
+`5e8a5b4f8664f23e3d9c08904693c19d9bbcf2ee`. The run included clean migration replay,
+idempotent seeds, RLS and durable queue behavior, static gates, all unit/service suites, explicit
+Supabase RAG and AWS provider integrations, all production builds and images, browser E2E, and the
+30-case frozen evaluation.
+
+Two real disposable journeys passed and cleaned up:
+
+- construction drawings uploaded through the deterministic CV/OCR/ONNX worker to linked evidence
+  and a printable report;
+- an engineering-schematic technical note ingested through local BGE embeddings and hybrid search
+  to a Bedrock-grounded answer, verified document citation, and review-only RFI draft.
+
+Normal suites passed 66 agent tests plus the separately enabled real RAG test, 56 API tests plus the
+two separately enabled AWS tests, 32 vision tests, 15 web tests, and 8 contract tests. All seven
+browser cases passed when the authenticated live case was enabled. The normal opt-in skips therefore
+do not represent skipped release requirements.
+
+`pnpm audit` and `pip-audit` found no published dependency vulnerability. Docker Scout found no
+fixable high/critical image issue; the three vendor-unfixed Debian Perl findings recorded below
+remain accepted and monitored. The images run non-root, the browser bundle contains none of the
+checked server-only variable names, and the full-history secret scan is required immediately before
+each push.
+
 This record began with the local `v0.1.0-rc.1` candidate and now includes the
 verified Vercel production deployment and AWS runtime evidence captured on
 2026-07-18. Passwordless authentication, live uploads, deterministic analysis,

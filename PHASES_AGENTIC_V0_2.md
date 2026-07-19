@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 21 — Complete verification and mandatory repair loop
-- Current task: Freeze feature work, run the complete final verification matrix from a clean state,
-  repair underlying failures, and restart the matrix after every fix
+- Current phase: Phase 22 — Cost-controlled deployment and v0.2 handoff
+- Current task: Push the verified Phase 21 candidate, require CI, measure the existing runtime,
+  deploy immutable API/vision/agent images, migrate production, deploy Vercel, and verify production
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -27,8 +27,8 @@ remaining safe work.
   `t3.small` with one encrypted 20 GiB `gp3` volume; `$25` monthly budget with `$0.103` recorded
   spend; bounded Amazon Nova Micro runtime invocation passed
 - Active blockers: none
-- Last completed implementation checkpoint: Phase 20 guardrails, deterministic evaluations, redacted
-  trace inspection, rate/queue controls, telemetry, and CloudWatch definitions are verified
+- Last completed implementation checkpoint: Phase 21 complete final verification and repair loop
+  passed against feature revision `5e8a5b4f8664f23e3d9c08904693c19d9bbcf2ee`
 - Phase 15 checkpoint: authorized PDF/TXT knowledge upload, validation, private storage, pending
   version/job creation, source access, retry, deletion, and focused API coverage pass
 - Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local BGE
@@ -56,7 +56,7 @@ remaining safe work.
   and injection overrides remain zero. Agent tests pass `64` with one explicit database-integration
   skip; API tests pass `56` with two explicit integration skips. Agent/API lint and strict
   typechecks pass, and the AWS runtime template validates.
-- Final verification status: Phase 21 started; complete matrix pending
+- Final verification status: Phase 21 local matrix passed; CI checkpoint pending after evidence push
 
 ## Phase 12 — Baseline, branch, and v0.2 contract
 
@@ -321,28 +321,53 @@ Completion evidence (2026-07-19):
 
 ## Phase 21 — Complete verification and mandatory repair loop
 
-- [ ] Freeze feature work and execute every item in `docs/FINAL_VERIFICATION_V0_2.md` from a clean
+- [x] Freeze feature work and execute every item in `docs/FINAL_VERIFICATION_V0_2.md` from a clean
       state.
-- [ ] Run clean migrations and seeds, not only incremental migrations.
-- [ ] Run formatting, lint, strict typecheck, all unit/service/integration tests, agent evaluations,
+- [x] Run clean migrations and seeds, not only incremental migrations.
+- [x] Run formatting, lint, strict typecheck, all unit/service/integration tests, agent evaluations,
       E2E, production builds, Docker builds, and health checks.
-- [ ] Run the complete original blueprint upload-to-report regression.
-- [ ] Run supporting-document ingestion through cited answer and RFI draft.
-- [ ] Run the engineering-schematic journey.
-- [ ] Run cross-user, prompt-injection, conflict, stale-record, wrong-revision, tool-loop, timeout,
+- [x] Run the complete original blueprint upload-to-report regression.
+- [x] Run supporting-document ingestion through cited answer and RFI draft.
+- [x] Run the engineering-schematic journey.
+- [x] Run cross-user, prompt-injection, conflict, stale-record, wrong-revision, tool-loop, timeout,
       retry, cancellation, restart, and quota tests.
-- [ ] Run accessibility, responsive, reduced-motion, and browser-console checks.
-- [ ] Run dependency, container, secret, staged-diff, and full-history scans.
-- [ ] For every failure, fix the underlying issue and rerun the smallest check.
-- [ ] After any fix, rerun the entire final matrix from the beginning.
-- [ ] Repeat until all required checks pass together.
-- [ ] Record exact commands, commit SHA, dataset version, metrics, limitations, duration, and
+- [x] Run accessibility, responsive, reduced-motion, and browser-console checks.
+- [x] Run dependency, container, secret, staged-diff, and full-history scans.
+- [x] For every failure, fix the underlying issue and rerun the smallest check.
+- [x] After any fix, rerun the entire final matrix from the beginning.
+- [x] Repeat until all required checks pass together.
+- [x] Record exact commands, commit SHA, dataset version, metrics, limitations, duration, and
       resource use.
 
 Exit gate:
 
-- [ ] No required test is skipped, weakened, quarantined, or deleted to pass.
-- [ ] Repository is clean and every required local gate passes in one final run.
+- [x] No required test is skipped, weakened, quarantined, or deleted to pass.
+- [x] Repository is clean and every required local gate passes in one final run.
+
+Completion evidence (2026-07-19):
+
+- Final feature revision: `5e8a5b4f8664f23e3d9c08904693c19d9bbcf2ee`. The preserved annotated
+  `v0.1.0` still peels to `11bdca3600491f01424175292e829208663f0955`.
+- `pnpm db:verify-clean`, deployment of all 12 migrations, two idempotent seed runs, and
+  `pnpm db:verify-behavior` passed: 17 tables, 24 RLS policies, 10 queue/retrieval functions, owner
+  isolation, stale lease recovery, hybrid conflicts, and project-scoped knowledge.
+- `pnpm format:check`, `pnpm lint`, `pnpm typecheck`, `pnpm test`, explicit real Supabase RAG and
+  AWS provider integrations, `pnpm build`, `pnpm test:e2e`, and all three Docker image builds
+  passed. Normal suites passed 66 agent tests plus the separately passing RAG test, 56 API tests
+  plus two separately passing AWS tests, 32 vision tests, 15 web tests, and 8 contract tests.
+- Live construction and schematic Bedrock runs each persisted seven safe steps and one verified
+  citation. `pnpm verify:local-agentic` ingested the real schematic technical note, embedded and
+  retrieved it, completed a Bedrock answer with one verified document citation, produced a
+  review-only RFI draft, and cleaned the disposable project/user.
+- `pnpm verify:local-e2e` passed all seven browser cases, including authenticated real CV/OCR/ONNX
+  upload-to-report, desktop/mobile layouts, reduced motion, labelled public samples, and cleanup.
+- Dataset `0.2.0` passed all 30 frozen scripted cases: routing/tool/evidence/citation/conflict/
+  refusal/limit metrics were `1.0`; unsupported claims, cross-project disclosures, and injection
+  overrides were `0`; scripted usage was 5,040 tokens and USD 0.010080 estimated.
+- `pnpm audit` and `pip-audit` found no published dependency vulnerabilities. Docker Scout found no
+  fixable critical/high findings; it continues to report the three documented vendor-unfixed Debian
+  Perl CVEs and missing registry attestations. All images run non-root. The browser bundle
+  server-only-name scan passed.
 
 ## Phase 22 — Cost-controlled deployment and v0.2 handoff
 
