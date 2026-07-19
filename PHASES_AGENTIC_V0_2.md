@@ -13,8 +13,8 @@ remaining safe work.
 ## Current execution state
 
 - Current phase: Phase 12 — baseline, branch, and v0.2 contract
-- Current task: Await temporary AWS reauthentication, then verify cost/resource baseline and close
-  Phase 12
+- Current task: Complete Phase 13 Pydantic/OpenAPI contracts while the Phase 12 AWS cost audit
+  awaits interactive reauthentication
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -26,7 +26,9 @@ remaining safe work.
 - Active blockers: temporary `plandelta` AWS CLI session is expired
 - Last completed implementation checkpoint: v0.2 execution pack extracted and all required v0.1/v0.2
   documentation read
-- Agent/RAG status: Not implemented in the audited v0.1.0 source
+- Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
+  knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
+  verified
 - Deployment policy: Reuse current cost-controlled runtime; no new paid service
 - Final verification status: Not started
 
@@ -53,30 +55,30 @@ Implementation checkpoint:
 
 ## Phase 13 — Additive database model and shared contracts
 
-- [ ] Enable `vector` through a versioned, reversible Supabase migration.
-- [ ] Add `analysisProfile` to projects/analyses with `construction_drawing` as the
+- [x] Enable `vector` through a versioned, reversible Supabase migration.
+- [x] Add `analysisProfile` to projects/analyses with `construction_drawing` as the
       backward-compatible default.
-- [ ] Add knowledge document, document version, chunk, and ingestion-job models.
-- [ ] Add conversation, message, agent-run, agent-step, and citation models.
-- [ ] Persist source revision, page, section, checksum, chunker version, embedding model,
+- [x] Add knowledge document, document version, chunk, and ingestion-job models.
+- [x] Add conversation, message, agent-run, agent-step, and citation models.
+- [x] Persist source revision, page, section, checksum, chunker version, embedding model,
       active/stale status, and authorization scope.
-- [ ] Add HNSW/IVFFlat only after confirming the supported Supabase/pgvector version and dataset
+- [x] Add HNSW/IVFFlat only after confirming the supported Supabase/pgvector version and dataset
       scale; add full-text indexes regardless.
-- [ ] Add a project-scoped hybrid-search database function with explicit limits.
-- [ ] Add constraints preventing cross-project citations and duplicate active chunks for the same
+- [x] Add a project-scoped hybrid-search database function with explicit limits.
+- [x] Add constraints preventing cross-project citations and duplicate active chunks for the same
       document version/checksum.
-- [ ] Add RLS for every new user-owned table and service-role-only worker paths.
+- [x] Add RLS for every new user-owned table and service-role-only worker paths.
 - [ ] Add shared Zod/Pydantic-compatible schemas for chat, run events, tools, specialist packets,
       answers, citations, RFI drafts, ingestion, and domain profiles.
 - [ ] Update OpenAPI/internal contracts without breaking v0.1 routes.
-- [ ] Add clean-database, migration, RLS, and conflict fixture coverage for the final verification
+- [x] Add clean-database, migration, RLS, and conflict fixture coverage for the final verification
       phase.
 - [ ] Commit schema and contracts in separate coherent commits.
 
 Implementation checkpoint:
 
-- [ ] Existing records map to the construction profile without data loss.
-- [ ] Every agent/retrieval record can be traced to an owner and project.
+- [x] Existing records map to the construction profile without data loss.
+- [x] Every agent/retrieval record can be traced to an owner and project.
 
 ## Phase 14 — Agent service foundation
 

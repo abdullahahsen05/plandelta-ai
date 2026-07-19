@@ -178,8 +178,9 @@ async function verifyQueueLeasing() {
     for (let index = 0; index < analysisIds.length; index += 1) {
       await setupClient.query(
         `INSERT INTO public.analyses (
-          id, project_id, baseline_revision_id, candidate_revision_id, requested_by, priority
-        ) VALUES ($1, $2, $3, $4, $5, $6)`,
+          id, project_id, baseline_revision_id, candidate_revision_id, requested_by, priority,
+          configuration
+        ) VALUES ($1, $2, $3, $4, $5, $6, '{"queueVisibility":"scoped"}'::jsonb)`,
         [
           analysisIds[index],
           projectId,
@@ -194,10 +195,12 @@ async function verifyQueueLeasing() {
     await Promise.all([workerA.connect(), workerB.connect()]);
     const [claimA, claimB] = await Promise.all([
       workerA.query<{ id: string }>(
-        "SELECT id FROM public.claim_analysis('verification-worker-a', 60)",
+        "SELECT id FROM public.claim_analysis('verification-worker-a', 60, $1)",
+        [projectId],
       ),
       workerB.query<{ id: string }>(
-        "SELECT id FROM public.claim_analysis('verification-worker-b', 60)",
+        "SELECT id FROM public.claim_analysis('verification-worker-b', 60, $1)",
+        [projectId],
       ),
     ]);
     const claimedIds = [claimA.rows[0]?.id, claimB.rows[0]?.id].filter((value): value is string =>
@@ -205,7 +208,10 @@ async function verifyQueueLeasing() {
     );
 
     if (claimedIds.length !== 2 || new Set(claimedIds).size !== 2) {
-      throw new Error("Concurrent workers did not receive two distinct analyses.");
+      throw new Error(
+        `Concurrent workers did not receive two distinct analyses ` +
+          `(workerA=${claimA.rows.length}, workerB=${claimB.rows.length}, unique=${new Set(claimedIds).size}).`,
+      );
     }
 
     const wrongHeartbeat = await setupClient.query<{ heartbeat_analysis: boolean }>(
@@ -244,8 +250,152 @@ async function verifyQueueLeasing() {
   }
 }
 
+async function verifyAgenticDataBoundaries() {
+  const client = createClient();
+  const ownerId = randomUUID();
+  const otherId = randomUUID();
+  const projectId = randomUUID();
+  const otherProjectId = randomUUID();
+  const documentIds = [randomUUID(), randomUUID()];
+  const versionIds = [randomUUID(), randomUUID()];
+  const chunkIds = [randomUUID(), randomUUID()];
+  const embedding = `[1,${Array.from({ length: 383 }, () => "0").join(",")}]`;
+  await client.connect();
+
+  let rolledBack = false;
+  try {
+    await client.query("BEGIN");
+    await insertSyntheticAuthUser(client, ownerId, "agentic-owner");
+    await insertSyntheticAuthUser(client, otherId, "agentic-other");
+    await client.query(
+      `INSERT INTO public.projects (id, owner_id, name)
+       VALUES ($1, $2, 'Agentic owner project'), ($3, $4, 'Agentic other project')`,
+      [projectId, ownerId, otherProjectId, otherId],
+    );
+
+    for (let index = 0; index < documentIds.length; index += 1) {
+      await client.query(
+        `INSERT INTO public.knowledge_documents (
+          id, project_id, owner_id, original_filename, detected_mime_type, byte_size,
+          checksum_sha256, storage_provider, storage_key, document_type, status
+        ) VALUES (
+          $1, $2, $3, $4, 'application/pdf', 1024, $5, 'LOCAL', $6, 'specification', 'ready'
+        )`,
+        [
+          documentIds[index],
+          projectId,
+          ownerId,
+          `agentic-${index + 1}.pdf`,
+          `${index + 1}`.repeat(64),
+          `agentic-verification/${documentIds[index]}.pdf`,
+        ],
+      );
+      await client.query(
+        `INSERT INTO public.knowledge_document_versions (
+          id, document_id, project_id, revision_label, effective_date, checksum_sha256,
+          page_count, extracted_character_count, parser_name, parser_version, chunker_version,
+          embedding_provider, embedding_model, embedding_dimension, status, is_active, completed_at
+        ) VALUES (
+          $1, $2, $3, $4, $5, $6, 1, 80, 'pypdf', '6', 'structure-v1',
+          'local', 'BAAI/bge-small-en-v1.5', 384, 'ready', true, clock_timestamp()
+        )`,
+        [
+          versionIds[index],
+          documentIds[index],
+          projectId,
+          `Rev ${index + 1}`,
+          `2026-07-${10 + index}`,
+          `${index + 1}`.repeat(64),
+        ],
+      );
+      await client.query(
+        `UPDATE public.knowledge_documents SET active_version_id = $1 WHERE id = $2`,
+        [versionIds[index], documentIds[index]],
+      );
+      await client.query(
+        `INSERT INTO public.knowledge_chunks (
+          id, document_version_id, document_id, project_id, ordinal, content_hash,
+          page_number, section_title, character_start, character_end, excerpt, content,
+          embedding, embedding_provider, embedding_model, embedding_version, chunker_version,
+          conflict_key
+        ) VALUES (
+          $1, $2, $3, $4, 1, $5, 1, 'Partition rating', 0, 80,
+          $6, $6, $7::extensions.vector, 'local', 'BAAI/bge-small-en-v1.5', '1',
+          'structure-v1', 'partition-rating'
+        )`,
+        [
+          chunkIds[index],
+          versionIds[index],
+          documentIds[index],
+          projectId,
+          `${index + 3}`.repeat(64),
+          index === 0
+            ? "Provide one-hour rated partition at corridor."
+            : "Provide two-hour rated partition at corridor.",
+          embedding,
+        ],
+      );
+    }
+
+    const hybrid = await client.query<{ chunk_id: string; conflict_count: number }>(
+      `SELECT chunk_id, conflict_count
+       FROM public.hybrid_search_knowledge(
+         $1, 'corridor partition rating', $2::extensions.vector, 12, NULL, NULL, 0.45, 0.55
+       )`,
+      [projectId, embedding],
+    );
+    if (hybrid.rows.length !== 2 || hybrid.rows.some((row) => row.conflict_count !== 2)) {
+      throw new Error("Hybrid retrieval did not preserve both conflicting active records.");
+    }
+
+    await client.query("SET LOCAL ROLE authenticated");
+    await setAuthenticatedUser(client, otherId);
+    const crossProjectDocuments = await client.query<{ count: number }>(
+      `SELECT count(*)::integer AS count
+       FROM public.knowledge_documents WHERE project_id = $1`,
+      [projectId],
+    );
+    const crossProjectRuns = await client.query<{ count: number }>(
+      `SELECT count(*)::integer AS count FROM public.agent_runs WHERE project_id = $1`,
+      [projectId],
+    );
+    if ((crossProjectDocuments.rows[0]?.count ?? 0) !== 0) {
+      throw new Error("Cross-user knowledge document access was not denied.");
+    }
+    if ((crossProjectRuns.rows[0]?.count ?? 0) !== 0) {
+      throw new Error("Cross-user agent run access was not denied.");
+    }
+
+    await client.query("RESET ROLE");
+    await client.query("SAVEPOINT wrong_scope");
+    let wrongScopeDenied = false;
+    try {
+      await client.query(
+        `INSERT INTO public.knowledge_document_versions (
+          document_id, project_id, checksum_sha256, parser_name, parser_version,
+          chunker_version, embedding_provider, embedding_model, embedding_dimension
+        ) VALUES ($1, $2, $3, 'pypdf', '6', 'structure-v1', 'local', 'model', 384)`,
+        [documentIds[0], otherProjectId, "f".repeat(64)],
+      );
+    } catch {
+      wrongScopeDenied = true;
+      await client.query("ROLLBACK TO SAVEPOINT wrong_scope");
+    }
+    if (!wrongScopeDenied) {
+      throw new Error("Cross-project knowledge version scope was not denied.");
+    }
+
+    await client.query("ROLLBACK");
+    rolledBack = true;
+  } finally {
+    if (!rolledBack) await client.query("ROLLBACK").catch(() => undefined);
+    await client.end();
+  }
+}
+
 await verifyRlsIsolation();
 await verifyQueueLeasing();
+await verifyAgenticDataBoundaries();
 process.stdout.write(
-  "Database behavior passed: cross-user RLS denied, lease columns protected, concurrent claims distinct, heartbeat ownership enforced, stale leases recovered.\n",
+  "Database behavior passed: cross-user RLS denied, queue leases isolated, hybrid conflicts preserved, and cross-project knowledge scope enforced.\n",
 );

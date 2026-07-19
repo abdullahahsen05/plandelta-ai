@@ -83,6 +83,98 @@ enum ChangeSource {
   HYBRID
 }
 
+enum AnalysisProfile {
+  CONSTRUCTION_DRAWING  @map("construction_drawing")
+  ENGINEERING_SCHEMATIC @map("engineering_schematic")
+}
+
+enum KnowledgeDocumentType {
+  SPECIFICATION      @map("specification")
+  DRAWING_NOTES      @map("drawing_notes")
+  REVISION_NARRATIVE @map("revision_narrative")
+  ADDENDUM           @map("addendum")
+  BOQ_SCHEDULE       @map("boq_schedule")
+  RFI                @map("rfi")
+  PRIOR_REPORT       @map("prior_report")
+  TECHNICAL_NOTE     @map("technical_note")
+}
+
+enum KnowledgeDocumentStatus {
+  UPLOADED   @map("uploaded")
+  EXTRACTING @map("extracting")
+  EMBEDDING  @map("embedding")
+  READY      @map("ready")
+  FAILED     @map("failed")
+  DELETED    @map("deleted")
+}
+
+enum KnowledgeVersionStatus {
+  PENDING    @map("pending")
+  EXTRACTING @map("extracting")
+  EMBEDDING  @map("embedding")
+  READY      @map("ready")
+  FAILED     @map("failed")
+}
+
+enum IngestionJobStatus {
+  QUEUED     @map("queued")
+  CLAIMED    @map("claimed")
+  EXTRACTING @map("extracting")
+  CHUNKING   @map("chunking")
+  EMBEDDING  @map("embedding")
+  RETRYING   @map("retrying")
+  COMPLETED  @map("completed")
+  FAILED     @map("failed")
+  CANCELLED  @map("cancelled")
+}
+
+enum ConversationStatus {
+  ACTIVE   @map("active")
+  ARCHIVED @map("archived")
+}
+
+enum MessageRole {
+  USER      @map("user")
+  ASSISTANT @map("assistant")
+  SYSTEM    @map("system")
+}
+
+enum MessageType {
+  QUESTION      @map("question")
+  ANSWER        @map("answer")
+  RFI_DRAFT     @map("rfi_draft")
+  SYSTEM_NOTICE @map("system_notice")
+}
+
+enum MessageStatus {
+  PENDING   @map("pending")
+  COMPLETED @map("completed")
+  FAILED    @map("failed")
+  CANCELLED @map("cancelled")
+}
+
+enum AgentRunStatus {
+  QUEUED    @map("queued")
+  RUNNING   @map("running")
+  VERIFYING @map("verifying")
+  COMPLETED @map("completed")
+  FAILED    @map("failed")
+  CANCELLED @map("cancelled")
+  EXPIRED   @map("expired")
+}
+
+enum AgentStepStatus {
+  STARTED   @map("started")
+  COMPLETED @map("completed")
+  FAILED    @map("failed")
+  BLOCKED   @map("blocked")
+}
+
+enum CitationType {
+  VISUAL_CHANGE  @map("visual_change")
+  DOCUMENT_CHUNK @map("document_chunk")
+}
+
 model Profile {
   id          String   @id @db.Uuid
   displayName String   @map("display_name")
@@ -90,27 +182,39 @@ model Profile {
   createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt   DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  projects          Project[]
-  requestedAnalyses Analysis[]
-  auditEvents       AuditEvent[]
+  projects           Project[]
+  requestedAnalyses  Analysis[]
+  auditEvents        AuditEvent[]
+  knowledgeDocuments KnowledgeDocument[]
+  conversations      Conversation[]
+  authoredMessages   Message[]
 
   @@map("profiles")
 }
 
 model Project {
-  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  ownerId     String        @map("owner_id") @db.Uuid
-  name        String
-  projectCode String?       @map("project_code")
-  description String?
-  status      ProjectStatus @default(ACTIVE)
-  createdAt   DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt   DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id              String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  ownerId         String          @map("owner_id") @db.Uuid
+  name            String
+  projectCode     String?         @map("project_code")
+  description     String?
+  status          ProjectStatus   @default(ACTIVE)
+  analysisProfile AnalysisProfile @default(CONSTRUCTION_DRAWING) @map("analysis_profile")
+  profileVersion  String          @default("1.0") @map("profile_version")
+  createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt       DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
-  owner       Profile        @relation(fields: [ownerId], references: [id], onDelete: Cascade)
-  revisions   PlanRevision[]
-  analyses    Analysis[]
-  auditEvents AuditEvent[]
+  owner              Profile                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  revisions          PlanRevision[]
+  analyses           Analysis[]
+  auditEvents        AuditEvent[]
+  knowledgeDocuments KnowledgeDocument[]
+  knowledgeVersions  KnowledgeDocumentVersion[]
+  knowledgeChunks    KnowledgeChunk[]
+  ingestionJobs      IngestionJob[]
+  conversations      Conversation[]
+  agentRuns          AgentRun[]
+  citations          Citation[]
 
   @@index([ownerId, updatedAt(sort: Desc)], map: "projects_owner_updated_idx")
   @@map("projects")
@@ -172,6 +276,8 @@ model Analysis {
   metrics             Json            @default("{}")
   warnings            Json            @default("[]")
   summaryProvider     SummaryProvider @default(DETERMINISTIC) @map("summary_provider")
+  analysisProfile     AnalysisProfile @default(CONSTRUCTION_DRAWING) @map("analysis_profile")
+  profileVersion      String          @default("1.0") @map("profile_version")
   createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
   updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
@@ -183,6 +289,9 @@ model Analysis {
   changes           DetectedChange[]
   report            AnalysisReport?
   auditEvents       AuditEvent[]
+  conversations     Conversation[]
+  agentRuns         AgentRun[]
+  citations         Citation[]
 
   @@index([status, nextAttemptAt, priority(sort: Desc), createdAt], map: "analyses_queue_idx")
   @@index([status, leaseExpiresAt], map: "analyses_lease_idx")
@@ -204,7 +313,8 @@ model AnalysisArtifact {
   metadata        Json            @default("{}")
   createdAt       DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis  Analysis   @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  citations Citation[]
 
   @@unique([analysisId, kind, storageKey], map: "analysis_artifacts_kind_key_unique")
   @@index([analysisId], map: "analysis_artifacts_analysis_idx")
@@ -234,7 +344,8 @@ model DetectedChange {
   evidence       Json           @default("{}")
   createdAt      DateTime       @default(now()) @map("created_at") @db.Timestamptz(6)
 
-  analysis Analysis @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  analysis  Analysis   @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  citations Citation[]
 
   @@unique([analysisId, sequence], map: "detected_changes_analysis_sequence_unique")
   @@index([analysisId, changeType, category], map: "detected_changes_filter_idx")
@@ -274,4 +385,306 @@ model AuditEvent {
   @@index([projectId, createdAt], map: "audit_events_project_created_idx")
   @@index([analysisId, createdAt], map: "audit_events_analysis_created_idx")
   @@map("audit_events")
+}
+
+model KnowledgeDocument {
+  id               String                  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId        String                  @map("project_id") @db.Uuid
+  ownerId          String                  @map("owner_id") @db.Uuid
+  originalName     String                  @map("original_filename")
+  detectedMimeType String                  @map("detected_mime_type")
+  byteSize         BigInt                  @map("byte_size") @db.BigInt
+  checksumSha256   String                  @map("checksum_sha256")
+  storageProvider  StorageProvider         @map("storage_provider")
+  storageKey       String                  @map("storage_key")
+  documentType     KnowledgeDocumentType   @map("document_type")
+  status           KnowledgeDocumentStatus @default(UPLOADED)
+  activeVersionId  String?                 @unique(map: "knowledge_documents_active_version_key") @map("active_version_id") @db.Uuid
+  failureCode      String?                 @map("failure_code")
+  createdAt        DateTime                @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime                @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  deletedAt        DateTime?               @map("deleted_at") @db.Timestamptz(6)
+
+  project       Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  owner         Profile                    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  versions      KnowledgeDocumentVersion[] @relation("DocumentVersions")
+  activeVersion KnowledgeDocumentVersion?  @relation("ActiveDocumentVersion", fields: [activeVersionId], references: [id], onDelete: SetNull)
+  ingestionJobs IngestionJob[]
+  chunks        KnowledgeChunk[]
+  citations     Citation[]
+
+  @@unique([storageProvider, storageKey], map: "knowledge_documents_storage_key_unique")
+  @@index([projectId, status, updatedAt(sort: Desc)], map: "knowledge_documents_project_status_idx")
+  @@index([ownerId, updatedAt(sort: Desc)], map: "knowledge_documents_owner_updated_idx")
+  @@map("knowledge_documents")
+}
+
+model KnowledgeDocumentVersion {
+  id                      String                 @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId              String                 @map("document_id") @db.Uuid
+  projectId               String                 @map("project_id") @db.Uuid
+  supersedesId            String?                @map("supersedes_id") @db.Uuid
+  revisionLabel           String?                @map("revision_label")
+  effectiveDate           DateTime?              @map("effective_date") @db.Date
+  checksumSha256          String                 @map("checksum_sha256")
+  pageCount               Int?                   @map("page_count")
+  extractedCharacterCount Int                    @default(0) @map("extracted_character_count")
+  parserName              String                 @map("parser_name")
+  parserVersion           String                 @map("parser_version")
+  ocrProvider             String?                @map("ocr_provider")
+  ocrVersion              String?                @map("ocr_version")
+  chunkerVersion          String                 @map("chunker_version")
+  embeddingProvider       String                 @map("embedding_provider")
+  embeddingModel          String                 @map("embedding_model")
+  embeddingDimension      Int                    @map("embedding_dimension")
+  status                  KnowledgeVersionStatus @default(PENDING)
+  failureCode             String?                @map("failure_code")
+  isActive                Boolean                @default(false) @map("is_active")
+  createdAt               DateTime               @default(now()) @map("created_at") @db.Timestamptz(6)
+  completedAt             DateTime?              @map("completed_at") @db.Timestamptz(6)
+
+  document      KnowledgeDocument          @relation("DocumentVersions", fields: [documentId], references: [id], onDelete: Cascade)
+  project       Project                    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  supersedes    KnowledgeDocumentVersion?  @relation("DocumentVersionHistory", fields: [supersedesId], references: [id], onDelete: SetNull)
+  supersededBy  KnowledgeDocumentVersion[] @relation("DocumentVersionHistory")
+  activeFor     KnowledgeDocument[]        @relation("ActiveDocumentVersion")
+  chunks        KnowledgeChunk[]
+  ingestionJobs IngestionJob[]
+  citations     Citation[]
+
+  @@unique([documentId, checksumSha256, parserVersion, chunkerVersion, embeddingModel], map: "knowledge_versions_ingestion_identity_unique")
+  @@index([projectId, isActive, status, effectiveDate(sort: Desc)], map: "knowledge_versions_project_active_idx")
+  @@index([documentId, createdAt(sort: Desc)], map: "knowledge_versions_document_created_idx")
+  @@map("knowledge_document_versions")
+}
+
+model KnowledgeChunk {
+  id                String                      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentVersionId String                      @map("document_version_id") @db.Uuid
+  documentId        String                      @map("document_id") @db.Uuid
+  projectId         String                      @map("project_id") @db.Uuid
+  ordinal           Int
+  contentHash       String                      @map("content_hash")
+  pageNumber        Int                         @map("page_number")
+  sectionPath       String?                     @map("section_path")
+  sectionTitle      String?                     @map("section_title")
+  characterStart    Int                         @map("character_start")
+  characterEnd      Int                         @map("character_end")
+  excerpt           String
+  content           String
+  searchVector      Unsupported("tsvector")?    @map("search_vector")
+  embedding         Unsupported("vector(384)")?
+  embeddingProvider String                      @map("embedding_provider")
+  embeddingModel    String                      @map("embedding_model")
+  embeddingVersion  String                      @map("embedding_version")
+  chunkerVersion    String                      @map("chunker_version")
+  isActive          Boolean                     @default(true) @map("is_active")
+  conflictKey       String?                     @map("conflict_key")
+  createdAt         DateTime                    @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  documentVersion KnowledgeDocumentVersion @relation(fields: [documentVersionId], references: [id], onDelete: Cascade)
+  document        KnowledgeDocument        @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  project         Project                  @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  citations       Citation[]
+
+  @@unique([documentVersionId, ordinal], map: "knowledge_chunks_version_ordinal_unique")
+  @@unique([documentVersionId, contentHash], map: "knowledge_chunks_version_hash_unique")
+  @@index([projectId, isActive, documentVersionId], map: "knowledge_chunks_project_active_idx")
+  @@index([documentId, createdAt], map: "knowledge_chunks_document_created_idx")
+  @@map("knowledge_chunks")
+}
+
+model IngestionJob {
+  id                String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  documentId        String             @map("document_id") @db.Uuid
+  documentVersionId String?            @map("document_version_id") @db.Uuid
+  projectId         String             @map("project_id") @db.Uuid
+  status            IngestionJobStatus @default(QUEUED)
+  progress          Int                @default(0)
+  currentStage      String             @default("queued") @map("current_stage")
+  attemptCount      Int                @default(0) @map("attempt_count")
+  maxAttempts       Int                @default(3) @map("max_attempts")
+  leaseOwner        String?            @map("lease_owner")
+  leaseExpiresAt    DateTime?          @map("lease_expires_at") @db.Timestamptz(6)
+  heartbeatAt       DateTime?          @map("heartbeat_at") @db.Timestamptz(6)
+  nextAttemptAt     DateTime?          @map("next_attempt_at") @db.Timestamptz(6)
+  idempotencyKey    String             @map("idempotency_key") @db.Uuid
+  failureCode       String?            @map("failure_code")
+  createdAt         DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  completedAt       DateTime?          @map("completed_at") @db.Timestamptz(6)
+
+  document        KnowledgeDocument         @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  documentVersion KnowledgeDocumentVersion? @relation(fields: [documentVersionId], references: [id], onDelete: SetNull)
+  project         Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, idempotencyKey], map: "ingestion_jobs_document_idempotency_unique")
+  @@index([status, nextAttemptAt, createdAt], map: "ingestion_jobs_queue_idx")
+  @@index([status, leaseExpiresAt], map: "ingestion_jobs_lease_idx")
+  @@index([projectId, createdAt(sort: Desc)], map: "ingestion_jobs_project_created_idx")
+  @@map("ingestion_jobs")
+}
+
+model Conversation {
+  id         String             @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId  String             @map("project_id") @db.Uuid
+  analysisId String?            @map("analysis_id") @db.Uuid
+  ownerId    String             @map("owner_id") @db.Uuid
+  title      String
+  status     ConversationStatus @default(ACTIVE)
+  createdAt  DateTime           @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt  DateTime           @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  project  Project    @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  analysis Analysis?  @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  owner    Profile    @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  messages Message[]
+  runs     AgentRun[]
+
+  @@index([projectId, updatedAt(sort: Desc)], map: "conversations_project_updated_idx")
+  @@index([ownerId, updatedAt(sort: Desc)], map: "conversations_owner_updated_idx")
+  @@map("conversations")
+}
+
+model Message {
+  id               String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId   String        @map("conversation_id") @db.Uuid
+  authorId         String?       @map("author_id") @db.Uuid
+  role             MessageRole
+  messageType      MessageType   @map("message_type")
+  status           MessageStatus @default(PENDING)
+  content          String
+  idempotencyKey   String?       @map("idempotency_key") @db.Uuid
+  provider         String?
+  modelId          String?       @map("model_id")
+  promptVersion    String?       @map("prompt_version")
+  inputTokens      Int           @default(0) @map("input_tokens")
+  outputTokens     Int           @default(0) @map("output_tokens")
+  estimatedCostUsd Decimal       @default(0) @map("estimated_cost_usd") @db.Decimal(10, 6)
+  warnings         Json          @default("[]")
+  createdAt        DateTime      @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt        DateTime      @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  conversation  Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  author        Profile?     @relation(fields: [authorId], references: [id], onDelete: SetNull)
+  requestedRuns AgentRun[]   @relation("AgentRunUserMessage")
+  completedRuns AgentRun[]   @relation("AgentRunAssistantMessage")
+  citations     Citation[]
+
+  @@unique([conversationId, idempotencyKey], map: "messages_conversation_idempotency_unique")
+  @@index([conversationId, createdAt], map: "messages_conversation_created_idx")
+  @@map("messages")
+}
+
+model AgentRun {
+  id                    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  conversationId        String          @map("conversation_id") @db.Uuid
+  userMessageId         String          @map("user_message_id") @db.Uuid
+  assistantMessageId    String?         @unique(map: "agent_runs_assistant_message_key") @map("assistant_message_id") @db.Uuid
+  projectId             String          @map("project_id") @db.Uuid
+  analysisId            String?         @map("analysis_id") @db.Uuid
+  analysisProfile       AnalysisProfile @map("analysis_profile")
+  profileVersion        String          @map("profile_version")
+  status                AgentRunStatus  @default(QUEUED)
+  attemptCount          Int             @default(0) @map("attempt_count")
+  maxAttempts           Int             @default(3) @map("max_attempts")
+  leaseOwner            String?         @map("lease_owner")
+  leaseExpiresAt        DateTime?       @map("lease_expires_at") @db.Timestamptz(6)
+  heartbeatAt           DateTime?       @map("heartbeat_at") @db.Timestamptz(6)
+  deadlineAt            DateTime        @map("deadline_at") @db.Timestamptz(6)
+  cancellationRequested Boolean         @default(false) @map("cancellation_requested")
+  selectedSpecialists   String[]        @default([]) @map("selected_specialists")
+  routeReasonCodes      String[]        @default([]) @map("route_reason_codes")
+  modelTurnCount        Int             @default(0) @map("model_turn_count")
+  toolCallCount         Int             @default(0) @map("tool_call_count")
+  retrievedChunkCount   Int             @default(0) @map("retrieved_chunk_count")
+  repairCount           Int             @default(0) @map("repair_count")
+  inputTokens           Int             @default(0) @map("input_tokens")
+  outputTokens          Int             @default(0) @map("output_tokens")
+  estimatedCostUsd      Decimal         @default(0) @map("estimated_cost_usd") @db.Decimal(10, 6)
+  verifierOutcome       String?         @map("verifier_outcome")
+  failureCode           String?         @map("failure_code")
+  correlationId         String          @map("correlation_id")
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  startedAt             DateTime?       @map("started_at") @db.Timestamptz(6)
+  completedAt           DateTime?       @map("completed_at") @db.Timestamptz(6)
+  updatedAt             DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  conversation     Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+  userMessage      Message      @relation("AgentRunUserMessage", fields: [userMessageId], references: [id], onDelete: Restrict)
+  assistantMessage Message?     @relation("AgentRunAssistantMessage", fields: [assistantMessageId], references: [id], onDelete: SetNull)
+  project          Project      @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  analysis         Analysis?    @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  steps            AgentStep[]
+  citations        Citation[]
+
+  @@index([status, createdAt], map: "agent_runs_queue_idx")
+  @@index([status, leaseExpiresAt], map: "agent_runs_lease_idx")
+  @@index([projectId, createdAt(sort: Desc)], map: "agent_runs_project_created_idx")
+  @@index([conversationId, createdAt], map: "agent_runs_conversation_created_idx")
+  @@map("agent_runs")
+}
+
+model AgentStep {
+  id               String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  agentRunId       String          @map("agent_run_id") @db.Uuid
+  sequence         Int
+  nodeName         String          @map("node_name")
+  nodeVersion      String          @map("node_version")
+  eventType        String          @map("event_type")
+  status           AgentStepStatus
+  safeSummary      String?         @map("safe_summary")
+  reasonCode       String?         @map("reason_code")
+  metadata         Json            @default("{}")
+  durationMs       Int?            @map("duration_ms")
+  inputTokens      Int             @default(0) @map("input_tokens")
+  outputTokens     Int             @default(0) @map("output_tokens")
+  estimatedCostUsd Decimal         @default(0) @map("estimated_cost_usd") @db.Decimal(10, 6)
+  errorCode        String?         @map("error_code")
+  createdAt        DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  run AgentRun @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+
+  @@unique([agentRunId, sequence], map: "agent_steps_run_sequence_unique")
+  @@index([agentRunId, createdAt], map: "agent_steps_run_created_idx")
+  @@map("agent_steps")
+}
+
+model Citation {
+  id                  String       @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  messageId           String       @map("message_id") @db.Uuid
+  agentRunId          String       @map("agent_run_id") @db.Uuid
+  projectId           String       @map("project_id") @db.Uuid
+  displayOrder        Int          @map("display_order")
+  citationType        CitationType @map("citation_type")
+  label               String
+  supportsClaimIds    String[]     @default([]) @map("supports_claim_ids")
+  detectedChangeId    String?      @map("detected_change_id") @db.Uuid
+  artifactId          String?      @map("artifact_id") @db.Uuid
+  analysisId          String?      @map("analysis_id") @db.Uuid
+  normalizedRegion    Json?        @map("normalized_region")
+  knowledgeDocumentId String?      @map("knowledge_document_id") @db.Uuid
+  knowledgeVersionId  String?      @map("knowledge_version_id") @db.Uuid
+  knowledgeChunkId    String?      @map("knowledge_chunk_id") @db.Uuid
+  pageNumber          Int?         @map("page_number")
+  sectionTitle        String?      @map("section_title")
+  excerpt             String?
+  retrievalMetadata   Json         @default("{}") @map("retrieval_metadata")
+  verifiedAt          DateTime     @map("verified_at") @db.Timestamptz(6)
+  createdAt           DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  message           Message                   @relation(fields: [messageId], references: [id], onDelete: Cascade)
+  run               AgentRun                  @relation(fields: [agentRunId], references: [id], onDelete: Cascade)
+  project           Project                   @relation(fields: [projectId], references: [id], onDelete: Cascade)
+  analysis          Analysis?                 @relation(fields: [analysisId], references: [id], onDelete: Cascade)
+  detectedChange    DetectedChange?           @relation(fields: [detectedChangeId], references: [id], onDelete: Cascade)
+  artifact          AnalysisArtifact?         @relation(fields: [artifactId], references: [id], onDelete: SetNull)
+  knowledgeDocument KnowledgeDocument?        @relation(fields: [knowledgeDocumentId], references: [id], onDelete: Cascade)
+  knowledgeVersion  KnowledgeDocumentVersion? @relation(fields: [knowledgeVersionId], references: [id], onDelete: Cascade)
+  knowledgeChunk    KnowledgeChunk?           @relation(fields: [knowledgeChunkId], references: [id], onDelete: Cascade)
+
+  @@unique([messageId, displayOrder], map: "citations_message_order_unique")
+  @@index([projectId, createdAt], map: "citations_project_created_idx")
+  @@index([agentRunId, displayOrder], map: "citations_run_order_idx")
+  @@map("citations")
 }

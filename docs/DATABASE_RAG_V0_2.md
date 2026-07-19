@@ -156,3 +156,12 @@ Final verification must cover:
 - version replacement/stale exclusion;
 - citation cross-project constraint;
 - concurrent job leasing.
+
+## Implemented index decision
+
+The Phase 13 migration fixes local embeddings at 384 dimensions for
+`BAAI/bge-small-en-v1.5`, enables `vector` in Supabase, and creates the full-text GIN index
+immediately. It intentionally does not create HNSW or IVFFlat for the initial portfolio dataset:
+exact vector scans over the bounded, project-filtered candidate set avoid approximate-index build
+and memory overhead at this scale. Add an approximate index only after recorded chunk volume and
+`EXPLAIN (ANALYZE, BUFFERS)` evidence show the exact scan is no longer adequate.
