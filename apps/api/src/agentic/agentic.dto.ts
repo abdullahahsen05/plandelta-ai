@@ -178,12 +178,7 @@ export class AgentRunEventDto {
 
   @ApiProperty({
     additionalProperties: {
-      oneOf: [
-        { type: "string" },
-        { type: "number" },
-        { type: "boolean" },
-        { type: "null" },
-      ],
+      oneOf: [{ type: "string" }, { type: "number" }, { type: "boolean" }, { type: "null" }],
     },
     type: "object",
   })

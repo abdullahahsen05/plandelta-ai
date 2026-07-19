@@ -259,9 +259,7 @@ export const copilotMessageSchema = z.object({
   messageType: z.enum(["QUESTION", "ANSWER", "RFI_DRAFT", "SYSTEM_NOTICE"]),
   status: z.enum(["PENDING", "STREAMING", "COMPLETED", "FAILED", "REFUSED"]),
   content: z.string(),
-  answerStatus: z
-    .enum(["verified", "conflicting_evidence", "insufficient_evidence"])
-    .nullable(),
+  answerStatus: z.enum(["verified", "conflicting_evidence", "insufficient_evidence"]).nullable(),
   confidence: z.enum(["high", "medium", "low", "insufficient"]).nullable(),
   rfiDraft: rfiDraftSchema,
   provider: z.string().nullable(),

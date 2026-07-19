@@ -12,9 +12,7 @@ import { AgentServiceClient } from "./agent-service.client.js";
 import { AgenticQueueService } from "./agentic-queue.service.js";
 
 @Injectable()
-export class AgenticWorkerRunnerService
-  implements OnApplicationBootstrap, OnApplicationShutdown
-{
+export class AgenticWorkerRunnerService implements OnApplicationBootstrap, OnApplicationShutdown {
   private readonly logger = new Logger(AgenticWorkerRunnerService.name);
   private running = false;
   private loopPromise: Promise<void> | null = null;
@@ -72,11 +70,7 @@ export class AgenticWorkerRunnerService
             run.id,
             leaseSeconds,
             async (signal) => {
-              const execution = await this.agent.executeRun(
-                run.id,
-                run.correlationId,
-                signal,
-              );
+              const execution = await this.agent.executeRun(run.id, run.correlationId, signal);
               await this.finalizer.complete(run.id, workerId, execution);
             },
             () => this.queue.heartbeatRun(run.id, workerId, leaseSeconds),

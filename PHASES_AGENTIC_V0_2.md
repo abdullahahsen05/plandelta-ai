@@ -27,8 +27,8 @@ remaining safe work.
   `t3.small` with one encrypted 20 GiB `gp3` volume; `$25` monthly budget with `$0.103` recorded
   spend; bounded Amazon Nova Micro runtime invocation passed
 - Active blockers: none
-- Last completed implementation checkpoint: Phase 20 guardrails, deterministic evaluations,
-  redacted trace inspection, rate/queue controls, telemetry, and CloudWatch definitions are verified
+- Last completed implementation checkpoint: Phase 20 guardrails, deterministic evaluations, redacted
+  trace inspection, rate/queue controls, telemetry, and CloudWatch definitions are verified
 - Phase 15 checkpoint: authorized PDF/TXT knowledge upload, validation, private storage, pending
   version/job creation, source access, retry, deletion, and focused API coverage pass
 - Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local BGE
@@ -203,10 +203,10 @@ Implementation checkpoint:
 
 Completion evidence:
 
-- Clean migration replay passed with 17 tables, 24 policies, and 10 isolated
-  queue/retrieval functions; the real Supabase migrations and queue behavior checks passed.
-- A real queued run survived API and agent restarts and completed with one assistant message,
-  five content-free safe trace steps, and no duplicate rows.
+- Clean migration replay passed with 17 tables, 24 policies, and 10 isolated queue/retrieval
+  functions; the real Supabase migrations and queue behavior checks passed.
+- A real queued run survived API and agent restarts and completed with one assistant message, five
+  content-free safe trace steps, and no duplicate rows.
 - API and agent suites cover message idempotency, concurrency one, cross-owner not-found behavior,
   internal authentication, transactional finalization, verified citations, and cancellation.
 
@@ -312,12 +312,12 @@ Completion evidence (2026-07-19):
 - `pnpm --filter @plandelta/agent lint`, strict typecheck, `64` active tests, and the evaluation
   harness pass; the sole skipped agent test is the separately invoked real Supabase integration.
 - Dataset `release-v0.2` contains `30` curated synthetic/scripted cases. All frozen release gates
-  pass; total scripted usage is `5,040` tokens and `$0.010080` estimated cost. These measurements are
-  explicitly labelled as scripted harness observations rather than field accuracy or provider
+  pass; total scripted usage is `5,040` tokens and `$0.010080` estimated cost. These measurements
+  are explicitly labelled as scripted harness observations rather than field accuracy or provider
   billing.
 - API lint/typecheck and `56` active tests pass. The runtime template validates in `us-east-1`.
-- Redacted completion/failure events and the authorized run-inspection CLI exclude prompts,
-  answers, chunks, URLs, storage keys, headers, and credentials.
+- Redacted completion/failure events and the authorized run-inspection CLI exclude prompts, answers,
+  chunks, URLs, storage keys, headers, and credentials.
 
 ## Phase 21 — Complete verification and mandatory repair loop
 

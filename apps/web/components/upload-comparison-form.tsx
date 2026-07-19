@@ -82,8 +82,7 @@ export function UploadComparisonForm() {
   const router = useRouter();
   const [name, setName] = useState("");
   const [projectCode, setProjectCode] = useState("");
-  const [analysisProfile, setAnalysisProfile] =
-    useState<AnalysisProfile>("CONSTRUCTION_DRAWING");
+  const [analysisProfile, setAnalysisProfile] = useState<AnalysisProfile>("CONSTRUCTION_DRAWING");
   const [baseline, setBaseline] = useState<File | null>(null);
   const [candidate, setCandidate] = useState<File | null>(null);
   const [stage, setStage] = useState<ProgressStage>("idle");

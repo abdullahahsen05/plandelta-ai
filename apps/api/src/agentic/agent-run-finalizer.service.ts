@@ -49,9 +49,7 @@ export class AgentRunFinalizerService {
           content: answer.answerMarkdown,
           answerStatus: answer.status,
           confidence: answer.confidence,
-          rfiDraft: answer.rfiDraft
-            ? (answer.rfiDraft as Prisma.InputJsonValue)
-            : Prisma.JsonNull,
+          rfiDraft: answer.rfiDraft ? (answer.rfiDraft as Prisma.InputJsonValue) : Prisma.JsonNull,
           provider: answer.provider,
           modelId: answer.modelId,
           promptVersion: answer.promptVersion,
@@ -65,9 +63,7 @@ export class AgentRunFinalizerService {
           content: answer.answerMarkdown,
           answerStatus: answer.status,
           confidence: answer.confidence,
-          rfiDraft: answer.rfiDraft
-            ? (answer.rfiDraft as Prisma.InputJsonValue)
-            : Prisma.JsonNull,
+          rfiDraft: answer.rfiDraft ? (answer.rfiDraft as Prisma.InputJsonValue) : Prisma.JsonNull,
           provider: answer.provider,
           modelId: answer.modelId,
           promptVersion: answer.promptVersion,
@@ -91,8 +87,7 @@ export class AgentRunFinalizerService {
             agentRunId: runId,
             projectId: run.projectId,
             displayOrder: citation.displayOrder,
-            citationType:
-              target.type === "visual_change" ? "VISUAL_CHANGE" : "DOCUMENT_CHUNK",
+            citationType: target.type === "visual_change" ? "VISUAL_CHANGE" : "DOCUMENT_CHUNK",
             label: citation.label,
             supportsClaimIds: citation.supportsClaimIds,
             detectedChangeId: target.type === "visual_change" ? target.changeId : null,
@@ -103,8 +98,7 @@ export class AgentRunFinalizerService {
                 ? (target.region as Prisma.InputJsonValue)
                 : Prisma.JsonNull,
             knowledgeDocumentId: target.type === "document_chunk" ? target.documentId : null,
-            knowledgeVersionId:
-              target.type === "document_chunk" ? target.documentVersionId : null,
+            knowledgeVersionId: target.type === "document_chunk" ? target.documentVersionId : null,
             knowledgeChunkId: target.type === "document_chunk" ? target.chunkId : null,
             pageNumber: target.type === "document_chunk" ? target.page : null,
             sectionTitle: target.type === "document_chunk" ? target.section : null,

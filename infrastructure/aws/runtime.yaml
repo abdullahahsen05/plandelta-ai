@@ -357,7 +357,7 @@ Resources:
     Type: AWS::Logs::MetricFilter
     Properties:
       LogGroupName: /plandelta/production
-      FilterPattern: '{ $.injectionSignalCount > 0 }'
+      FilterPattern: "{ $.injectionSignalCount > 0 }"
       MetricTransformations:
         - MetricNamespace: PlanDelta/Agentic
           MetricName: PromptInjectionDetections

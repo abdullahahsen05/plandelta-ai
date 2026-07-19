@@ -210,7 +210,7 @@ button {
   }
 
   .profile-selector label {
-    @apply flex cursor-pointer items-start gap-3 bg-[#FBFAF6] p-5 text-sm outline-none transition-colors hover:bg-[#FFF4EF] has-[:checked]:bg-[#FFF4EF] has-[:checked]:shadow-[inset_3px_0_0_#E6532F];
+    @apply flex cursor-pointer items-start gap-3 bg-[#FBFAF6] p-5 text-sm transition-colors outline-none hover:bg-[#FFF4EF] has-[:checked]:bg-[#FFF4EF] has-[:checked]:shadow-[inset_3px_0_0_#E6532F];
   }
 
   .profile-selector input {

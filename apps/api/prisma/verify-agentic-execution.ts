@@ -24,10 +24,9 @@ const messageId = randomUUID();
 const runId = randomUUID();
 const correlationId = randomUUID();
 const startedAt = Date.now();
-const analysisProfile =
-  process.argv.includes("--schematic")
-    ? "engineering_schematic"
-    : "construction_drawing";
+const analysisProfile = process.argv.includes("--schematic")
+  ? "engineering_schematic"
+  : "construction_drawing";
 const schematic = analysisProfile === "engineering_schematic";
 
 await client.connect();

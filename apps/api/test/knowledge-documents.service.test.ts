@@ -72,9 +72,8 @@ function databaseMock() {
     knowledgeDocumentVersion: {
       findFirst: vi.fn().mockResolvedValue(null),
     },
-    inTransaction: vi.fn(
-      async (operation: (client: typeof transaction) => Promise<unknown>) =>
-        operation(transaction),
+    inTransaction: vi.fn(async (operation: (client: typeof transaction) => Promise<unknown>) =>
+      operation(transaction),
     ),
     transaction,
   };
@@ -89,10 +88,7 @@ describe("KnowledgeDocumentsService", () => {
   it("stores a validated owner-scoped document and queues its typed version", async () => {
     const database = databaseMock();
     const storage = storageMock();
-    const service = new KnowledgeDocumentsService(
-      database as unknown as DatabaseService,
-      storage,
-    );
+    const service = new KnowledgeDocumentsService(database as unknown as DatabaseService, storage);
 
     const result = await service.upload(
       ownerId,
@@ -107,9 +103,7 @@ describe("KnowledgeDocumentsService", () => {
 
     expect(storage.write).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(
-          `^${ownerId}/${projectId}/knowledge/[0-9a-f-]+/[0-9a-f-]+/original\\.txt$`,
-        ),
+        new RegExp(`^${ownerId}/${projectId}/knowledge/[0-9a-f-]+/[0-9a-f-]+/original\\.txt$`),
       ),
       expect.any(Buffer),
     );
@@ -137,10 +131,7 @@ describe("KnowledgeDocumentsService", () => {
   it("rejects invalid UTF-8 before storing anything", async () => {
     const database = databaseMock();
     const storage = storageMock();
-    const service = new KnowledgeDocumentsService(
-      database as unknown as DatabaseService,
-      storage,
-    );
+    const service = new KnowledgeDocumentsService(database as unknown as DatabaseService, storage);
     const invalid = textFile("specification.txt");
     invalid.buffer = Buffer.from([0xc3, 0x28]);
     invalid.size = invalid.buffer.byteLength;
@@ -157,10 +148,7 @@ describe("KnowledgeDocumentsService", () => {
     const database = databaseMock();
     database.project.findFirst.mockResolvedValue(null);
     const storage = storageMock();
-    const service = new KnowledgeDocumentsService(
-      database as unknown as DatabaseService,
-      storage,
-    );
+    const service = new KnowledgeDocumentsService(database as unknown as DatabaseService, storage);
 
     await expectApiError(
       service.upload(ownerId, projectId, { documentType: "SPECIFICATION" }, textFile()),
@@ -208,10 +196,7 @@ describe("KnowledgeDocumentsService", () => {
       status: "READY",
     });
     const storage = storageMock();
-    const service = new KnowledgeDocumentsService(
-      database as unknown as DatabaseService,
-      storage,
-    );
+    const service = new KnowledgeDocumentsService(database as unknown as DatabaseService, storage);
 
     await service.uploadVersion(
       ownerId,
@@ -234,10 +219,7 @@ describe("KnowledgeDocumentsService", () => {
       ingestionJobs: [{ id: "job", status: "COMPLETED" }],
     });
     const storage = storageMock();
-    const service = new KnowledgeDocumentsService(
-      database as unknown as DatabaseService,
-      storage,
-    );
+    const service = new KnowledgeDocumentsService(database as unknown as DatabaseService, storage);
 
     await service.uploadVersion(
       ownerId,
@@ -270,16 +252,9 @@ describe("KnowledgeDocumentsService", () => {
       ingestionJobs: [],
     });
     const storage = storageMock();
-    const service = new KnowledgeDocumentsService(
-      database as unknown as DatabaseService,
-      storage,
-    );
+    const service = new KnowledgeDocumentsService(database as unknown as DatabaseService, storage);
 
-    await service.delete(
-      ownerId,
-      projectId,
-      "00000000-0000-4000-8000-000000000064",
-    );
+    await service.delete(ownerId, projectId, "00000000-0000-4000-8000-000000000064");
 
     expect(database.knowledgeDocument.delete).toHaveBeenCalledWith({
       where: { id: "00000000-0000-4000-8000-000000000064" },

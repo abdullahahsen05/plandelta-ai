@@ -26,8 +26,8 @@ export function buildDeterministicReport(
         )
           .map(([type, count]) => `${count} ${titleCase(type)}`)
           .join(", ")}. Review each region against the source ${
-            profile === "ENGINEERING_SCHEMATIC" ? "schematics" : "drawings"
-          } before coordination.`;
+          profile === "ENGINEERING_SCHEMATIC" ? "schematics" : "drawings"
+        } before coordination.`;
 
   return {
     executiveSummary,

@@ -220,8 +220,7 @@ export class KnowledgeDocumentsService {
     const parserName = inspected.mimeType === "application/pdf" ? "pypdf" : "utf8";
     const parserVersion = inspected.mimeType === "application/pdf" ? "6" : "1";
     const chunkerVersion = "plandelta-structure-v1";
-    const embeddingModel =
-      process.env.AGENT_EMBEDDING_MODEL ?? "BAAI/bge-small-en-v1.5";
+    const embeddingModel = process.env.AGENT_EMBEDDING_MODEL ?? "BAAI/bge-small-en-v1.5";
     const existing = await this.database.knowledgeDocumentVersion.findFirst({
       where: {
         documentId,

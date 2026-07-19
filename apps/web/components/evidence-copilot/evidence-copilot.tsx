@@ -45,14 +45,7 @@ import type { SampleChange } from "../../lib/sample-data";
 import { createBrowserSupabaseClient } from "../../lib/supabase/client";
 
 type PanelState =
-  | "loading"
-  | "ready"
-  | "running"
-  | "reconnecting"
-  | "cancelled"
-  | "quota"
-  | "offline"
-  | "error";
+  "loading" | "ready" | "running" | "reconnecting" | "cancelled" | "quota" | "offline" | "error";
 
 type UiCitation = Pick<
   EvidenceCitation,
@@ -336,9 +329,7 @@ function inlineMarkdown(
     }
     const marker = token.match(/^\[(\d+)]$/);
     if (marker) {
-      const citation = citations.find(
-        (candidate) => candidate.displayOrder === Number(marker[1]),
-      );
+      const citation = citations.find((candidate) => candidate.displayOrder === Number(marker[1]));
       if (citation) {
         return (
           <button
@@ -506,18 +497,15 @@ export function EvidenceCopilot({
     return data.session.access_token;
   }, []);
 
-  const loadMessages = useCallback(
-    async (id: string, token: string) => {
-      const persisted = await apiRequest(
-        `/conversations/${id}/messages`,
-        token,
-        copilotMessageListSchema,
-      );
-      setMessages(persisted.map(toUiMessage).filter((message) => message !== null));
-      return persisted;
-    },
-    [],
-  );
+  const loadMessages = useCallback(async (id: string, token: string) => {
+    const persisted = await apiRequest(
+      `/conversations/${id}/messages`,
+      token,
+      copilotMessageListSchema,
+    );
+    setMessages(persisted.map(toUiMessage).filter((message) => message !== null));
+    return persisted;
+  }, []);
 
   const followRun = useCallback(
     async (runId: string, token: string, currentConversationId: string) => {
@@ -584,16 +572,11 @@ export function EvidenceCopilot({
       try {
         const token = await accessToken();
         const [capabilities, conversations] = await Promise.all([
-          apiRequest(
-            "/agent-runs/capabilities",
-            token,
-            copilotCapabilitiesSchema,
-          ).catch(() => ({ available: false, provider: "offline" as const })),
-          apiRequest(
-            `/projects/${projectId}/conversations`,
-            token,
-            conversationListSchema,
-          ),
+          apiRequest("/agent-runs/capabilities", token, copilotCapabilitiesSchema).catch(() => ({
+            available: false,
+            provider: "offline" as const,
+          })),
+          apiRequest(`/projects/${projectId}/conversations`, token, conversationListSchema),
         ]);
         setLiveAvailable(capabilities.available);
         const conversation = conversations.find(
@@ -818,18 +801,24 @@ export function EvidenceCopilot({
             onClick={() => setWide((value) => !value)}
             type="button"
           >
-            {wide ? <Minimize2 aria-hidden="true" size={15} /> : <Maximize2 aria-hidden="true" size={15} />}
+            {wide ? (
+              <Minimize2 aria-hidden="true" size={15} />
+            ) : (
+              <Maximize2 aria-hidden="true" size={15} />
+            )}
           </button>
-          <button aria-label="Collapse Evidence Copilot" onClick={() => setCollapsed(true)} type="button">
+          <button
+            aria-label="Collapse Evidence Copilot"
+            onClick={() => setCollapsed(true)}
+            type="button"
+          >
             <PanelRightClose aria-hidden="true" size={15} />
           </button>
         </div>
       </header>
 
       <div
-        className={`copilot-truth-band ${
-          sample ? "sample" : liveAvailable ? "live" : "offline"
-        }`}
+        className={`copilot-truth-band ${sample ? "sample" : liveAvailable ? "live" : "offline"}`}
       >
         <span>
           {sample
@@ -871,10 +860,7 @@ export function EvidenceCopilot({
           </section>
         ) : (
           messages.map((message) => (
-            <article
-              className={`copilot-message ${message.role.toLowerCase()}`}
-              key={message.id}
-            >
+            <article className={`copilot-message ${message.role.toLowerCase()}`} key={message.id}>
               <div className="message-meta">
                 <span>{message.role === "USER" ? "YOU" : "EVIDENCE RESPONSE"}</span>
                 {message.sample ? <b>SAMPLE OUTPUT</b> : null}
@@ -961,7 +947,12 @@ export function EvidenceCopilot({
         <label htmlFor="copilot-question">Question for the evidence record</label>
         <div>
           <textarea
-            disabled={running || panelState === "loading" || panelState === "quota" || panelState === "offline"}
+            disabled={
+              running ||
+              panelState === "loading" ||
+              panelState === "quota" ||
+              panelState === "offline"
+            }
             id="copilot-question"
             maxLength={4000}
             onChange={(event) => setQuestion(event.target.value)}
@@ -981,7 +972,13 @@ export function EvidenceCopilot({
           />
           <button
             aria-label="Ask Evidence Copilot"
-            disabled={!question.trim() || running || panelState === "loading" || panelState === "quota" || panelState === "offline"}
+            disabled={
+              !question.trim() ||
+              running ||
+              panelState === "loading" ||
+              panelState === "quota" ||
+              panelState === "offline"
+            }
             type="submit"
           >
             <Send aria-hidden="true" size={16} />
@@ -1007,7 +1004,11 @@ export function EvidenceCopilot({
                 <span>AUTHORIZED SOURCE EXCERPT</span>
                 <h3>{source.documentName}</h3>
               </div>
-              <button aria-label="Close source preview" onClick={() => setSource(null)} type="button">
+              <button
+                aria-label="Close source preview"
+                onClick={() => setSource(null)}
+                type="button"
+              >
                 <X aria-hidden="true" size={16} />
               </button>
             </header>

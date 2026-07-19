@@ -52,11 +52,7 @@ describe("ConversationsService", () => {
     };
     const service = new ConversationsService(database as unknown as DatabaseService);
 
-    await expectApiError(
-      service.get(otherOwnerId, conversationId),
-      "CONVERSATION_NOT_FOUND",
-      404,
-    );
+    await expectApiError(service.get(otherOwnerId, conversationId), "CONVERSATION_NOT_FOUND", 404);
   });
 
   it("enforces one active agent run before creating another", async () => {

@@ -34,10 +34,7 @@ export class AgentRunsController {
   }
 
   @Get(":runId")
-  get(
-    @CurrentAuth() auth: AuthContext,
-    @Param("runId", new ParseUUIDPipe()) runId: string,
-  ) {
+  get(@CurrentAuth() auth: AuthContext, @Param("runId", new ParseUUIDPipe()) runId: string) {
     return this.conversations.run(auth.userId, runId);
   }
 
@@ -51,10 +48,7 @@ export class AgentRunsController {
   }
 
   @Post(":runId/cancel")
-  cancel(
-    @CurrentAuth() auth: AuthContext,
-    @Param("runId", new ParseUUIDPipe()) runId: string,
-  ) {
+  cancel(@CurrentAuth() auth: AuthContext, @Param("runId", new ParseUUIDPipe()) runId: string) {
     return this.conversations.cancel(auth.userId, runId);
   }
 
@@ -67,7 +61,8 @@ export class AgentRunsController {
   ): Observable<MessageEvent> {
     const initialSequence = Number(request.header("last-event-id") ?? 0);
     return new Observable<MessageEvent>((subscriber) => {
-      let sequence = Number.isSafeInteger(initialSequence) && initialSequence > 0 ? initialSequence : 0;
+      let sequence =
+        Number.isSafeInteger(initialSequence) && initialSequence > 0 ? initialSequence : 0;
       let active = true;
       let terminalEmitted = false;
       const poll = async () => {
@@ -152,8 +147,9 @@ export class AgentRunsController {
     if (!value || typeof value !== "object" || Array.isArray(value)) return {};
     return Object.fromEntries(
       Object.entries(value)
-        .filter((entry): entry is [string, boolean | null | number | string] =>
-          ["boolean", "number", "string"].includes(typeof entry[1]) || entry[1] === null,
+        .filter(
+          (entry): entry is [string, boolean | null | number | string] =>
+            ["boolean", "number", "string"].includes(typeof entry[1]) || entry[1] === null,
         )
         .slice(0, 20),
     );

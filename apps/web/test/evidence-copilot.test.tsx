@@ -7,10 +7,7 @@ vi.mock("../lib/supabase/client", () => ({
   }),
 }));
 
-import {
-  EvidenceCopilot,
-  SafeMarkdown,
-} from "../components/evidence-copilot/evidence-copilot";
+import { EvidenceCopilot, SafeMarkdown } from "../components/evidence-copilot/evidence-copilot";
 import {
   sampleChanges,
   sampleProject,
@@ -57,9 +54,7 @@ describe("EvidenceCopilot", () => {
       />,
     );
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Draft an RFI for the changed keynote." }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Draft an RFI for the changed keynote." }));
     fireEvent.click(screen.getByRole("button", { name: "Ask Evidence Copilot" }));
 
     expect(screen.getByLabelText("Editable RFI draft")).toBeInTheDocument();

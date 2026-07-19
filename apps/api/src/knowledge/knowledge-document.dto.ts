@@ -1,13 +1,6 @@
 import { ApiProperty, ApiPropertyOptional } from "@nestjs/swagger";
 import { KnowledgeDocumentType } from "../generated/prisma/enums.js";
-import {
-  IsDateString,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-  MinLength,
-} from "class-validator";
+import { IsDateString, IsEnum, IsOptional, IsString, MaxLength, MinLength } from "class-validator";
 
 export class UploadKnowledgeDocumentDto {
   @ApiProperty({ enum: KnowledgeDocumentType })

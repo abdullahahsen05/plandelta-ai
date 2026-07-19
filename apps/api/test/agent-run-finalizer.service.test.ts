@@ -87,9 +87,8 @@ describe("AgentRunFinalizerService", () => {
       auditEvent: { create: vi.fn().mockResolvedValue({ id: "audit" }) },
     };
     const database = {
-      inTransaction: vi.fn(
-        async (operation: (client: typeof transaction) => Promise<void>) =>
-          operation(transaction),
+      inTransaction: vi.fn(async (operation: (client: typeof transaction) => Promise<void>) =>
+        operation(transaction),
       ),
     };
     const service = new AgentRunFinalizerService(database as unknown as DatabaseService);
@@ -100,10 +99,10 @@ describe("AgentRunFinalizerService", () => {
     const citationCall: unknown = transaction.citation.upsert.mock.calls[0]?.[0];
     expect(citationCall).toMatchObject({
       create: {
-          id: citationId,
-          projectId,
-          detectedChangeId: changeId,
-          citationType: "VISUAL_CHANGE",
+        id: citationId,
+        projectId,
+        detectedChangeId: changeId,
+        citationType: "VISUAL_CHANGE",
       },
     });
     const completedRunCall: unknown = transaction.agentRun.update.mock.calls[0]?.[0];
@@ -130,9 +129,8 @@ describe("AgentRunFinalizerService", () => {
       auditEvent: { create: vi.fn() },
     };
     const database = {
-      inTransaction: vi.fn(
-        async (operation: (client: typeof transaction) => Promise<void>) =>
-          operation(transaction),
+      inTransaction: vi.fn(async (operation: (client: typeof transaction) => Promise<void>) =>
+        operation(transaction),
       ),
     };
     const service = new AgentRunFinalizerService(database as unknown as DatabaseService);

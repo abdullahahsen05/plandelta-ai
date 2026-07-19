@@ -5,10 +5,7 @@ import { HttpStatus, Injectable } from "@nestjs/common";
 import { ApiException } from "../common/api.exception.js";
 import { DatabaseService } from "../database/database.service.js";
 import type { Prisma } from "../generated/prisma/client.js";
-import type {
-  CreateAgentMessageDto,
-  CreateConversationDto,
-} from "./agentic.dto.js";
+import type { CreateAgentMessageDto, CreateConversationDto } from "./agentic.dto.js";
 
 const conversationSelect = {
   id: true,

@@ -7,7 +7,10 @@ const repositoryRoot = resolve(import.meta.dirname, "../../..");
 loadDotenv({ path: resolve(repositoryRoot, ".env.local"), quiet: true });
 
 const runId = process.argv[2];
-if (!runId || !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(runId)) {
+if (
+  !runId ||
+  !/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(runId)
+) {
   throw new Error("Usage: pnpm --filter @plandelta/api db:inspect-agent-run <run-uuid>");
 }
 const directDatabaseUrl = process.env.DIRECT_DATABASE_URL;
@@ -42,7 +45,8 @@ try {
   process.stdout.write(
     `${JSON.stringify(
       {
-        notice: "Redacted operator trace. Questions, answers, prompts, chunks, URLs, and credentials are excluded.",
+        notice:
+          "Redacted operator trace. Questions, answers, prompts, chunks, URLs, and credentials are excluded.",
         run: run.rows[0],
         steps: steps.rows,
       },

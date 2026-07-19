@@ -1,7 +1,4 @@
-import {
-  schematicSampleWorkbench,
-  Workbench,
-} from "../../../../components/workbench";
+import { schematicSampleWorkbench, Workbench } from "../../../../components/workbench";
 import type { WorkbenchData } from "../../../../components/workbench";
 import { AnalysisProgress } from "../../../../components/analysis-progress";
 import { apiRequest } from "../../../../lib/api/client";
