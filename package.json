@@ -16,6 +16,7 @@
     "test": "pnpm db:generate && turbo run test",
     "test:e2e": "pnpm db:generate && turbo run test:e2e",
     "verify:local-journey": "node scripts/verify-local-journey.mjs",
+    "verify:local-agentic": "node scripts/verify-local-agentic-journey.mjs",
     "verify:local-stack": "pnpm --filter @plandelta/api build && node scripts/run-local-integration.mjs",
     "verify:local-e2e": "pnpm --filter @plandelta/api build && node scripts/run-local-integration.mjs --playwright",
     "start:local": "node scripts/run-local-integration.mjs --serve",

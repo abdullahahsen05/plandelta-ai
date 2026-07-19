@@ -40,9 +40,14 @@ services:
       context: apps/agent
       dockerfile: Dockerfile
     env_file: .env.local
+    environment:
+      HF_HOME: /home/plandelta/.cache/fastembed/huggingface
+      HF_HUB_DISABLE_XET: "1"
+      XDG_CACHE_HOME: /home/plandelta/.cache/fastembed
     expose:
       - "8100"
     volumes:
+      - plandelta-data:/data
       - plandelta-agent-models:/home/plandelta/.cache/fastembed
     mem_limit: 768m
     cpus: 0.75

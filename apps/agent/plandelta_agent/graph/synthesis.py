@@ -142,7 +142,8 @@ class EvidenceSynthesizer:
             else "insufficient_evidence"
         )
         confidence = draft.confidence if citations else AgentConfidence.INSUFFICIENT
-        rfi = self._rfi(question, draft.answer_markdown, citations) if draft.draft_rfi else None
+        should_draft_rfi = draft.draft_rfi or self._explicit_rfi_request(question)
+        rfi = self._rfi(question, draft.answer_markdown, citations) if should_draft_rfi else None
         return SynthesisOutcome(
             answer=VerifiedAnswer(
                 status=status,
@@ -238,3 +239,12 @@ class EvidenceSynthesizer:
             ),
             citation_ids=[citation.id for citation in citations],
         )
+
+    @staticmethod
+    def _explicit_rfi_request(question: str) -> bool:
+        normalized = question.casefold()
+        names_rfi = "rfi" in normalized or "request for information" in normalized
+        requests_draft = any(
+            action in normalized for action in ("draft", "prepare", "create", "write")
+        )
+        return names_rfi and requests_draft

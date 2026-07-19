@@ -296,6 +296,21 @@ async def test_graph_accepts_schema_valid_json_inside_a_model_fence() -> None:
 
 
 @pytest.mark.anyio
+async def test_explicit_rfi_request_produces_review_draft_even_if_model_flag_is_false() -> None:
+    provider = DeterministicChatProvider([response()])
+    result = await AgentWorkflow(
+        context=context(),
+        provider=provider,
+        specialists=specialists([]),
+    ).execute("Draft an RFI for what changed in the drawing.")
+
+    assert result.verifier.approved is True
+    assert result.answer.rfi_draft is not None
+    assert result.answer.rfi_draft.status == "draft_requires_human_review"
+    assert result.answer.rfi_draft.citation_ids == [result.answer.citations[0].id]
+
+
+@pytest.mark.anyio
 async def test_graph_repairs_one_hallucinated_source_then_terminates() -> None:
     calls: list[SpecialistRole] = []
     provider = DeterministicChatProvider(
@@ -384,9 +399,7 @@ async def test_specialists_run_in_parallel_and_timeout_is_terminal() -> None:
     calls: list[SpecialistRole] = []
     starts: list[float] = []
     run_context = context()
-    delayed = {
-        role: SlowFixtureSpecialist(role, calls, 0.08, starts) for role in SpecialistRole
-    }
+    delayed = {role: SlowFixtureSpecialist(role, calls, 0.08, starts) for role in SpecialistRole}
     result = await AgentWorkflow(
         context=run_context,
         provider=DeterministicChatProvider([response()]),
