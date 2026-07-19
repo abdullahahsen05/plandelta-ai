@@ -229,27 +229,33 @@ async function verifyQueueLeasing() {
       throw new Error("The owning worker could not renew its lease.");
     }
 
-    await setupClient.query(
-      "UPDATE public.analyses SET lease_expires_at = clock_timestamp() - interval '1 second' WHERE project_id = $1",
-      [projectId],
-    );
-    const recovery = await setupClient.query<{ requeued_count: number; failed_count: number }>(
-      "SELECT * FROM public.recover_stale_analyses()",
-    );
-    const recoveredFixtures = await setupClient.query<{ count: number }>(
-      `SELECT count(*)::integer AS count
-       FROM public.analyses
-       WHERE project_id = $1
-         AND status = 'RETRYING'
-         AND lease_owner IS NULL
-         AND lease_expires_at IS NULL`,
-      [projectId],
-    );
-    if (
-      (recovery.rows[0]?.requeued_count ?? 0) < 2 ||
-      (recoveredFixtures.rows[0]?.count ?? 0) !== 2
-    ) {
-      throw new Error("Stale leases did not recover to RETRYING as expected.");
+    await setupClient.query("BEGIN");
+    try {
+      await setupClient.query(
+        "UPDATE public.analyses SET lease_expires_at = clock_timestamp() - interval '1 second' WHERE project_id = $1",
+        [projectId],
+      );
+      const recovery = await setupClient.query<{ requeued_count: number; failed_count: number }>(
+        "SELECT * FROM public.recover_stale_analyses()",
+      );
+      const recoveredFixtures = await setupClient.query<{ count: number }>(
+        `SELECT count(*)::integer AS count
+         FROM public.analyses
+         WHERE project_id = $1
+           AND status = 'RETRYING'
+           AND lease_owner IS NULL
+           AND lease_expires_at IS NULL`,
+        [projectId],
+      );
+      if (
+        (recovery.rows[0]?.requeued_count ?? 0) < 2 ||
+        (recoveredFixtures.rows[0]?.count ?? 0) !== 2
+      ) {
+        throw new Error("Stale leases did not recover to RETRYING as expected.");
+      }
+    } finally {
+      // Keep the recovery assertion isolated from any continuously running production worker.
+      await setupClient.query("ROLLBACK");
     }
   } finally {
     await Promise.all([workerA.end().catch(() => undefined), workerB.end().catch(() => undefined)]);
@@ -439,13 +445,7 @@ async function verifyAgenticQueueLeasing() {
         $1, $2, $3, $4, 'text/plain', 32, 'LOCAL', $5, 1, 'utf8', '1',
         'plandelta-structure-v1', 'local', 'BAAI/bge-small-en-v1.5', 384
       )`,
-      [
-        versionId,
-        documentId,
-        projectId,
-        "a".repeat(64),
-        `queue/${documentId}/${versionId}.txt`,
-      ],
+      [versionId, documentId, projectId, "a".repeat(64), `queue/${documentId}/${versionId}.txt`],
     );
     await client.query(
       `INSERT INTO public.ingestion_jobs (
@@ -483,10 +483,7 @@ async function verifyAgenticQueueLeasing() {
       "SELECT id FROM public.claim_ingestion_job('agentic-verifier-2', 60, $1)",
       [projectId],
     );
-    if (
-      ingestionClaim.rows[0]?.id !== ingestionJobId ||
-      secondIngestionClaim.rows.length !== 0
-    ) {
+    if (ingestionClaim.rows[0]?.id !== ingestionJobId || secondIngestionClaim.rows.length !== 0) {
       throw new Error("Ingestion lease was missing or duplicated.");
     }
     const wrongIngestionHeartbeat = await client.query<{ heartbeat_ingestion_job: boolean }>(
@@ -549,14 +546,12 @@ async function verifyAgenticQueueLeasing() {
     if ((runRecovery.rows[0]?.requeued_count ?? 0) !== 1) {
       throw new Error("Stale agent run did not return to the queue.");
     }
-    await client.query(
-      "UPDATE public.agent_runs SET next_attempt_at = NULL WHERE id = $1",
-      [runId],
-    );
-    await client.query(
-      "SELECT id FROM public.claim_agent_run('agentic-verifier', 60, $1)",
-      [projectId],
-    );
+    await client.query("UPDATE public.agent_runs SET next_attempt_at = NULL WHERE id = $1", [
+      runId,
+    ]);
+    await client.query("SELECT id FROM public.claim_agent_run('agentic-verifier', 60, $1)", [
+      projectId,
+    ]);
     await client.query(
       `UPDATE public.agent_runs
        SET cancellation_requested = true,
