@@ -208,4 +208,67 @@ if ($LASTEXITCODE -ne 0) {
   throw "The one-instance PlanDelta runtime stack failed."
 }
 
-Write-Output "Phase 10 resources deployed. Run verify-phase10.ps1 before claiming availability."
+$instanceId = (
+  aws cloudformation describe-stacks `
+    --stack-name plandelta-runtime `
+    --profile $Profile `
+    --region $Region `
+    --query "Stacks[0].Outputs[?OutputKey=='InstanceId'].OutputValue | [0]" `
+    --output text
+).Trim()
+if ($instanceId -notmatch "^i-[0-9a-f]+$") {
+  throw "The runtime instance ID could not be resolved after deployment."
+}
+
+Write-Output "Refreshing the existing instance with the immutable release."
+$refreshScriptUrl =
+  "https://raw.githubusercontent.com/abdullahahsen05/plandelta-ai/$headCommit/infrastructure/runtime/refresh-runtime.sh"
+$refreshCommand =
+  "curl --fail --silent --show-error --location $refreshScriptUrl --output /tmp/plandelta-refresh-runtime.sh && " +
+  "bash /tmp/plandelta-refresh-runtime.sh $headCommit $ImageTag $EnvironmentParameterName $Region $accountId"
+$refreshParameters = "commands=[`"$refreshCommand`"]"
+$commandId = (
+  aws ssm send-command `
+    --instance-ids $instanceId `
+    --document-name AWS-RunShellScript `
+    --parameters $refreshParameters `
+    --timeout-seconds 900 `
+    --profile $Profile `
+    --region $Region `
+    --query "Command.CommandId" `
+    --output text
+).Trim()
+if ($LASTEXITCODE -ne 0 -or $commandId -notmatch "^[0-9a-f-]+$") {
+  throw "The runtime refresh command could not be started."
+}
+
+$refreshStatus = "InProgress"
+for ($attempt = 0; $attempt -lt 90; $attempt++) {
+  Start-Sleep -Seconds 10
+  $refreshStatus = (
+    aws ssm get-command-invocation `
+      --command-id $commandId `
+      --instance-id $instanceId `
+      --profile $Profile `
+      --region $Region `
+      --query Status `
+      --output text
+  ).Trim()
+  if ($refreshStatus -notin @("Pending", "InProgress", "Delayed")) {
+    break
+  }
+}
+if ($refreshStatus -ne "Success") {
+  $refreshError = (
+    aws ssm get-command-invocation `
+      --command-id $commandId `
+      --instance-id $instanceId `
+      --profile $Profile `
+      --region $Region `
+      --query StandardErrorContent `
+      --output text
+  ).Trim()
+  throw "The runtime refresh failed with status $refreshStatus. $refreshError"
+}
+
+Write-Output "Phase 10 resources and immutable runtime deployed. Run verify-phase10.ps1 before claiming availability."

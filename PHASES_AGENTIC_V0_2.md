@@ -13,8 +13,8 @@ remaining safe work.
 ## Current execution state
 
 - Current phase: Phase 22 — Cost-controlled deployment and v0.2 handoff
-- Current task: Push the verified Phase 21 candidate, require CI, measure the existing runtime,
-  deploy immutable API/vision/agent images, migrate production, deploy Vercel, and verify production
+- Current task: Production AWS runtime is verified on the immutable v0.2 images; make the refresh
+  path durable, migrate production, deploy Vercel, and verify the complete production journeys
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -371,12 +371,12 @@ Completion evidence (2026-07-19):
 
 ## Phase 22 — Cost-controlled deployment and v0.2 handoff
 
-- [ ] Measure current EC2 memory/disk/CPU before adding the agent container.
-- [ ] Build and push immutable agent/API/vision release images.
-- [ ] Update the existing Compose/CloudFormation deployment without prohibited services or duplicate
+- [x] Measure current EC2 memory/disk/CPU before adding the agent container.
+- [x] Build and push immutable agent/API/vision release images.
+- [x] Update the existing Compose/CloudFormation deployment without prohibited services or duplicate
       always-on environments.
-- [ ] Add only the minimum new SSM configuration and IAM permissions.
-- [ ] Verify local embeddings and agent concurrency one fit the current runtime; resize only after
+- [x] Add only the minimum new SSM configuration and IAM permissions.
+- [x] Verify local embeddings and agent concurrency one fit the current runtime; resize only after
       recorded failure and within the existing policy.
 - [ ] Apply production migrations safely and verify RLS.
 - [ ] Deploy backend and then Vercel changes.
