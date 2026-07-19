@@ -6,6 +6,7 @@ from plandelta_agent.tools.implementations import (
 )
 from plandelta_agent.tools.registry import (
     ToolDefinition,
+    ToolInvocationRecord,
     ToolName,
     ToolPolicyError,
     ToolRegistry,
@@ -15,6 +16,7 @@ from plandelta_agent.tools.registry import (
 __all__ = [
     "PostgresEvidenceTools",
     "ToolDefinition",
+    "ToolInvocationRecord",
     "ToolName",
     "ToolPolicyError",
     "ToolRegistry",

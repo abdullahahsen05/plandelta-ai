@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import time
 from collections.abc import Awaitable, Callable, Iterable
 from enum import StrEnum
 
@@ -34,6 +35,16 @@ class ToolResult(ContractModel):
     warnings: list[str] = Field(default_factory=list, max_length=20)
 
 
+class ToolInvocationRecord(ContractModel):
+    name: ToolName
+    version: str = Field(min_length=1, max_length=20)
+    specialist: SpecialistRole
+    status: str = Field(pattern=r"^(completed|failed)$")
+    result_count: int = Field(ge=0, le=20)
+    duration_ms: int = Field(ge=0)
+    error_code: str | None = Field(default=None, max_length=100)
+
+
 ToolHandler = Callable[[ContractModel, RunContext], Awaitable[ToolResult]]
 
 
@@ -50,10 +61,15 @@ class ToolDefinition(ContractModel):
 class ToolRegistry:
     def __init__(self, definitions: Iterable[ToolDefinition]) -> None:
         self._definitions: dict[ToolName, ToolDefinition] = {}
+        self._events: list[ToolInvocationRecord] = []
         for definition in definitions:
             if definition.name in self._definitions:
                 raise ValueError(f"Duplicate tool definition: {definition.name}")
             self._definitions[definition.name] = definition
+
+    @property
+    def events(self) -> list[ToolInvocationRecord]:
+        return list(self._events)
 
     async def invoke(
         self,
@@ -77,16 +93,78 @@ class ToolRegistry:
             raise ToolPolicyError("AGENT_TOOL_ARGUMENTS_INVALID") from error
 
         budget.reserve_tool(name.value, validated.model_dump_json())
+        started = time.perf_counter()
         try:
             async with asyncio.timeout(definition.timeout_seconds):
                 result = await definition.handler(validated, context)
         except TimeoutError as error:
+            self._record(
+                definition,
+                specialist,
+                started,
+                status="failed",
+                error_code="AGENT_TOOL_TIMEOUT",
+            )
             raise ToolPolicyError("AGENT_TOOL_TIMEOUT") from error
+        except Exception as error:
+            self._record(
+                definition,
+                specialist,
+                started,
+                status="failed",
+                error_code="AGENT_TOOL_FAILED",
+            )
+            raise ToolPolicyError("AGENT_TOOL_FAILED") from error
         if len(result.evidence) > definition.max_results:
+            self._record(
+                definition,
+                specialist,
+                started,
+                status="failed",
+                error_code="AGENT_TOOL_RESULT_LIMIT",
+            )
             raise ToolPolicyError("AGENT_TOOL_RESULT_LIMIT")
         if any(reference.project_id != context.project_id for reference in result.evidence):
+            self._record(
+                definition,
+                specialist,
+                started,
+                status="failed",
+                error_code="AGENT_TOOL_SCOPE_VIOLATION",
+            )
             raise ToolPolicyError("AGENT_TOOL_SCOPE_VIOLATION")
         budget.add_retrieved_chunks(
             sum(reference.source_type == "document_chunk" for reference in result.evidence)
         )
+        self._record(
+            definition,
+            specialist,
+            started,
+            status="completed",
+            result_count=len(result.evidence),
+        )
         return result
+
+    def _record(
+        self,
+        definition: ToolDefinition,
+        specialist: SpecialistRole,
+        started: float,
+        *,
+        status: str,
+        result_count: int = 0,
+        error_code: str | None = None,
+    ) -> None:
+        self._events.append(
+            ToolInvocationRecord.model_validate(
+                {
+                    "name": definition.name,
+                    "version": definition.version,
+                    "specialist": specialist,
+                    "status": status,
+                    "resultCount": result_count,
+                    "durationMs": max(0, round((time.perf_counter() - started) * 1000)),
+                    "errorCode": error_code,
+                }
+            )
+        )

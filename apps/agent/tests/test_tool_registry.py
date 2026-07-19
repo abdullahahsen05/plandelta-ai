@@ -87,6 +87,8 @@ async def test_registry_uses_server_scope_and_returns_typed_evidence() -> None:
     )
 
     assert result.evidence[0].project_id == run_context.project_id
+    assert registry.events[0].status == "completed"
+    assert registry.events[0].result_count == 1
 
 
 @pytest.mark.anyio

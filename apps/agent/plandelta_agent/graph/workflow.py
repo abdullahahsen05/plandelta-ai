@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import asyncio
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
 from typing import Literal
 
@@ -22,6 +22,7 @@ from plandelta_agent.models.base import ContractModel
 from plandelta_agent.models.evidence import SpecialistRole
 from plandelta_agent.models.state import AgentGraphState, RunContext, SafeError
 from plandelta_agent.providers import ChatProvider
+from plandelta_agent.tools import ToolInvocationRecord, ToolPolicyError
 
 
 class GraphTraceRecord(ContractModel):
@@ -52,9 +53,12 @@ class AgentWorkflow:
         context: RunContext,
         provider: ChatProvider,
         specialists: Mapping[SpecialistRole, SpecialistAgent],
+        tool_event_source: Callable[[], list[ToolInvocationRecord]] | None = None,
     ) -> None:
         self._context = context
         self._specialists = specialists
+        self._tool_event_source = tool_event_source or (lambda: [])
+        self._emitted_tool_events = 0
         self._budget = RunBudget(context.limits)
         self._synthesizer = EvidenceSynthesizer(provider)
         self._verifier = AnswerVerifier()
@@ -88,12 +92,12 @@ class AgentWorkflow:
             )
             state = self._safe_terminal_state(initial, safe_error)
             self._record("fallback", "safe_limit", {"code": safe_error.code})
-        except (BudgetLimitError, InputPolicyError) as error:
+        except (BudgetLimitError, InputPolicyError, ToolPolicyError) as error:
             code = error.code
             safe_error = SafeError(
                 code=code,
                 message="The evidence run stopped at a configured safety limit.",
-                retryable=code in {"AGENT_TIMEOUT"},
+                retryable=code in {"AGENT_TIMEOUT", "AGENT_TOOL_TIMEOUT", "AGENT_TOOL_FAILED"},
             )
             state = self._safe_terminal_state(initial, safe_error)
             self._record("fallback", "safe_limit", {"code": code})
@@ -198,16 +202,19 @@ class AgentWorkflow:
         for role in selected:
             if role not in self._specialists:
                 raise BudgetLimitError("AGENT_SPECIALIST_UNAVAILABLE")
-        packets = await asyncio.gather(
-            *[
-                self._specialists[role].run(
-                    question=state["question"],
-                    context=state["context"],
-                    budget=self._budget,
-                )
-                for role in selected
-            ]
-        )
+        try:
+            packets = await asyncio.gather(
+                *[
+                    self._specialists[role].run(
+                        question=state["question"],
+                        context=state["context"],
+                        budget=self._budget,
+                    )
+                    for role in selected
+                ]
+            )
+        finally:
+            self._emit_tool_events()
         self._record(
             "specialists",
             "completed",
@@ -217,6 +224,22 @@ class AgentWorkflow:
             },
         )
         return {"evidence_packets": packets}
+
+    def _emit_tool_events(self) -> None:
+        tool_events = self._tool_event_source()
+        for event in tool_events[self._emitted_tool_events :]:
+            self._record(
+                f"tool.{event.name.value}",
+                event.status,
+                {
+                    "version": event.version,
+                    "specialist": event.specialist.value,
+                    "resultCount": event.result_count,
+                    "durationMs": event.duration_ms,
+                    "errorCode": event.error_code,
+                },
+            )
+        self._emitted_tool_events = len(tool_events)
 
     async def _synthesis(self, state: AgentGraphState) -> dict[str, object]:
         repair_reasons = (

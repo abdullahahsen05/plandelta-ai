@@ -118,6 +118,7 @@ class AgentRuntime:
             context=context,
             provider=provider,
             specialists=build_specialists(registry),
+            tool_event_source=lambda: registry.events,
         )
 
 

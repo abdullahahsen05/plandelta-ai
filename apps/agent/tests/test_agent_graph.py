@@ -327,10 +327,12 @@ async def test_combined_question_fans_out_without_private_content_in_trace() -> 
 async def test_graph_executes_allowlisted_tools_through_real_specialists() -> None:
     tool_calls: list[ToolName] = []
     run_context = context()
+    registry = real_registry(run_context, tool_calls)
     result = await AgentWorkflow(
         context=run_context,
         provider=DeterministicChatProvider([response()]),
-        specialists=build_specialists(real_registry(run_context, tool_calls)),
+        specialists=build_specialists(registry),
+        tool_event_source=lambda: registry.events,
     ).execute("What coordination impact could this wall change have?")
 
     assert set(tool_calls) == {
@@ -340,6 +342,11 @@ async def test_graph_executes_allowlisted_tools_through_real_specialists() -> No
     }
     assert result.tool_calls == 3
     assert result.verifier.approved is True
+    assert {record.node for record in result.trace if record.node.startswith("tool.")} == {
+        "tool.list_visual_changes",
+        "tool.apply_profile_impact_rules",
+        "tool.calculate_evidence_quantity",
+    }
 
 
 @pytest.mark.anyio
