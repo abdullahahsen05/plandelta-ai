@@ -106,7 +106,7 @@ export class KnowledgeDocumentsService {
         HttpStatus.BAD_REQUEST,
       );
     }
-    const storageKey = `${ownerId}/${projectId}/knowledge/${documentId}/original.${inspected.extension}`;
+    const storageKey = `${ownerId}/${projectId}/knowledge/${documentId}/${versionId}/original.${inspected.extension}`;
     const checksumSha256 = createHash("sha256").update(file.buffer).digest("hex");
     await this.storage.write(storageKey, file.buffer);
     try {
@@ -136,6 +136,10 @@ export class KnowledgeDocumentsService {
               ? new Date(`${input.effectiveDate}T00:00:00.000Z`)
               : null,
             checksumSha256,
+            detectedMimeType: inspected.mimeType,
+            byteSize: BigInt(file.size),
+            storageProvider: this.storage.provider,
+            storageKey,
             pageCount: inspected.pageCount,
             parserName: inspected.mimeType === "application/pdf" ? "pypdf" : "utf8",
             parserVersion: inspected.mimeType === "application/pdf" ? "6" : "1",
@@ -195,6 +199,137 @@ export class KnowledgeDocumentsService {
     });
   }
 
+  async uploadVersion(
+    ownerId: string,
+    projectId: string,
+    documentId: string,
+    input: UploadKnowledgeDocumentDto,
+    file?: Express.Multer.File,
+  ) {
+    await this.requireOwnedProject(ownerId, projectId);
+    const document = await this.getOwned(ownerId, projectId, documentId);
+    if (!file) {
+      throw new ApiException(
+        "KNOWLEDGE_DOCUMENT_REQUIRED",
+        "A supporting document is required.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const inspected = await this.inspectFile(file);
+    const checksumSha256 = createHash("sha256").update(file.buffer).digest("hex");
+    const parserName = inspected.mimeType === "application/pdf" ? "pypdf" : "utf8";
+    const parserVersion = inspected.mimeType === "application/pdf" ? "6" : "1";
+    const chunkerVersion = "plandelta-structure-v1";
+    const embeddingModel =
+      process.env.AGENT_EMBEDDING_MODEL ?? "BAAI/bge-small-en-v1.5";
+    const existing = await this.database.knowledgeDocumentVersion.findFirst({
+      where: {
+        documentId,
+        checksumSha256,
+        parserVersion,
+        chunkerVersion,
+        embeddingModel,
+      },
+      select: { id: true, status: true },
+    });
+    if (existing) {
+      if (existing.status === "FAILED") {
+        return this.retry(ownerId, projectId, documentId);
+      }
+      return this.getOwned(ownerId, projectId, documentId);
+    }
+
+    const versionId = randomUUID();
+    const originalName = safeOriginalName(file.originalname);
+    if (!originalName) {
+      throw new ApiException(
+        "KNOWLEDGE_DOCUMENT_FILENAME_INVALID",
+        "The supporting document filename is invalid.",
+        HttpStatus.BAD_REQUEST,
+      );
+    }
+    const storageKey = `${ownerId}/${projectId}/knowledge/${documentId}/${versionId}/original.${inspected.extension}`;
+    await this.storage.write(storageKey, file.buffer);
+    try {
+      return await this.database.inTransaction(async (transaction) => {
+        await transaction.knowledgeDocumentVersion.create({
+          data: {
+            id: versionId,
+            documentId,
+            projectId,
+            supersedesId: document.activeVersion?.id ?? null,
+            revisionLabel: input.revisionLabel?.trim() || null,
+            effectiveDate: input.effectiveDate
+              ? new Date(`${input.effectiveDate}T00:00:00.000Z`)
+              : null,
+            checksumSha256,
+            detectedMimeType: inspected.mimeType,
+            byteSize: BigInt(file.size),
+            storageProvider: this.storage.provider,
+            storageKey,
+            pageCount: inspected.pageCount,
+            parserName,
+            parserVersion,
+            chunkerVersion,
+            embeddingProvider: "local",
+            embeddingModel,
+            embeddingDimension: Number(process.env.AGENT_EMBEDDING_DIMENSION ?? 384),
+            status: "PENDING",
+            isActive: false,
+          },
+        });
+        await transaction.ingestionJob.create({
+          data: {
+            documentId,
+            documentVersionId: versionId,
+            projectId,
+            idempotencyKey: randomUUID(),
+            status: "QUEUED",
+            progress: 0,
+            currentStage: "queued",
+          },
+        });
+        await transaction.knowledgeDocument.update({
+          where: { id: documentId },
+          data: {
+            originalName,
+            detectedMimeType: inspected.mimeType,
+            byteSize: BigInt(file.size),
+            checksumSha256,
+            storageProvider: this.storage.provider,
+            storageKey,
+            documentType: input.documentType,
+            status: document.activeVersion ? "READY" : "UPLOADED",
+            failureCode: null,
+          },
+        });
+        await transaction.auditEvent.create({
+          data: {
+            actorId: ownerId,
+            projectId,
+            eventType: "KNOWLEDGE_DOCUMENT_VERSION_UPLOADED",
+            correlationId: randomUUID(),
+            metadata: {
+              documentId,
+              versionId,
+              supersedesVersionId: document.activeVersion?.id ?? null,
+              documentType: input.documentType,
+              detectedMimeType: inspected.mimeType,
+              pageCount: inspected.pageCount,
+            },
+          },
+        });
+        return transaction.knowledgeDocument.findUniqueOrThrow({
+          where: { id: documentId },
+          select: documentSelect,
+        });
+      });
+    } catch (error) {
+      await this.storage.delete(storageKey).catch(() => undefined);
+      throw error;
+    }
+  }
+
   async getOwned(ownerId: string, projectId: string, documentId: string, withStorage = false) {
     const document = await this.database.knowledgeDocument.findFirst({
       where: { id: documentId, projectId, ownerId, deletedAt: null },
@@ -237,7 +372,10 @@ export class KnowledgeDocumentsService {
     await this.database.inTransaction(async (transaction) => {
       await transaction.knowledgeDocument.update({
         where: { id: documentId },
-        data: { status: "UPLOADED", failureCode: null },
+        data: {
+          status: document.activeVersion ? "READY" : "UPLOADED",
+          failureCode: null,
+        },
       });
       await transaction.ingestionJob.create({
         data: {
@@ -255,10 +393,9 @@ export class KnowledgeDocumentsService {
   }
 
   async delete(ownerId: string, projectId: string, documentId: string): Promise<void> {
-    const document = await this.getOwned(ownerId, projectId, documentId, true);
-    if (!("storageKey" in document)) throw new Error("Storage key was not selected.");
+    await this.getOwned(ownerId, projectId, documentId);
     await this.database.knowledgeDocument.delete({ where: { id: documentId } });
-    await this.storage.delete(document.storageKey);
+    await this.storage.deletePrefix(`${ownerId}/${projectId}/knowledge/${documentId}`);
   }
 
   async source(ownerId: string, projectId: string, documentId: string) {

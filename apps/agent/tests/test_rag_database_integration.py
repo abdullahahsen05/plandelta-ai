@@ -28,6 +28,7 @@ integration_test = pytest.mark.skipif(
 )
 REPOSITORY_ROOT = Path(__file__).resolve().parents[3]
 FIXTURE_KEY = "samples/knowledge/coordination-specification.txt"
+REPLACEMENT_KEY = "samples/knowledge/coordination-addendum.txt"
 
 
 @integration_test
@@ -136,6 +137,46 @@ async def _run_real_ingestion() -> None:
             assert status is not None
             assert status[:4] == ("ready", "ready", True, "completed")
             assert int(status[4]) >= 2
+
+            replacement = (REPOSITORY_ROOT / REPLACEMENT_KEY).read_bytes()
+            replacement_version_id = uuid4()
+            replacement_job_id = uuid4()
+            await seed_replacement(
+                connection,
+                document_id=document_id,
+                version_id=replacement_version_id,
+                job_id=replacement_job_id,
+                project_id=project_id,
+                supersedes_id=version_id,
+                checksum=hashlib.sha256(replacement).hexdigest(),
+            )
+            await connection.commit()
+            await processor.process(replacement_job_id)
+
+            current_results = await retriever.search(
+                project_id=project_id,
+                query="Which services must be coordinated with relocated partitions?",
+                limit=6,
+                document_types=["specification"],
+            )
+            assert current_results
+            assert all(
+                result.document_version_id == replacement_version_id for result in current_results
+            )
+            assert all(result.is_active for result in current_results)
+
+            stale_results = await retriever.search(
+                project_id=project_id,
+                query="partition coordination",
+                limit=6,
+                document_types=["specification"],
+                revision_labels=["Integration fixture"],
+                include_inactive_conflicts=True,
+            )
+            assert stale_results
+            assert all(result.document_version_id == version_id for result in stale_results)
+            assert all(not result.is_active for result in stale_results)
+            assert all(result.is_conflicting for result in stale_results)
         finally:
             await connection.execute(
                 "DELETE FROM knowledge_documents WHERE id = %s",
@@ -174,15 +215,24 @@ async def seed_ingestion(
     await connection.execute(
         """
         INSERT INTO knowledge_document_versions (
-          id, document_id, project_id, revision_label, checksum_sha256, page_count,
+          id, document_id, project_id, revision_label, checksum_sha256,
+          detected_mime_type, byte_size, storage_provider, storage_key, page_count,
           parser_name, parser_version, chunker_version, embedding_provider,
           embedding_model, embedding_dimension, status, is_active
         ) VALUES (
-          %s, %s, %s, 'Integration fixture', %s, 1, 'utf8', '1',
+          %s, %s, %s, 'Integration fixture', %s,
+          'text/plain', %s, 'LOCAL', %s, 1, 'utf8', '1',
           'plandelta-structure-v1', 'local', 'BAAI/bge-small-en-v1.5', 384, 'pending', false
         )
         """,
-        (version_id, document_id, project_id, checksum),
+        (
+            version_id,
+            document_id,
+            project_id,
+            checksum,
+            (REPOSITORY_ROOT / FIXTURE_KEY).stat().st_size,
+            FIXTURE_KEY,
+        ),
     )
     await connection.execute(
         """
@@ -191,4 +241,62 @@ async def seed_ingestion(
         ) VALUES (%s, %s, %s, %s, 'queued', %s)
         """,
         (job_id, document_id, version_id, project_id, uuid4()),
+    )
+
+
+async def seed_replacement(
+    connection: psycopg.AsyncConnection[tuple[object, ...]],
+    *,
+    document_id: UUID,
+    version_id: UUID,
+    job_id: UUID,
+    project_id: UUID,
+    supersedes_id: UUID,
+    checksum: str,
+) -> None:
+    byte_size = (REPOSITORY_ROOT / REPLACEMENT_KEY).stat().st_size
+    await connection.execute(
+        """
+        INSERT INTO knowledge_document_versions (
+          id, document_id, project_id, supersedes_id, revision_label, checksum_sha256,
+          detected_mime_type, byte_size, storage_provider, storage_key, page_count,
+          parser_name, parser_version, chunker_version, embedding_provider,
+          embedding_model, embedding_dimension, status, is_active
+        ) VALUES (
+          %s, %s, %s, %s, 'Addendum 02', %s,
+          'text/plain', %s, 'LOCAL', %s, 1, 'utf8', '1',
+          'plandelta-structure-v1', 'local', 'BAAI/bge-small-en-v1.5', 384, 'pending', false
+        )
+        """,
+        (
+            version_id,
+            document_id,
+            project_id,
+            supersedes_id,
+            checksum,
+            byte_size,
+            REPLACEMENT_KEY,
+        ),
+    )
+    await connection.execute(
+        """
+        INSERT INTO ingestion_jobs (
+          id, document_id, document_version_id, project_id, status, idempotency_key
+        ) VALUES (%s, %s, %s, %s, 'queued', %s)
+        """,
+        (job_id, document_id, version_id, project_id, uuid4()),
+    )
+    await connection.execute(
+        """
+        UPDATE knowledge_documents
+        SET original_filename = 'coordination-addendum.txt',
+            detected_mime_type = 'text/plain',
+            byte_size = %s,
+            checksum_sha256 = %s,
+            storage_provider = 'LOCAL',
+            storage_key = %s,
+            status = 'ready'
+        WHERE id = %s
+        """,
+        (byte_size, checksum, REPLACEMENT_KEY, document_id),
     )

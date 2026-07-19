@@ -69,6 +69,9 @@ function databaseMock() {
       findMany: vi.fn().mockResolvedValue([]),
       delete: vi.fn().mockResolvedValue({ id: "document" }),
     },
+    knowledgeDocumentVersion: {
+      findFirst: vi.fn().mockResolvedValue(null),
+    },
     inTransaction: vi.fn(
       async (operation: (client: typeof transaction) => Promise<unknown>) =>
         operation(transaction),
@@ -104,7 +107,9 @@ describe("KnowledgeDocumentsService", () => {
 
     expect(storage.write).toHaveBeenCalledWith(
       expect.stringMatching(
-        new RegExp(`^${ownerId}/${projectId}/knowledge/[0-9a-f-]+/original\\.txt$`),
+        new RegExp(
+          `^${ownerId}/${projectId}/knowledge/[0-9a-f-]+/[0-9a-f-]+/original\\.txt$`,
+        ),
       ),
       expect.any(Buffer),
     );
@@ -187,6 +192,100 @@ describe("KnowledgeDocumentsService", () => {
       service.retry(ownerId, projectId, "00000000-0000-4000-8000-000000000031"),
       "KNOWLEDGE_RETRY_NOT_ALLOWED",
       409,
+    );
+  });
+
+  it("reuses an already indexed version with the same ingestion identity", async () => {
+    const database = databaseMock();
+    database.knowledgeDocument.findFirst.mockResolvedValue({
+      id: "document",
+      status: "READY",
+      activeVersion: { id: "00000000-0000-4000-8000-000000000060" },
+      ingestionJobs: [{ id: "job", status: "COMPLETED" }],
+    });
+    database.knowledgeDocumentVersion.findFirst.mockResolvedValue({
+      id: "00000000-0000-4000-8000-000000000060",
+      status: "READY",
+    });
+    const storage = storageMock();
+    const service = new KnowledgeDocumentsService(
+      database as unknown as DatabaseService,
+      storage,
+    );
+
+    await service.uploadVersion(
+      ownerId,
+      projectId,
+      "00000000-0000-4000-8000-000000000061",
+      { documentType: "SPECIFICATION" },
+      textFile(),
+    );
+
+    expect(storage.write).not.toHaveBeenCalled();
+    expect(database.transaction.knowledgeDocumentVersion.create).not.toHaveBeenCalled();
+  });
+
+  it("queues a new stored version that supersedes the active version", async () => {
+    const database = databaseMock();
+    database.knowledgeDocument.findFirst.mockResolvedValue({
+      id: "document",
+      status: "READY",
+      activeVersion: { id: "00000000-0000-4000-8000-000000000062" },
+      ingestionJobs: [{ id: "job", status: "COMPLETED" }],
+    });
+    const storage = storageMock();
+    const service = new KnowledgeDocumentsService(
+      database as unknown as DatabaseService,
+      storage,
+    );
+
+    await service.uploadVersion(
+      ownerId,
+      projectId,
+      "00000000-0000-4000-8000-000000000063",
+      { documentType: "ADDENDUM", revisionLabel: "Addendum 02" },
+      textFile("addendum.txt", "ADDENDUM 02\\nRevised partition coordination requirements."),
+    );
+
+    const versionInput =
+      database.transaction.knowledgeDocumentVersion.create.mock.calls[0]?.[0].data;
+    expect(versionInput).toMatchObject({
+      supersedesId: "00000000-0000-4000-8000-000000000062",
+      revisionLabel: "Addendum 02",
+      detectedMimeType: "text/plain",
+      storageProvider: "LOCAL",
+      parserName: "utf8",
+      status: "PENDING",
+    });
+    expect(typeof versionInput?.storageKey).toBe("string");
+    expect(database.transaction.ingestionJob.create).toHaveBeenCalledTimes(1);
+  });
+
+  it("deletes the complete private version prefix after the owned record", async () => {
+    const database = databaseMock();
+    database.knowledgeDocument.findFirst.mockResolvedValue({
+      id: "00000000-0000-4000-8000-000000000064",
+      status: "READY",
+      activeVersion: { id: "00000000-0000-4000-8000-000000000065" },
+      ingestionJobs: [],
+    });
+    const storage = storageMock();
+    const service = new KnowledgeDocumentsService(
+      database as unknown as DatabaseService,
+      storage,
+    );
+
+    await service.delete(
+      ownerId,
+      projectId,
+      "00000000-0000-4000-8000-000000000064",
+    );
+
+    expect(database.knowledgeDocument.delete).toHaveBeenCalledWith({
+      where: { id: "00000000-0000-4000-8000-000000000064" },
+    });
+    expect(storage.deletePrefix).toHaveBeenCalledWith(
+      `${ownerId}/${projectId}/knowledge/00000000-0000-4000-8000-000000000064`,
     );
   });
 });

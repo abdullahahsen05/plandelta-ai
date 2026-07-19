@@ -13,8 +13,7 @@ remaining safe work.
 ## Current execution state
 
 - Current phase: Phase 15 — document ingestion and hybrid RAG
-- Current task: Implement bounded extraction/chunking, local embedding, transactional activation,
-  and project-scoped citation-ready retrieval
+- Current task: Add ingestion status/retry UI, then close the Phase 15 browser and regression gates
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -34,6 +33,9 @@ remaining safe work.
 - Phase 15 RAG checkpoint: deterministic extraction/chunking, bounded Vision OCR fallback, local
   BGE embeddings, transactional activation, filtered hybrid retrieval, clean migration replay,
   and a real temporary Supabase ingestion/search/cleanup journey pass
+- Phase 15 versioning checkpoint: per-version private storage, same-identity reuse, atomic
+  replacement, stale/conflicting opt-in retrieval, and full-prefix deletion pass in focused and
+  real Supabase checks
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -125,9 +127,9 @@ Implementation checkpoint:
 - [x] Detect and preserve conflicting records; never silently select a winner.
 - [x] Produce citation-ready results containing source, page, section, excerpt, score components,
       checksum, and revision metadata.
-- [ ] Add deletion/re-ingestion cleanup and idempotency.
+- [x] Add deletion/re-ingestion cleanup and idempotency.
 - [ ] Add ingestion status UI and safe error/retry states.
-- [ ] Commit ingestion and retrieval separately.
+- [x] Commit ingestion and retrieval separately.
 
 Implementation checkpoint:
 

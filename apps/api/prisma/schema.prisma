@@ -427,6 +427,10 @@ model KnowledgeDocumentVersion {
   revisionLabel           String?                @map("revision_label")
   effectiveDate           DateTime?              @map("effective_date") @db.Date
   checksumSha256          String                 @map("checksum_sha256")
+  detectedMimeType        String                 @map("detected_mime_type")
+  byteSize                BigInt                 @map("byte_size") @db.BigInt
+  storageProvider         StorageProvider        @map("storage_provider")
+  storageKey              String                 @map("storage_key")
   pageCount               Int?                   @map("page_count")
   extractedCharacterCount Int                    @default(0) @map("extracted_character_count")
   parserName              String                 @map("parser_name")
@@ -453,6 +457,7 @@ model KnowledgeDocumentVersion {
   citations     Citation[]
 
   @@unique([documentId, checksumSha256, parserVersion, chunkerVersion, embeddingModel], map: "knowledge_versions_ingestion_identity_unique")
+  @@unique([storageProvider, storageKey], map: "knowledge_versions_storage_key_unique")
   @@index([projectId, isActive, status, effectiveDate(sort: Desc)], map: "knowledge_versions_project_active_idx")
   @@index([documentId, createdAt(sort: Desc)], map: "knowledge_versions_document_created_idx")
   @@map("knowledge_document_versions")

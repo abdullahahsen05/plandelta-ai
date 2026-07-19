@@ -81,6 +81,51 @@ export class KnowledgeDocumentsController {
     return this.documents.list(auth.userId, projectId);
   }
 
+  @Post(":documentId/versions")
+  @ApiConsumes("multipart/form-data")
+  @ApiBody({
+    schema: {
+      type: "object",
+      required: ["file", "documentType"],
+      properties: {
+        file: { type: "string", format: "binary" },
+        documentType: {
+          type: "string",
+          enum: [
+            "SPECIFICATION",
+            "DRAWING_NOTES",
+            "REVISION_NARRATIVE",
+            "ADDENDUM",
+            "BOQ_SCHEDULE",
+            "RFI",
+            "PRIOR_REPORT",
+            "TECHNICAL_NOTE",
+          ],
+        },
+        revisionLabel: { type: "string", maxLength: 120 },
+        effectiveDate: { type: "string", format: "date" },
+      },
+    },
+  })
+  @UseInterceptors(
+    FileInterceptor("file", {
+      storage: memoryStorage(),
+      limits: {
+        fileSize: Number(process.env.KNOWLEDGE_MAX_FILE_BYTES ?? 20 * 1024 * 1024),
+        files: 1,
+      },
+    }),
+  )
+  uploadVersion(
+    @CurrentAuth() auth: AuthContext,
+    @Param("projectId", new ParseUUIDPipe()) projectId: string,
+    @Param("documentId", new ParseUUIDPipe()) documentId: string,
+    @Body() input: UploadKnowledgeDocumentDto,
+    @UploadedFile() file?: Express.Multer.File,
+  ) {
+    return this.documents.uploadVersion(auth.userId, projectId, documentId, input, file);
+  }
+
   @Get(":documentId")
   get(
     @CurrentAuth() auth: AuthContext,

@@ -103,8 +103,8 @@ class PostgresKnowledgeRepository:
         ):
             await cursor.execute(
                 """
-                    SELECT j.id, d.id, v.id, d.project_id, d.storage_provider::text,
-                           d.storage_key, d.detected_mime_type, d.checksum_sha256
+                    SELECT j.id, d.id, v.id, d.project_id, v.storage_provider::text,
+                           v.storage_key, v.detected_mime_type, v.checksum_sha256
                     FROM ingestion_jobs j
                     JOIN knowledge_documents d ON d.id = j.document_id
                     JOIN knowledge_document_versions v ON v.id = j.document_version_id
@@ -153,7 +153,11 @@ class PostgresKnowledgeRepository:
                 await connection.execute(
                     """
                     UPDATE knowledge_documents d
-                    SET status = %s, failure_code = NULL
+                    SET status = CASE
+                          WHEN d.active_version_id IS NULL THEN %s::"KnowledgeDocumentStatus"
+                          ELSE 'ready'::"KnowledgeDocumentStatus"
+                        END,
+                        failure_code = NULL
                     FROM ingestion_jobs j
                     WHERE j.id = %s AND d.id = j.document_id
                     """,
@@ -302,7 +306,12 @@ class PostgresKnowledgeRepository:
                 await connection.execute(
                     """
                     UPDATE knowledge_documents
-                    SET status = 'failed', failure_code = %s, updated_at = CURRENT_TIMESTAMP
+                    SET status = CASE
+                          WHEN active_version_id IS NULL THEN 'failed'::"KnowledgeDocumentStatus"
+                          ELSE 'ready'::"KnowledgeDocumentStatus"
+                        END,
+                        failure_code = %s,
+                        updated_at = CURRENT_TIMESTAMP
                     WHERE id = %s
                     """,
                     (safe_code, source.document_id),
