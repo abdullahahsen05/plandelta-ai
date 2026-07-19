@@ -19,6 +19,8 @@ class RunBudget:
         self.model_turns = 0
         self.tool_calls = 0
         self.retrieved_chunks = 0
+        self.input_tokens = 0
+        self.output_tokens = 0
         self.total_tokens = 0
         self.estimated_cost_usd = 0.0
         self.repair_passes = 0
@@ -67,6 +69,8 @@ class RunBudget:
         if next_cost > self.limits.max_estimated_cost_usd:
             raise BudgetLimitError("AGENT_COST_LIMIT")
         self.model_turns += 1
+        self.input_tokens += input_tokens
+        self.output_tokens += output_tokens
         self.total_tokens = next_tokens
         self.estimated_cost_usd = next_cost
 

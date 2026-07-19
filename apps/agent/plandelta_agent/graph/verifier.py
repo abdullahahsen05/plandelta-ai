@@ -96,6 +96,5 @@ class AnswerVerifier:
                 else []
             ),
             invalid_citation_ids=list(dict.fromkeys(invalid_citations)),
-            repairable=not approved
-            and not {"CITATION_VALIDATION_FAILED"} & set(reason_codes),
+            repairable=not approved and not {"CITATION_VALIDATION_FAILED"} & set(reason_codes),
         )

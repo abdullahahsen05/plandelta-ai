@@ -56,8 +56,9 @@ class PostgresEvidenceTools:
         if context.analysis_id is None:
             return ToolResult(warnings=["No analysis is scoped to this conversation."])
         async with (
-            await psycopg.AsyncConnection.connect(self._database_url, row_factory=tuple_row)
-            as connection,
+            await psycopg.AsyncConnection.connect(
+                self._database_url, row_factory=tuple_row
+            ) as connection,
             connection.cursor() as cursor,
         ):
             await cursor.execute(
@@ -94,9 +95,7 @@ class PostgresEvidenceTools:
         return ToolResult(
             evidence=[self._visual_reference(context, row) for row in rows],
             warnings=(
-                []
-                if rows
-                else ["No completed visual changes were found in the scoped analysis."]
+                [] if rows else ["No completed visual changes were found in the scoped analysis."]
             ),
         )
 
@@ -177,8 +176,9 @@ class PostgresEvidenceTools:
         if context.analysis_id is None:
             return ToolResult(warnings=["No analysis is scoped for quantity evidence."])
         async with (
-            await psycopg.AsyncConnection.connect(self._database_url, row_factory=tuple_row)
-            as connection,
+            await psycopg.AsyncConnection.connect(
+                self._database_url, row_factory=tuple_row
+            ) as connection,
             connection.cursor() as cursor,
         ):
             await cursor.execute(

@@ -49,9 +49,7 @@ class EvidenceSynthesizer:
         repair_reason_codes: list[str] | None = None,
     ) -> SynthesisOutcome:
         references = {
-            reference.evidence_id: reference
-            for packet in packets
-            for reference in packet.evidence
+            reference.evidence_id: reference for packet in packets for reference in packet.evidence
         }
         citeable = {
             evidence_id: reference

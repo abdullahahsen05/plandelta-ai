@@ -3,7 +3,7 @@ from __future__ import annotations
 import asyncio
 from collections.abc import Callable, Mapping
 from datetime import UTC, datetime
-from typing import Literal
+from typing import Literal, Protocol
 
 from langgraph.graph import END, START, StateGraph
 from pydantic import Field
@@ -40,10 +40,20 @@ class GraphExecutionResult(ContractModel):
     model_turns: int
     tool_calls: int
     retrieved_chunks: int
+    input_tokens: int
+    output_tokens: int
     total_tokens: int
     estimated_cost_usd: float
     repair_passes: int
     safe_error: SafeError | None = None
+
+
+class GraphResultSink(Protocol):
+    async def persist(
+        self,
+        context: RunContext,
+        result: GraphExecutionResult,
+    ) -> None: ...
 
 
 class AgentWorkflow:
@@ -54,10 +64,12 @@ class AgentWorkflow:
         provider: ChatProvider,
         specialists: Mapping[SpecialistRole, SpecialistAgent],
         tool_event_source: Callable[[], list[ToolInvocationRecord]] | None = None,
+        result_sink: GraphResultSink | None = None,
     ) -> None:
         self._context = context
         self._specialists = specialists
         self._tool_event_source = tool_event_source or (lambda: [])
+        self._result_sink = result_sink
         self._emitted_tool_events = 0
         self._budget = RunBudget(context.limits)
         self._synthesizer = EvidenceSynthesizer(provider)
@@ -103,7 +115,7 @@ class AgentWorkflow:
             self._record("fallback", "safe_limit", {"code": code})
         answer = state["candidate_answer"]
         verifier = state["verifier_result"]
-        return GraphExecutionResult(
+        result = GraphExecutionResult(
             answer=answer,
             verifier=verifier,
             selected_specialists=state.get("selected_specialists", []),
@@ -111,11 +123,16 @@ class AgentWorkflow:
             model_turns=self._budget.model_turns,
             tool_calls=self._budget.tool_calls,
             retrieved_chunks=self._budget.retrieved_chunks,
+            input_tokens=self._budget.input_tokens,
+            output_tokens=self._budget.output_tokens,
             total_tokens=self._budget.total_tokens,
             estimated_cost_usd=self._budget.estimated_cost_usd,
             repair_passes=self._budget.repair_passes,
             safe_error=safe_error or state.get("safe_error"),
         )
+        if self._result_sink is not None:
+            await self._result_sink.persist(self._context, result)
+        return result
 
     def _safe_terminal_state(
         self,

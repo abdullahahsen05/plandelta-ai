@@ -6,7 +6,7 @@ from uuid import UUID
 
 from plandelta_agent.agents import build_specialists
 from plandelta_agent.config import AgentSettings, load_settings
-from plandelta_agent.graph import AgentWorkflow
+from plandelta_agent.graph import AgentWorkflow, PostgresGraphResultSink
 from plandelta_agent.ingestion import (
     DocumentExtractor,
     IngestionProcessor,
@@ -119,6 +119,7 @@ class AgentRuntime:
             provider=provider,
             specialists=build_specialists(registry),
             tool_event_source=lambda: registry.events,
+            result_sink=PostgresGraphResultSink(settings.database_url.get_secret_value()),
         )
 
 

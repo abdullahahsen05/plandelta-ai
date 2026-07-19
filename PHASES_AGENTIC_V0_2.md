@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 16 — load-bearing multi-agent graph
-- Current task: Implement guarded context construction, dynamic specialist routing, and bounded tool
-  execution before the verifier/repair graph
+- Current phase: Phase 17 — NestJS conversation API and durable execution
+- Current task: Implement owned conversation/message/run APIs, isolated durable agent leases, and
+  resumable safe event delivery
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -41,6 +41,11 @@ remaining safe work.
   replacement, real polled progress, safe failure codes, retry/deletion, desktop/mobile layouts,
   clean migration replay, database boundaries, real Supabase RAG replacement journey,
   repository-wide tests, lint, typecheck, and production builds pass
+- Phase 16 completion (2026-07-19): guarded intake, dynamic supervisor routing, three allowlisted
+  read-only specialists, parallel fan-out, schema-constrained grounded synthesis, independent
+  citation/freshness/conflict verifier, one repair edge, safe fallback, hard
+  tool/model/token/time/cost bounds, redacted node/tool traces, durable trace sink, and 55 active
+  agent tests pass
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -143,30 +148,30 @@ Implementation checkpoint:
 
 ## Phase 16 — Load-bearing multi-agent graph
 
-- [ ] Implement intake/input guard and authorized context construction.
-- [ ] Implement supervisor intent classification and specialist selection.
-- [ ] Implement Visual Evidence Agent with only analysis/change/artifact tools.
-- [ ] Implement Knowledge Agent with only hybrid-search/source-page tools.
-- [ ] Implement Impact Agent with evidence, configured profile rules, quantity helpers, and
+- [x] Implement intake/input guard and authorized context construction.
+- [x] Implement supervisor intent classification and specialist selection.
+- [x] Implement Visual Evidence Agent with only analysis/change/artifact tools.
+- [x] Implement Knowledge Agent with only hybrid-search/source-page tools.
+- [x] Implement Impact Agent with evidence, configured profile rules, quantity helpers, and
       RFI-draft schema.
-- [ ] Implement candidate-answer synthesis from structured specialist packets.
-- [ ] Implement mandatory Verifier Agent for claims, citations, scope, conflicts, revision
+- [x] Implement candidate-answer synthesis from structured specialist packets.
+- [x] Implement mandatory Verifier Agent for claims, citations, scope, conflicts, revision
       freshness, and uncertainty.
-- [ ] Add one verifier-driven repair edge and a hard terminal fallback.
-- [ ] Ensure simple visual questions do not invoke RAG unnecessarily.
-- [ ] Ensure document-only questions do not invoke CV tools unnecessarily.
-- [ ] Enforce maximum turns, specialists, tool calls, chunks, tokens, duration, repair passes, and
+- [x] Add one verifier-driven repair edge and a hard terminal fallback.
+- [x] Ensure simple visual questions do not invoke RAG unnecessarily.
+- [x] Ensure document-only questions do not invoke CV tools unnecessarily.
+- [x] Enforce maximum turns, specialists, tool calls, chunks, tokens, duration, repair passes, and
       cost estimate.
-- [ ] Persist graph node transitions and summarized tool events without hidden chain-of-thought or
+- [x] Persist graph node transitions and summarized tool events without hidden chain-of-thought or
       private content.
-- [ ] Add deterministic graph fixtures for routing, parallelizable specialists, verifier rejection,
+- [x] Add deterministic graph fixtures for routing, parallelizable specialists, verifier rejection,
       repair, timeout, and loop termination.
-- [ ] Commit each specialist/tool group and the final graph separately.
+- [x] Commit each specialist/tool group and the final graph separately.
 
 Implementation checkpoint:
 
-- [ ] Source and traces prove dynamic routing and real tool use.
-- [ ] An answer cannot complete without verifier approval or safe fallback.
+- [x] Source and traces prove dynamic routing and real tool use.
+- [x] An answer cannot complete without verifier approval or safe fallback.
 
 ## Phase 17 — NestJS conversation API and durable execution
 

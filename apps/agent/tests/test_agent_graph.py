@@ -353,10 +353,7 @@ async def test_graph_executes_allowlisted_tools_through_real_specialists() -> No
 async def test_specialists_run_in_parallel_and_timeout_is_terminal() -> None:
     calls: list[SpecialistRole] = []
     run_context = context()
-    delayed = {
-        role: SlowFixtureSpecialist(role, calls, 0.08)
-        for role in SpecialistRole
-    }
+    delayed = {role: SlowFixtureSpecialist(role, calls, 0.08) for role in SpecialistRole}
     started = time.perf_counter()
     result = await AgentWorkflow(
         context=run_context,
@@ -373,10 +370,7 @@ async def test_specialists_run_in_parallel_and_timeout_is_terminal() -> None:
     timed_out = await AgentWorkflow(
         context=timeout_context,
         provider=DeterministicChatProvider([response()]),
-        specialists={
-            role: SlowFixtureSpecialist(role, [], 0.08)
-            for role in SpecialistRole
-        },
+        specialists={role: SlowFixtureSpecialist(role, [], 0.08) for role in SpecialistRole},
     ).execute("What changed in the drawing?")
 
     assert timed_out.safe_error is not None
