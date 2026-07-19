@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 12 — baseline, branch, and v0.2 contract
-- Current task: Complete Phase 13 Pydantic/OpenAPI contracts while the Phase 12 AWS cost audit
-  awaits interactive reauthentication
+- Current phase: Phase 14 — agent service foundation
+- Current task: Implement bounded model/embedding providers, execution context, redacted telemetry,
+  container limits, and API readiness integration
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -23,9 +23,12 @@ remaining safe work.
   readiness returned HTTP 200
 - Runtime baseline: Node 22.16.0, pnpm 11.9.0, Python 3.12.10, Docker 29.6.1, Docker Compose 5.3.0,
   15.68 GiB host memory, 181.21 GiB free disk
-- Active blockers: temporary `plandelta` AWS CLI session is expired
-- Last completed implementation checkpoint: v0.2 execution pack extracted and all required v0.1/v0.2
-  documentation read
+- AWS audit (2026-07-19): non-root `plandelta` IAM identity verified in `us-east-1`; one running
+  `t3.small` with one encrypted 20 GiB `gp3` volume; `$25` monthly budget with `$0.103` recorded
+  spend; bounded Amazon Nova Micro runtime invocation passed
+- Active blockers: none
+- Last completed implementation checkpoint: Phase 13 additive migrations, RLS behavior, hybrid
+  search, shared Zod/Pydantic schemas, and v0.2 OpenAPI models are verified
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -35,9 +38,9 @@ remaining safe work.
 ## Phase 12 — Baseline, branch, and v0.2 contract
 
 - [x] Read every existing and v0.2 instruction/documentation file.
-- [ ] Inspect worktree, remotes, tags, latest commits, CI, releases, live resource status, and
+- [x] Inspect worktree, remotes, tags, latest commits, CI, releases, live resource status, and
       current cost without modifying v0.1.0.
-- [ ] Verify existing Supabase, GitHub, Vercel, and temporary AWS access without printing secret
+- [x] Verify existing Supabase, GitHub, Vercel, and temporary AWS access without printing secret
       values.
 - [x] Verify current v0.1.0 sample and record any pre-existing failure.
 - [x] Create or resume `feat/agentic-v0.2` from current `main`.
@@ -50,8 +53,8 @@ remaining safe work.
 
 Implementation checkpoint:
 
-- [ ] v0.1.0 history/tag is unchanged and the v0.2 branch is clean.
-- [ ] No secret or cloud mutation occurred during planning.
+- [x] v0.1.0 history/tag is unchanged and the v0.2 branch is clean.
+- [x] No secret or cloud mutation occurred during planning.
 
 ## Phase 13 — Additive database model and shared contracts
 
@@ -70,10 +73,10 @@ Implementation checkpoint:
 - [x] Add RLS for every new user-owned table and service-role-only worker paths.
 - [x] Add shared Zod/Pydantic-compatible schemas for chat, run events, tools, specialist packets,
       answers, citations, RFI drafts, ingestion, and domain profiles.
-- [ ] Update OpenAPI/internal contracts without breaking v0.1 routes.
+- [x] Update OpenAPI/internal contracts without breaking v0.1 routes.
 - [x] Add clean-database, migration, RLS, and conflict fixture coverage for the final verification
       phase.
-- [ ] Commit schema and contracts in separate coherent commits.
+- [x] Commit schema and contracts in separate coherent commits.
 
 Implementation checkpoint:
 
