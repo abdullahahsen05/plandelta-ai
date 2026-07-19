@@ -1,6 +1,7 @@
 import { MiddlewareConsumer, Module, type NestModule } from "@nestjs/common";
 
 import { AuthModule } from "./auth/auth.module.js";
+import { AgenticModule } from "./agentic/agentic.module.js";
 import { AnalysesModule } from "./analyses/analyses.module.js";
 import { ArtifactsModule } from "./artifacts/artifacts.module.js";
 import { CorrelationMiddleware } from "./common/correlation.middleware.js";
@@ -19,6 +20,7 @@ import { StorageModule } from "./storage/storage.module.js";
     DatabaseModule,
     StorageModule,
     AuthModule,
+    AgenticModule,
     ProjectsModule,
     RevisionsModule,
     AnalysesModule,
