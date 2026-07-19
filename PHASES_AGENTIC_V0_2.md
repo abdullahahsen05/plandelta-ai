@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 18 — Evidence Copilot experience
-- Current task: Build the responsive evidence workspace, safe streamed run states, and interactive
-  visual/document citations on top of the verified durable API
+- Current phase: Phase 19 — Analysis profiles and second domain
+- Current task: Preserve the construction profile while adding a verified engineering-schematic
+  profile, fixtures, and public cached sample
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -206,27 +206,39 @@ Completion evidence:
 
 ## Phase 18 — Evidence Copilot experience
 
-- [ ] Add a responsive Evidence Copilot panel to the analysis workspace.
-- [ ] Add evidence-aware suggested questions.
-- [ ] Implement streaming status, cancel, retry, reconnect, empty, loading, partial, refusal,
+- [x] Add a responsive Evidence Copilot panel to the analysis workspace.
+- [x] Add evidence-aware suggested questions.
+- [x] Implement streaming status, cancel, retry, reconnect, empty, loading, partial, refusal,
       conflict, error, and quota states.
-- [ ] Render only sanitized supported Markdown.
-- [ ] Render typed visual and document citation components.
-- [ ] Clicking a visual citation selects/focuses the existing React Konva region and corresponding
+- [x] Render only sanitized supported Markdown.
+- [x] Render typed visual and document citation components.
+- [x] Clicking a visual citation selects/focuses the existing React Konva region and corresponding
       ledger entry.
-- [ ] Clicking a document citation opens an authorized source preview at the page/section or shows a
+- [x] Clicking a document citation opens an authorized source preview at the page/section or shows a
       safe excerpt when preview is unavailable.
-- [ ] Add structured, editable RFI draft presentation with explicit human review and no send action.
-- [ ] Add keyboard navigation, focus management, screen-reader labels, mobile layout, and
+- [x] Add structured, editable RFI draft presentation with explicit human review and no send action.
+- [x] Add keyboard navigation, focus management, screen-reader labels, mobile layout, and
       reduced-motion behavior.
-- [ ] Keep existing comparison and report interactions usable when chat is collapsed or unavailable.
-- [ ] Add clearly labelled cached sample questions/answers without exposing an unlimited
+- [x] Keep existing comparison and report interactions usable when chat is collapsed or unavailable.
+- [x] Add clearly labelled cached sample questions/answers without exposing an unlimited
       unauthenticated Bedrock route.
 
 Implementation checkpoint:
 
-- [ ] Citations link answer text to the correct visible evidence.
-- [ ] The assistant never appears available when live compute is offline.
+- [x] Citations link answer text to the correct visible evidence.
+- [x] The assistant never appears available when live compute is offline.
+
+Completion evidence (2026-07-19):
+
+- The responsive Copilot supports authenticated durable runs, reconnect/cancel/retry states,
+  sanitized supported Markdown, typed visual/document citations, editable review-only RFIs, and a
+  clearly labelled cached sample without public model access.
+- Visual citations focus the existing drawing and ledger; document citations open the authorized
+  source excerpt fallback. Live availability is derived from the agent readiness capability.
+- Web tests pass `14/14`, the web production build and web/API lint/typechecks pass, and the agent
+  suite passes `60` tests with the explicit opt-in database integration test skipped.
+- A real local durable Amazon Bedrock run completed through the worker in `23371 ms` with one
+  assistant message, seven safe trace steps, and one verified citation.
 
 ## Phase 19 — Analysis profiles and second domain
 
