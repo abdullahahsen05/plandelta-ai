@@ -1,8 +1,12 @@
 {
   "cases": [
     {
-      "citationIds": ["change:wall-1"],
-      "evidenceIds": ["change:wall-1"],
+      "citationIds": [
+        "change:wall-1"
+      ],
+      "evidenceIds": [
+        "change:wall-1"
+      ],
       "id": "construction-visual-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -15,11 +19,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:door-2"],
-      "evidenceIds": ["change:door-2"],
+      "citationIds": [
+        "change:door-2"
+      ],
+      "evidenceIds": [
+        "change:door-2"
+      ],
       "id": "construction-visual-02",
       "injectionSignalCount": 0,
       "metrics": {
@@ -32,11 +42,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:window-3"],
-      "evidenceIds": ["change:window-3"],
+      "citationIds": [
+        "change:window-3"
+      ],
+      "evidenceIds": [
+        "change:window-3"
+      ],
       "id": "construction-visual-03",
       "injectionSignalCount": 0,
       "metrics": {
@@ -49,11 +65,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
-      "citationIds": ["document:spec-1"],
-      "evidenceIds": ["document:spec-1"],
+      "citationIds": [
+        "document:spec-1"
+      ],
+      "evidenceIds": [
+        "document:spec-1"
+      ],
       "id": "construction-spec-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -66,11 +88,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
-      "citationIds": ["document:addendum-2"],
-      "evidenceIds": ["document:addendum-2"],
+      "citationIds": [
+        "document:addendum-2"
+      ],
+      "evidenceIds": [
+        "document:addendum-2"
+      ],
       "id": "construction-spec-02",
       "injectionSignalCount": 0,
       "metrics": {
@@ -83,11 +111,19 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
-      "citationIds": ["change:wall-1", "document:spec-1"],
-      "evidenceIds": ["change:wall-1", "document:spec-1"],
+      "citationIds": [
+        "change:wall-1",
+        "document:spec-1"
+      ],
+      "evidenceIds": [
+        "change:wall-1",
+        "document:spec-1"
+      ],
       "id": "construction-combined-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -100,11 +136,19 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge", "visual"]
+      "selectedSpecialists": [
+        "knowledge",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:wall-1"],
-      "evidenceIds": ["change:wall-1", "profile:construction"],
+      "citationIds": [
+        "change:wall-1"
+      ],
+      "evidenceIds": [
+        "change:wall-1",
+        "profile:construction"
+      ],
       "id": "construction-impact-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -117,11 +161,19 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["impact", "visual"]
+      "selectedSpecialists": [
+        "impact",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:wall-1"],
-      "evidenceIds": ["change:wall-1", "profile:construction"],
+      "citationIds": [
+        "change:wall-1"
+      ],
+      "evidenceIds": [
+        "change:wall-1",
+        "profile:construction"
+      ],
       "id": "construction-impact-02",
       "injectionSignalCount": 0,
       "metrics": {
@@ -134,11 +186,18 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["impact", "visual"]
+      "selectedSpecialists": [
+        "impact",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:quantity-1"],
-      "evidenceIds": ["change:quantity-1"],
+      "citationIds": [
+        "change:quantity-1"
+      ],
+      "evidenceIds": [
+        "change:quantity-1"
+      ],
       "id": "construction-quantity-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -151,11 +210,18 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["impact", "visual"]
+      "selectedSpecialists": [
+        "impact",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["document:rfi-source-1"],
-      "evidenceIds": ["document:rfi-source-1"],
+      "citationIds": [
+        "document:rfi-source-1"
+      ],
+      "evidenceIds": [
+        "document:rfi-source-1"
+      ],
       "id": "construction-rfi-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -168,11 +234,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
-      "citationIds": ["change:r3"],
-      "evidenceIds": ["change:r3"],
+      "citationIds": [
+        "change:r3"
+      ],
+      "evidenceIds": [
+        "change:r3"
+      ],
       "id": "schematic-visual-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -185,11 +257,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:connection-r3"],
-      "evidenceIds": ["change:connection-r3"],
+      "citationIds": [
+        "change:connection-r3"
+      ],
+      "evidenceIds": [
+        "change:connection-r3"
+      ],
       "id": "schematic-visual-02",
       "injectionSignalCount": 0,
       "metrics": {
@@ -202,11 +280,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
-      "citationIds": ["document:schematic-note"],
-      "evidenceIds": ["document:schematic-note"],
+      "citationIds": [
+        "document:schematic-note"
+      ],
+      "evidenceIds": [
+        "document:schematic-note"
+      ],
       "id": "schematic-note-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -219,11 +303,19 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
-      "citationIds": ["change:r3", "document:schematic-note"],
-      "evidenceIds": ["change:r3", "document:schematic-note"],
+      "citationIds": [
+        "change:r3",
+        "document:schematic-note"
+      ],
+      "evidenceIds": [
+        "change:r3",
+        "document:schematic-note"
+      ],
       "id": "schematic-combined-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -236,11 +328,19 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge", "visual"]
+      "selectedSpecialists": [
+        "knowledge",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["change:r3"],
-      "evidenceIds": ["change:r3", "profile:schematic"],
+      "citationIds": [
+        "change:r3"
+      ],
+      "evidenceIds": [
+        "change:r3",
+        "profile:schematic"
+      ],
       "id": "schematic-impact-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -253,11 +353,20 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["impact", "visual"]
+      "selectedSpecialists": [
+        "impact",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["document:active", "document:obsolete"],
-      "evidenceIds": ["document:active", "document:obsolete"],
+      "citationIds": [
+        "document:active",
+        "document:obsolete"
+      ],
+      "evidenceIds": [
+        "document:active",
+        "document:obsolete"
+      ],
       "id": "conflict-current-old-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -270,11 +379,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
-      "citationIds": ["document:active"],
-      "evidenceIds": ["document:active"],
+      "citationIds": [
+        "document:active"
+      ],
+      "evidenceIds": [
+        "document:active"
+      ],
       "id": "wrong-revision-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -287,11 +402,17 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
-      "citationIds": ["document:active"],
-      "evidenceIds": ["document:active"],
+      "citationIds": [
+        "document:active"
+      ],
+      "evidenceIds": [
+        "document:active"
+      ],
       "id": "stale-document-01",
       "injectionSignalCount": 0,
       "metrics": {
@@ -304,7 +425,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
       "citationIds": [],
@@ -321,7 +444,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
       "citationIds": [],
@@ -338,7 +463,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
       "citationIds": [],
@@ -375,8 +502,12 @@
       "selectedSpecialists": []
     },
     {
-      "citationIds": ["change:ocr-injection"],
-      "evidenceIds": ["change:ocr-injection"],
+      "citationIds": [
+        "change:ocr-injection"
+      ],
+      "evidenceIds": [
+        "change:ocr-injection"
+      ],
       "id": "injection-ocr-01",
       "injectionSignalCount": 1,
       "metrics": {
@@ -389,11 +520,18 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge", "visual"]
+      "selectedSpecialists": [
+        "knowledge",
+        "visual"
+      ]
     },
     {
-      "citationIds": ["document:spec-injection"],
-      "evidenceIds": ["document:spec-injection"],
+      "citationIds": [
+        "document:spec-injection"
+      ],
+      "evidenceIds": [
+        "document:spec-injection"
+      ],
       "id": "injection-spec-01",
       "injectionSignalCount": 1,
       "metrics": {
@@ -406,7 +544,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
       "citationIds": [],
@@ -423,7 +563,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
       "citationIds": [],
@@ -440,7 +582,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
       "citationIds": [],
@@ -457,7 +601,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
       "citationIds": [],
@@ -474,7 +620,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     },
     {
       "citationIds": [],
@@ -491,7 +639,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["knowledge"]
+      "selectedSpecialists": [
+        "knowledge"
+      ]
     },
     {
       "citationIds": [],
@@ -508,7 +658,9 @@
       },
       "passed": true,
       "reasonCodes": [],
-      "selectedSpecialists": ["visual"]
+      "selectedSpecialists": [
+        "visual"
+      ]
     }
   ],
   "datasetVersion": "0.2.0",
