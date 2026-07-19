@@ -13,7 +13,9 @@ from plandelta_agent.models.evidence import AnalysisProfileId, EvidencePacket, S
 class RunLimits(ContractModel):
     max_model_turns: int = Field(ge=1, le=8)
     max_tool_calls: int = Field(ge=1, le=12)
+    max_specialists: int = Field(default=3, ge=1, le=3)
     max_retrieved_chunks: int = Field(ge=1, le=12)
+    max_total_tokens: int = Field(default=12_000, ge=500, le=40_000)
     max_repair_passes: int = Field(ge=0, le=1)
     timeout_seconds: int = Field(ge=5, le=120)
     max_estimated_cost_usd: float = Field(gt=0, le=0.05)

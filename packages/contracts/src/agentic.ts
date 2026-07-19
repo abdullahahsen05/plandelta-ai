@@ -161,6 +161,7 @@ export const evidenceReferenceSchema = z
     confidence: z.number().min(0).max(1),
     isActive: z.boolean(),
     isConflicting: z.boolean(),
+    citationTarget: citationTargetSchema.nullable(),
   })
   .strict();
 export type EvidenceReference = z.infer<typeof evidenceReferenceSchema>;

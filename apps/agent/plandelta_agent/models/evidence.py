@@ -79,6 +79,7 @@ class EvidenceReference(ContractModel):
     confidence: float = Field(ge=0, le=1)
     is_active: bool
     is_conflicting: bool
+    citation_target: CitationTarget | None = None
 
 
 class EvidencePacket(ContractModel):
