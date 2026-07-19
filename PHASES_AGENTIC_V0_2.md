@@ -83,7 +83,7 @@ Implementation checkpoint:
 ## Phase 14 — Agent service foundation
 
 - [ ] Create `apps/agent` as a typed FastAPI service with health/readiness.
-- [ ] Add strict environment validation and internal service authentication.
+- [x] Add strict environment validation and internal service authentication.
 - [ ] Add Bedrock chat-model provider behind an interface.
 - [ ] Add deterministic/fake provider implementations for tests and local failure behavior; never
       present them as live AI.
