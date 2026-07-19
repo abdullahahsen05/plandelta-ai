@@ -12,9 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
-- Current phase: Phase 14 — agent service foundation
-- Current task: Implement bounded model/embedding providers, execution context, redacted telemetry,
-  container limits, and API readiness integration
+- Current phase: Phase 15 — document ingestion and hybrid RAG
+- Current task: Implement authorized document upload, bounded extraction/chunking, local embedding,
+  transactional versioning, and scoped retrieval
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
 - Working branch: `feat/agentic-v0.2`, created from the starting main commit
 - Stable tag to preserve: annotated `v0.1.0` at `11bdca3600491f01424175292e829208663f0955`
@@ -27,8 +27,8 @@ remaining safe work.
   `t3.small` with one encrypted 20 GiB `gp3` volume; `$25` monthly budget with `$0.103` recorded
   spend; bounded Amazon Nova Micro runtime invocation passed
 - Active blockers: none
-- Last completed implementation checkpoint: Phase 13 additive migrations, RLS behavior, hybrid
-  search, shared Zod/Pydantic schemas, and v0.2 OpenAPI models are verified
+- Last completed implementation checkpoint: Phase 14 typed provider/runtime foundation, redacted
+  telemetry, cancellation/timeout controls, and the internal non-root container are verified
 - Agent/RAG status: typed workspace and shared Zod contracts pass; additive Supabase pgvector,
   knowledge, conversation, run, step, citation, RLS, and hybrid-search migrations are applied and
   verified
@@ -85,24 +85,24 @@ Implementation checkpoint:
 
 ## Phase 14 — Agent service foundation
 
-- [ ] Create `apps/agent` as a typed FastAPI service with health/readiness.
+- [x] Create `apps/agent` as a typed FastAPI service with health/readiness.
 - [x] Add strict environment validation and internal service authentication.
-- [ ] Add Bedrock chat-model provider behind an interface.
-- [ ] Add deterministic/fake provider implementations for tests and local failure behavior; never
+- [x] Add Bedrock chat-model provider behind an interface.
+- [x] Add deterministic/fake provider implementations for tests and local failure behavior; never
       present them as live AI.
-- [ ] Add local embedding provider behind an interface with recorded model and dimension.
-- [ ] Keep optional Bedrock embeddings disabled by default.
-- [ ] Define typed graph state, run context, evidence packet, citation, answer, verifier result, and
+- [x] Add local embedding provider behind an interface with recorded model and dimension.
+- [x] Keep optional Bedrock embeddings disabled by default.
+- [x] Define typed graph state, run context, evidence packet, citation, answer, verifier result, and
       safe-error schemas.
-- [ ] Add correlation IDs, timeouts, cancellation, and redacted structured event logging.
-- [ ] Add Dockerfile, resource limits, Compose service, and NestJS readiness integration.
-- [ ] Ensure the service is lightweight when idle and lazy-loads embedding resources.
-- [ ] Commit the service foundation before agent behavior.
+- [x] Add correlation IDs, timeouts, cancellation, and redacted structured event logging.
+- [x] Add Dockerfile, resource limits, Compose service, and NestJS readiness integration.
+- [x] Ensure the service is lightweight when idle and lazy-loads embedding resources.
+- [x] Commit the service foundation before agent behavior.
 
 Implementation checkpoint:
 
-- [ ] Browser cannot reach the internal agent service directly.
-- [ ] No prompt/document/message content appears in service logs.
+- [x] Browser cannot reach the internal agent service directly.
+- [x] No prompt/document/message content appears in service logs.
 
 ## Phase 15 — Document ingestion and hybrid RAG
 

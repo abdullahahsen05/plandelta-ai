@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from plandelta_agent import __version__
 from plandelta_agent.models.health import HealthResponse, ReadinessResponse
+from plandelta_agent.telemetry import request_telemetry_middleware
 
 app = FastAPI(
     title="PlanDelta Agent",
@@ -14,6 +15,7 @@ app = FastAPI(
     docs_url=None,
     redoc_url=None,
 )
+app.middleware("http")(request_telemetry_middleware)
 
 
 @app.get("/health/live", response_model=HealthResponse)

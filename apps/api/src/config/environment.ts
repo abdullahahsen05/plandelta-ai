@@ -15,6 +15,12 @@ const environmentSchema = z
     LOG_LEVEL: z.enum(["fatal", "error", "warn", "info", "debug", "trace"]).default("info"),
     WEB_ORIGINS: z.string().default("http://localhost:3000"),
     INTERNAL_SERVICE_SECRET: z.string().min(32),
+    AGENT_ENABLED: z
+      .enum(["true", "false"])
+      .default("false")
+      .transform((value) => value === "true"),
+    AGENT_SERVICE_URL: z.string().url().default("http://agent:8100"),
+    AGENT_INTERNAL_TOKEN: z.string().min(32).optional(),
     VISION_SERVICE_URL: z.string().url().default("http://localhost:8000"),
     STORAGE_PROVIDER: z.enum(["local", "s3"]).default("local"),
     LOCAL_STORAGE_ROOT: z.string().min(1).default("data"),
@@ -75,6 +81,13 @@ const environmentSchema = z
         code: "custom",
         path: ["BEDROCK_MODEL_ID"],
         message: "BEDROCK_MODEL_ID is required when SUMMARY_PROVIDER=bedrock.",
+      });
+    }
+    if (environment.AGENT_ENABLED && !environment.AGENT_INTERNAL_TOKEN) {
+      context.addIssue({
+        code: "custom",
+        path: ["AGENT_INTERNAL_TOKEN"],
+        message: "AGENT_INTERNAL_TOKEN is required when AGENT_ENABLED=true.",
       });
     }
   });

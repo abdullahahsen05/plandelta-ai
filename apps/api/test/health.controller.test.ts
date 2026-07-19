@@ -27,6 +27,7 @@ describe("HealthController", () => {
       service: "api",
       status: "ok",
       version: "0.1.0",
+      agent: "disabled",
       database: "ok",
       vision: "ok",
     });
