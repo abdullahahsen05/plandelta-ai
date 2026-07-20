@@ -1,11 +1,27 @@
-# PlanDelta AI
+<h1 align="center">PlanDelta AI</h1>
 
-**Evidence-first intelligence for construction drawing revisions.**
+<p align="center"><strong>Evidence-first intelligence for construction drawing revisions.</strong></p>
 
-[![CI](https://github.com/abdullahahsen05/plandelta-ai/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/abdullahahsen05/plandelta-ai/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/abdullahahsen05/plandelta-ai?display_name=tag&sort=semver)](https://github.com/abdullahahsen05/plandelta-ai/releases/latest)
-[![License: MIT](https://img.shields.io/badge/License-MIT-151515.svg)](./LICENSE)
-[![Live demo](https://img.shields.io/badge/Live_demo-plandelta--ai.vercel.app-EA4F2F.svg)](https://plandelta-ai.vercel.app)
+<p align="center">
+  <a href="https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0"><img alt="Status: released" src="https://img.shields.io/badge/status-released-149765?style=flat-square"></a>
+  <a href="https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0"><img alt="Release: v0.2.0" src="https://img.shields.io/badge/release-v0.2.0-EA4F2F?style=flat-square"></a>
+  <a href="https://github.com/abdullahahsen05/plandelta-ai/actions/workflows/ci.yml"><img alt="GitHub Actions workflow status" src="https://img.shields.io/github/actions/workflow/status/abdullahahsen05/plandelta-ai/ci.yml?branch=main&amp;style=flat-square&amp;label=build&amp;logo=githubactions&amp;logoColor=white"></a>
+  <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-151515?style=flat-square"></a>
+  <a href="https://plandelta-ai.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/live_demo-open-EA4F2F?style=flat-square&amp;logo=vercel&amp;logoColor=white"></a>
+  <br>
+  <img alt="Next.js 16.2" src="https://img.shields.io/badge/Next.js-16.2-151515?style=flat-square&amp;logo=nextdotjs&amp;logoColor=white">
+  <img alt="TypeScript 5.9" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&amp;logo=typescript&amp;logoColor=white">
+  <img alt="NestJS 11.1" src="https://img.shields.io/badge/NestJS-11.1-E0234E?style=flat-square&amp;logo=nestjs&amp;logoColor=white">
+  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white">
+  <img alt="FastAPI 0.124 or newer" src="https://img.shields.io/badge/FastAPI-0.124%2B-009688?style=flat-square&amp;logo=fastapi&amp;logoColor=white">
+  <br>
+  <img alt="OpenCV 4.10" src="https://img.shields.io/badge/OpenCV-4.10-5C3EE8?style=flat-square&amp;logo=opencv&amp;logoColor=white">
+  <img alt="PaddleOCR 3" src="https://img.shields.io/badge/PaddleOCR-3.x-0062B0?style=flat-square">
+  <img alt="LangGraph 1.2 or newer" src="https://img.shields.io/badge/LangGraph-1.2%2B-1C3C3C?style=flat-square&amp;logo=langchain&amp;logoColor=white">
+  <img alt="PostgreSQL with pgvector" src="https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&amp;logo=postgresql&amp;logoColor=white">
+  <img alt="Supabase Auth and RAG" src="https://img.shields.io/badge/Supabase-Auth_+_RAG-3FCF8E?style=flat-square&amp;logo=supabase&amp;logoColor=white">
+  <img alt="Amazon Bedrock Nova Micro" src="https://img.shields.io/badge/Bedrock-Nova_Micro-FF9900?style=flat-square&amp;logo=amazonaws&amp;logoColor=white">
+</p>
 
 PlanDelta aligns a baseline drawing with a revised drawing, detects visual and textual changes, and
 turns each finding into inspectable review evidence. Its Evidence Copilot answers project questions
