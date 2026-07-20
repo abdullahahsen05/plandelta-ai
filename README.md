@@ -1,135 +1,219 @@
-# PlanDelta AI
+<h1 align="center">PlanDelta AI</h1>
 
-PlanDelta compares a baseline drawing with a revised drawing, aligns the sheets, detects visual and
-textual changes, and turns every finding into traceable review evidence. Its Evidence Copilot
-answers project questions only from authorized drawing regions and ingested project documents, with
-clickable citations and review-only RFI drafts.
+<p align="center"><strong>Evidence-first intelligence for construction drawing revisions.</strong></p>
 
-The product is a serious construction-intelligence workspace—not an estimation claim, automatic
-takeoff, or generic analytics dashboard. User-uploaded results come from a real deterministic
-OpenCV/OCR pipeline. The built-in sample is always identified as sample data.
+<p align="center">
+  <a href="https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0"><img alt="Status: released" src="https://img.shields.io/badge/status-released-149765?style=flat-square"></a>
+  <a href="https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0"><img alt="Release: v0.2.0" src="https://img.shields.io/badge/release-v0.2.0-EA4F2F?style=flat-square"></a>
+  <a href="https://github.com/abdullahahsen05/plandelta-ai/actions/workflows/ci.yml"><img alt="GitHub Actions workflow status" src="https://img.shields.io/github/actions/workflow/status/abdullahahsen05/plandelta-ai/ci.yml?branch=main&amp;style=flat-square&amp;label=build&amp;logo=githubactions&amp;logoColor=white"></a>
+  <a href="./LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/license-MIT-151515?style=flat-square"></a>
+  <a href="https://plandelta-ai.vercel.app"><img alt="Live demo" src="https://img.shields.io/badge/live_demo-open-EA4F2F?style=flat-square&amp;logo=vercel&amp;logoColor=white"></a>
+  <br>
+  <img alt="Next.js 16.2" src="https://img.shields.io/badge/Next.js-16.2-151515?style=flat-square&amp;logo=nextdotjs&amp;logoColor=white">
+  <img alt="TypeScript 5.9" src="https://img.shields.io/badge/TypeScript-5.9-3178C6?style=flat-square&amp;logo=typescript&amp;logoColor=white">
+  <img alt="NestJS 11.1" src="https://img.shields.io/badge/NestJS-11.1-E0234E?style=flat-square&amp;logo=nestjs&amp;logoColor=white">
+  <img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-3776AB?style=flat-square&amp;logo=python&amp;logoColor=white">
+  <img alt="FastAPI 0.124 or newer" src="https://img.shields.io/badge/FastAPI-0.124%2B-009688?style=flat-square&amp;logo=fastapi&amp;logoColor=white">
+  <br>
+  <img alt="OpenCV 4.10" src="https://img.shields.io/badge/OpenCV-4.10-5C3EE8?style=flat-square&amp;logo=opencv&amp;logoColor=white">
+  <img alt="PaddleOCR 3" src="https://img.shields.io/badge/PaddleOCR-3.x-0062B0?style=flat-square">
+  <img alt="LangGraph 1.2 or newer" src="https://img.shields.io/badge/LangGraph-1.2%2B-1C3C3C?style=flat-square&amp;logo=langchain&amp;logoColor=white">
+  <img alt="PostgreSQL with pgvector" src="https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&amp;logo=postgresql&amp;logoColor=white">
+  <img alt="Supabase Auth and RAG" src="https://img.shields.io/badge/Supabase-Auth_+_RAG-3FCF8E?style=flat-square&amp;logo=supabase&amp;logoColor=white">
+  <img alt="Amazon Bedrock Nova Micro" src="https://img.shields.io/badge/Bedrock-Nova_Micro-FF9900?style=flat-square&amp;logo=amazonaws&amp;logoColor=white">
+</p>
 
-## Current status
+PlanDelta aligns a baseline drawing with a revised drawing, detects visual and textual changes, and
+turns each finding into inspectable review evidence. Its Evidence Copilot answers project questions
+from authorized drawing regions and supporting documents, with interactive citations and
+human-review-only RFI drafts.
 
-The v0.2 release candidate is verified locally and on its cost-controlled AWS runtime from two
-validated blueprint uploads through durable job processing, OpenCV alignment and directional
-differencing, PaddleOCR, normalized evidence regions, private S3 artifacts, an evidence-constrained
-Bedrock summary, and a printable report. A second production journey ingested an
-engineering-schematic technical note, generated local BGE embeddings, retrieved it through Supabase
-pgvector hybrid search, and produced a Bedrock answer with a verified document citation and
-review-only RFI.
+This is a working, full-stack construction-intelligence product—not a generic chatbot, automatic
+takeoff system, or collection of hardcoded AI results. Uploaded drawings run through a deterministic
+OpenCV/OCR pipeline. Built-in demonstrations are always labelled as sample data.
 
-One `t3.small` runs one API, worker, agent, vision service, and TLS proxy with concurrency one,
-bounded Nova Micro usage, CloudWatch alarms, and a USD 25 teardown gate.
+## Explore the product
 
-The [public Vercel workspace](https://plandelta-ai.vercel.app) has verified passwordless sign-in and
-live uploads connected to the AWS runtime. The production journey has completed from two uploaded
-drawings through private storage, deterministic analysis, evidence review, and report generation.
-The clearly labelled sample remains available without signing in and will remain useful if the
-temporary AWS compute is later stopped. Live processing is intentionally retained for the portfolio
-demo under USD 10/15/20/25 gross-cost alerts and the documented teardown gate.
+| Journey                                                                                       | What it demonstrates                                                                                   |
+| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
+| [Construction sample](https://plandelta-ai.vercel.app/app/analyses/sample)                    | Linked drawing evidence, change ledger, side-by-side comparison, and printable reporting               |
+| [Engineering schematic sample](https://plandelta-ai.vercel.app/app/analyses/schematic-sample) | Three schematic changes, cited Evidence Copilot answer, and citation-to-ledger navigation              |
+| [Live workspace](https://plandelta-ai.vercel.app/app)                                         | Passwordless authentication, private projects, real uploads, durable processing, and project knowledge |
 
-Agentic progress and source-to-test evidence are recorded in
-[PHASES_AGENTIC_V0_2.md](./PHASES_AGENTIC_V0_2.md) and
-[docs/APPLICATION_EVIDENCE_V0_2.md](./docs/APPLICATION_EVIDENCE_V0_2.md).
+For a live comparison:
 
-## Product
+1. Sign in with a passwordless email link.
+2. Create a project and upload the earlier drawing as the **baseline**.
+3. Upload the later drawing as the **candidate**.
+4. Start analysis and review the aligned sheets beside the change ledger.
+5. Select evidence regions, ask grounded questions, inspect citations, and print the report.
+
+Accepted drawing formats are PDF, PNG, JPG, and JPEG. Default limits are 20 MB per file, 50 PDF
+pages per drawing, and one selected page from each revision per analysis.
+
+## Product experience
 
 ![PlanDelta project workspace](./docs/images/projects-workspace.png)
 
-The workspace keeps the built-in example visibly separate from user uploads and shows the evidence
-count before a reviewer opens the comparison.
+Projects keep sample data visibly separate from user uploads and expose analysis state without fake
+analytics or invented findings.
 
-![Side-by-side blueprint comparison with change ledger](./docs/images/comparison-workbench.png)
+![PlanDelta side-by-side comparison workbench](./docs/images/comparison-workbench.png)
 
-The review surface presents the original baseline and revised drawings together, links change
-markers to the evidence ledger, and keeps confidence and affected work visible without presenting a
-result as automatic approval.
+The comparison workbench preserves the source drawings, links canvas markers to evidence, supports
+side-by-side and overlay inspection, and keeps uncertainty visible.
+
+## What is implemented
+
+### Deterministic revision analysis
+
+- PDF and image ingestion with MIME, size, page-count, and pixel validation
+- sheet rasterization, alignment, reprojection measurement, and directional differencing
+- PaddleOCR text comparison and normalized evidence coordinates
+- confidence-gated ONNX region classification with an explicit deterministic fallback
+- durable PostgreSQL jobs, leases, retries, heartbeats, and stale-work recovery
+- private source drawings, crops, overlays, and signed artifact access
+- evidence-ledger filtering, synchronized viewer focus, and printable reports
+
+### Evidence Copilot
+
+- durable project conversations and resumable run events
+- local `BAAI/bge-small-en-v1.5` embeddings
+- Supabase pgvector and PostgreSQL full-text hybrid retrieval
+- versioned supporting-document extraction, chunking, supersession, and conflict handling
+- bounded LangGraph supervisor with visual, knowledge, and impact specialists
+- allowlisted typed tools with server-owned project and analysis scope
+- claim verification, citation validation, one bounded repair, and safe fallback
+- interactive drawing-region and document citations
+- editable RFI drafts that cannot be sent automatically
+- prompt-injection resistance, cancellation, time, tool, token, and cost budgets
+
+### Production controls
+
+- Supabase Auth, PostgreSQL row-level security, and project ownership checks
+- per-user upload, analysis, message, concurrency, token, and estimated-cost quotas
+- correlation-aware structured logging with prompt, answer, OCR, and drawing content redacted
+- API security headers, request timeouts, strict DTO validation, and traffic limits
+- health and readiness checks across PostgreSQL, agent, and vision dependencies
+- one-worker and one-agent-run concurrency on the deployed portfolio runtime
 
 ## Architecture
 
 ```mermaid
 flowchart LR
-    Browser["Next.js workspace"] --> API["NestJS API"]
-    API --> DB["Supabase PostgreSQL + Auth"]
+    User["Reviewer"] --> Web["Next.js workspace"]
+    Web --> API["NestJS API"]
+    API --> Auth["Supabase Auth"]
+    API --> DB[("Supabase PostgreSQL<br/>pgvector + durable queues")]
     Worker["NestJS worker"] --> DB
-    Worker --> Vision["FastAPI CV/OCR"]
-    Worker --> Agent["FastAPI bounded agent graph"]
+    Worker --> Vision["FastAPI vision<br/>OpenCV + OCR + ONNX"]
+    API --> Storage["Local volume / private S3"]
+    Worker --> Storage
+    Worker --> Agent["FastAPI agent<br/>bounded LangGraph"]
     Agent --> DB
     Agent --> Embeddings["Local BGE embeddings"]
-    API --> Storage["Storage provider"]
-    Worker --> Storage
-    Agent --> Bedrock["Bedrock Nova Micro"]
-    Agent --> Logs["CloudWatch"]
+    Agent --> Bedrock["Amazon Bedrock<br/>Nova Micro on demand"]
+    Agent --> Observability["Redacted traces<br/>CloudWatch"]
 ```
 
-- `apps/web`: Next.js App Router interface and blueprint workbench.
-- `apps/api`: NestJS HTTP API and separate durable worker entry point.
-- `apps/agent`: FastAPI/LangGraph ingestion, hybrid retrieval, bounded specialist orchestration,
-  verification, citations, and traces.
-- `apps/vision`: stateless FastAPI computer-vision and OCR service.
-- `packages/contracts`: shared Zod contracts and normalized geometry.
-- `packages/ui`: PlanDelta-specific reusable interface utilities.
-- `infrastructure`: deployment assets created only after the local release gate.
+The browser never calls the agent, S3, Bedrock, or service-role database paths directly. PostgreSQL
+is the system of record for ownership, analysis jobs, ingestion jobs, conversations, agent runs,
+citations, and traces. Bedrock can synthesize an evidence-grounded response, but it cannot create or
+replace deterministic drawing evidence.
 
-Supabase PostgreSQL is the source of truth, durable queue, conversation store, and pgvector hybrid
-retrieval layer. Local development uses a shared storage volume; the verified production provider
-uses private S3. Bedrock synthesis remains bounded and never replaces deterministic evidence.
+### Repository layout
 
-Production uses one encrypted 20 GB `t3.small` with 2 GB swap, IMDSv2, standard T3 credits, SSM-only
-administration, ports 80/443, one concurrency-one worker, and seven-day logs. It does not use a NAT
-Gateway, load balancer, RDS, cache, cluster, or provisioned Bedrock capacity.
+```text
+apps/
+  web/          Next.js App Router workspace
+  api/          NestJS API and separate durable worker
+  vision/       Stateless FastAPI CV/OCR service
+  agent/        FastAPI ingestion, hybrid RAG, agent graph, guardrails, and evaluations
+packages/
+  contracts/    Shared Zod contracts and normalized geometry
+  ui/           Shared PlanDelta interface utilities
+infrastructure/
+  aws/          Cost guard, storage, ECR, runtime, and verification automation
+  runtime/      Production Compose and recovery scripts
+samples/        Labelled construction, schematic, and knowledge fixtures
+docs/           Architecture, API, operations, security, testing, costs, and release evidence
+```
 
-The public API applies strict input validation, security headers, request timeouts, per-IP traffic
-limits, and database-backed per-user upload, analysis, message, token, and estimated-cost quotas.
-Readiness checks cover PostgreSQL, the agent, and the vision service; structured logs use
-correlation IDs without recording prompts, answers, chunks, drawing content, or OCR text. Defaults,
-cleanup behavior, and incident checks are documented in [docs/OPERATIONS.md](./docs/OPERATIONS.md).
+Read [the complete v0.2 architecture](./docs/ARCHITECTURE_V0_2.md) for graph state, tool boundaries,
+reliability rules, and request sequences.
 
-## Verified evidence
+## Verified release evidence
 
-| Gate                     | Recorded result                                                               |
-| ------------------------ | ----------------------------------------------------------------------------- |
-| Unit/service suites      | 66 agent, 56 API, 32 vision, 15 web, and 8 contract tests                     |
-| Provider integrations    | Real Supabase RAG plus two AWS provider tests passed separately               |
-| Agent evaluation         | 30/30 cases; citation/routing/conflict/refusal 100%; injection overrides 0    |
-| Deployed drawing journey | CV/OCR/ONNX evidence, private artifacts, printable report, and cleanup passed |
-| Deployed RAG journey     | Ingestion, BGE, retrieval, Bedrock, verified citation/RFI, and cleanup passed |
-| AWS runtime              | Five services healthy; agent 87 MB idle; 885 MB available; nine alarms `OK`   |
-| AWS billing snapshot     | Budget actual USD 0.589; forecast unavailable; alerts at USD 10/15/20/25      |
+Version [`v0.2.0`](https://github.com/abdullahahsen05/plandelta-ai/releases/tag/v0.2.0) was released
+on 2026-07-19 after the complete local, CI, database, container, and production verification matrix
+passed.
 
-The ONNX numbers use a seed-generated synthetic validation set and are not field-accuracy claims.
-Billing data can lag resource use. Full commands, caveats, and evidence are recorded in
-[docs/RELEASE.md](./docs/RELEASE.md), [docs/MODEL_CARD.md](./docs/MODEL_CARD.md), and
-[docs/AWS_COSTS.md](./docs/AWS_COSTS.md).
+| Gate                       | Recorded result                                                                                            |
+| -------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Unit and service suites    | 66 agent, 56 API, 32 vision, 15 web, and 8 contract tests                                                  |
+| Provider integrations      | Real Supabase RAG and two separately enabled AWS provider tests passed                                     |
+| Frozen agent evaluation    | 30/30 cases; 100% citation, routing, conflict, and refusal metrics; zero injection overrides               |
+| Production drawing journey | Authentication, upload, CV/OCR/ONNX evidence, private artifacts, report, and cleanup passed                |
+| Production RAG journey     | Document ingestion, local embeddings, hybrid retrieval, Bedrock, verified citation/RFI, and cleanup passed |
+| Browser release journey    | Real upload-to-report Playwright journey passed in 46.5 seconds                                            |
+| Runtime capacity           | Five services healthy on one `t3.small`; 885 MB available; agent approximately 87 MB idle                  |
+| Observability              | All nine CloudWatch alarms `OK`; all five service log streams present                                      |
+| Security                   | Full-history Gitleaks scan passed; dependency audits found no published vulnerability                      |
+| Billing snapshot           | AWS Budget actual USD 0.589 against the USD 25 teardown gate                                               |
 
-## Requirements
+These measurements are reproducible release evidence, not field-accuracy claims. The ONNX validation
+set is synthetic, and AWS billing can lag resource use. See
+[application evidence](./docs/APPLICATION_EVIDENCE_V0_2.md), [release evidence](./docs/RELEASE.md),
+[evaluation results](./docs/EVALS_V0_2.md), and the [model card](./docs/MODEL_CARD.md).
+
+## Local development
+
+### Prerequisites
 
 - Node.js 22 or newer
 - pnpm 11
 - Python 3.12
-- Supabase project credentials in an ignored `.env.local`
-- Docker Desktop for the complete Compose verification path
+- Docker Desktop for the complete Compose path
+- a Supabase project with PostgreSQL, Auth, and pgvector
+- AWS only for optional Bedrock/S3 integration and cloud deployment
 
-AWS is not required for local analysis. AWS deployment begins only after the local release gate.
+### Configure the environment
 
-## Setup
+Copy `.env.example` to the ignored `.env.local` file and configure the documented variables there.
+Never commit the resulting file or paste credentials into issues, pull requests, or chat.
+
+For Supabase:
+
+- use the pooled PostgreSQL connection for `DATABASE_URL`;
+- use the direct PostgreSQL connection for `DIRECT_DATABASE_URL`;
+- allow `http://localhost:3000/auth/callback` in Auth redirect URLs;
+- set `NEXT_PUBLIC_APP_URL=http://localhost:3000`.
+
+Generate separate long random values for `INTERNAL_SERVICE_SECRET` and `AGENT_INTERNAL_TOKEN`. Local
+deterministic drawing analysis does not require AWS.
+
+### Install and prepare the database
 
 ```powershell
 pnpm install
 python -m venv .venv
 pnpm vision:install
+pnpm agent:install
 pnpm db:generate
 pnpm db:verify-clean
 pnpm db:migrate
 pnpm db:seed
+pnpm db:verify-behavior
 ```
 
-Copy `.env.example` to `.env.local` and configure values locally. Never commit or paste the
-resulting file. The web app runs at `http://localhost:3000`, the API at `http://localhost:4000`, the
-vision service at `http://localhost:8000`, and the internal agent at `http://localhost:8100`. Start
-the complete non-containerized stack in five terminals so the API and durable worker remain
-separate:
+`db:verify-clean` replays every migration inside a rolled-back transaction and intentionally refuses
+to run against a database that already contains PlanDelta tables. `db:verify-behavior` creates and
+removes synthetic records while testing RLS, project isolation, leases, concurrency, stale recovery,
+and agentic queue behavior.
+
+### Start the development stack
+
+Run the services in separate terminals:
 
 ```powershell
 pnpm --filter @plandelta/vision dev
@@ -139,97 +223,113 @@ pnpm --filter @plandelta/api dev:worker
 pnpm --filter @plandelta/web dev
 ```
 
-The first OCR analysis may take longer while the configured mobile model initializes. Uploaded files
-and generated evidence are written beneath ignored `data/` paths and are never committed.
+| Service              | Local address           |
+| -------------------- | ----------------------- |
+| Web                  | `http://localhost:3000` |
+| API                  | `http://localhost:4000` |
+| Vision               | `http://localhost:8000` |
+| Agent, internal only | `http://localhost:8100` |
 
-After a production build, the same four-process stack can be started and stopped as one managed
-command:
+The first OCR or embedding operation can take longer while local models initialize. Runtime uploads,
+generated artifacts, virtual environments, caches, and model downloads remain ignored by Git.
+
+For the production-built local stack:
 
 ```powershell
 pnpm build
 pnpm start:local
 ```
 
-Press `Ctrl+C` in that terminal to stop only the PlanDelta processes started by the command.
+Press `Ctrl+C` to stop only the PlanDelta processes started by that command.
 
-### Supabase database and authentication
-
-Use the pooled Supabase PostgreSQL URL for `DATABASE_URL` and the direct PostgreSQL URL for
-`DIRECT_DATABASE_URL`. For a new empty project, verify and apply the migration chain, then run the
-idempotent sample seed:
+## Quality gates
 
 ```powershell
-pnpm db:verify-clean
-pnpm db:migrate
-pnpm db:seed
-pnpm db:verify-behavior
+pnpm format:check
+pnpm lint
+pnpm typecheck
+pnpm test
+pnpm test:e2e
+pnpm build
 ```
 
-`db:verify-clean` intentionally refuses to run after PlanDelta tables exist. It executes every
-migration inside a rolled-back transaction. `db:verify-behavior` uses temporary synthetic users,
-checks cross-user RLS and concurrent queue leasing, and cleans up its records.
+Additional end-to-end and agentic verification:
 
-In Supabase Auth URL settings, allow `http://localhost:3000/auth/callback` for local passwordless
-sign-in. Set `NEXT_PUBLIC_APP_URL` to the matching application origin; add the final Vercel callback
-`https://plandelta-ai.vercel.app/auth/callback` during deployment.
-
-## Root commands
-
-```text
-pnpm dev           Start web, API, and vision development processes
-pnpm build         Build every application and shared package
-pnpm lint          Run TypeScript and Python lint checks
-pnpm typecheck     Run strict TypeScript and Python type checks
-pnpm test          Run unit and service tests
-pnpm test:e2e      Run browser and service-boundary smoke tests
-pnpm verify:local-stack  Run a disposable authenticated upload-to-report integration journey
-pnpm verify:local-e2e    Run Playwright against the real API, worker, vision, and Supabase stack
-pnpm verify:local-agentic  Run ingestion through cited Bedrock answer and review-only RFI
-pnpm eval:release  Run the frozen 30-case agentic release evaluation
-pnpm start:local    Start the built web, API, worker, and vision stack until Ctrl+C
-pnpm format        Format supported source and documentation
-pnpm db:generate   Generate the Prisma client
-pnpm db:verify-clean  Verify migrations transactionally on a new empty project
-pnpm db:migrate    Apply committed database migrations
-pnpm db:seed       Run the idempotent development seed
-pnpm db:verify-behavior  Verify RLS and durable queue behavior
-pnpm docker:up     Build and start local service containers
-pnpm docker:down   Stop local service containers
+```powershell
+pnpm verify:local-stack
+pnpm verify:local-e2e
+pnpm verify:local-agentic
+pnpm --filter @plandelta/agent eval:release
 ```
 
-### Troubleshooting
+Browser tests use an isolated Next.js build on port 3100 and do not disturb a development server on
+port 3000. Real provider checks are explicit opt-in gates and never silently substitute fake
+analysis or fake model output. The full matrix is documented in
+[FINAL_VERIFICATION_V0_2.md](./docs/FINAL_VERIFICATION_V0_2.md).
 
-- If an app port is busy, stop only the process you own or configure another port. Browser tests use
-  an isolated Next build directory on port 3100, so they do not disturb the development server on
-  port 3000.
-- `NEXT_PUBLIC_API_URL` may be the API origin (`http://localhost:4000`) or include `/v1`; the web
-  client normalizes it once.
-- A failed analysis remains visible with its safe error message and can be retried from the progress
-  screen. Polling continues when Supabase Realtime is unavailable.
-- On Windows, container-style `/data` configuration is normalized to the repository's ignored
-  `data/` directory for local processes.
-- Docker Compose verification requires Docker Desktop. The non-containerized integration and live
-  Playwright harnesses exercise the same API, worker, vision, database, Auth, and storage workflow.
+## Deployment and cost boundaries
 
-## Safety and limitations
+The public frontend runs on Vercel. The verified backend uses:
 
-- PlanDelta supports revision review; it does not guarantee quantities, cost, constructability, or
-  code compliance.
-- Uploaded drawings are private runtime data and never training material.
-- Low-confidence alignment or OCR remains visibly uncertain.
-- RAG can miss poorly extracted or ambiguous source text; stale/conflicting sources remain visible
-  and require human review.
-- Construction and engineering-schematic profiles do not imply arbitrary-image support.
-- Curated agent evaluation scores are regression evidence, not field accuracy.
-- The small ONNX changed-region classifier is confidence-gated and falls back visibly to
-  deterministic rules; its published metrics are synthetic-set measurements, not real-world
-  accuracy.
-- Public demos use labelled sample evidence when temporary backend compute is unavailable.
+- one `t3.small` EC2 instance;
+- one encrypted 20 GB `gp3` volume;
+- private ECR repositories for API, vision, and agent images;
+- private S3 storage for runtime artifacts;
+- Systems Manager for administration and encrypted runtime configuration;
+- CloudWatch logs, metrics, and alarms;
+- on-demand Amazon Nova Micro through Bedrock.
 
-See [PLAN.md](./PLAN.md), [docs/ARCHITECTURE.md](./docs/ARCHITECTURE.md), and
-[docs/SECURITY.md](./docs/SECURITY.md) for the complete engineering contract. API examples and
-operational limits are documented in [docs/OPERATIONS.md](./docs/OPERATIONS.md). Classifier scope,
-reproduction, measured metrics, and limitations are recorded in
-[docs/MODEL_CARD.md](./docs/MODEL_CARD.md). The current local gate and accepted base-image findings
-are recorded in [docs/RELEASE.md](./docs/RELEASE.md). Portfolio-ready resume bullets, interview
-talking points, and the verified cloud story are in [docs/PORTFOLIO.md](./docs/PORTFOLIO.md).
+The design deliberately excludes NAT Gateway, load balancers, RDS, ElastiCache, OpenSearch,
+SageMaker endpoints, Kubernetes, ECS/Fargate, and provisioned Bedrock capacity. A conservative
+always-on estimate is USD 22.94 per month before credits or free allowances. Gross-cost alerts exist
+at USD 10, 15, 20, and 25; the USD 25 teardown gate remains binding.
+
+See [AWS costs](./docs/AWS_COSTS.md), [operations](./docs/OPERATIONS.md), and
+[deployment guidance](./docs/DEPLOYMENT.md) before creating or retaining cloud resources.
+
+## Security and data handling
+
+- uploaded drawings and supporting documents are private runtime data, not training material;
+- secrets and service credentials remain server-side and outside Git;
+- authorization scope comes from the authenticated server context, never model output;
+- document and OCR content is treated as untrusted data, including prompt-injection attempts;
+- citations are authorized and validated before an answer can complete;
+- model traces store bounded structured events, not hidden reasoning or raw project content;
+- RFIs remain editable drafts with no external send action.
+
+Please report security concerns through the process in [docs/SECURITY.md](./docs/SECURITY.md), not a
+public issue.
+
+## Scope and limitations
+
+- PlanDelta supports revision review; it does not approve drawings or guarantee quantities, cost,
+  constructability, structural adequacy, or code compliance.
+- The MVP compares one selected page from two drawing revisions.
+- Low-confidence alignment, OCR, classification, and retrieval remain visibly uncertain.
+- RAG can miss ambiguous or poorly extracted source text; stale and conflicting sources require
+  human judgment.
+- Construction-drawing and engineering-schematic profiles do not imply arbitrary-image support.
+- Evaluation and synthetic classifier metrics are regression signals, not real-world accuracy.
+- Live processing depends on the retained Supabase and AWS services. Labelled samples remain usable
+  if temporary compute is stopped.
+
+Every finding, citation, impact statement, and RFI draft must be checked against the source material
+by a qualified reviewer before coordination, procurement, or construction.
+
+## Documentation
+
+| Area                     | Reference                                                                                         |
+| ------------------------ | ------------------------------------------------------------------------------------------------- |
+| Product and phase record | [Plan](./PLAN_AGENTIC_V0_2.md) · [Phases](./PHASES_AGENTIC_V0_2.md)                               |
+| Architecture             | [v0.2 architecture](./docs/ARCHITECTURE_V0_2.md) · [system architecture](./docs/ARCHITECTURE.md)  |
+| API and chat contracts   | [API contract](./docs/API_CONTRACT.md) · [chat API](./docs/API_CHAT_V0_2.md)                      |
+| Database and retrieval   | [Database RAG](./docs/DATABASE_RAG_V0_2.md)                                                       |
+| Guardrails and UX        | [Guardrails](./docs/GUARDRAILS_V0_2.md) · [chat UX](./docs/CHAT_UX_V0_2.md)                       |
+| Testing and evaluation   | [Testing](./docs/TESTING.md) · [evaluations](./docs/EVALS_V0_2.md)                                |
+| Operations and security  | [Operations](./docs/OPERATIONS.md) · [security](./docs/SECURITY.md)                               |
+| Deployment and cost      | [Deployment](./docs/DEPLOYMENT.md) · [AWS costs](./docs/AWS_COSTS.md)                             |
+| Evidence and release     | [Application evidence](./docs/APPLICATION_EVIDENCE_V0_2.md) · [release record](./docs/RELEASE.md) |
+
+## License
+
+PlanDelta AI is available under the [MIT License](./LICENSE).
