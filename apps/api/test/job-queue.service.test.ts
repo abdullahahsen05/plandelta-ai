@@ -2,6 +2,7 @@ import { describe, expect, it, vi } from "vitest";
 
 import type { DatabaseService } from "../src/database/database.service.js";
 import { JobQueueService } from "../src/worker/job-queue.service.js";
+import { VisionServiceError } from "../src/worker/vision-client.js";
 
 const analysisId = "00000000-0000-4000-8000-000000000041";
 
@@ -61,6 +62,47 @@ describe("JobQueueService cancellation", () => {
         currentStage: "summary",
         progress: 90,
       },
+    });
+  });
+
+  it("does not retry a deterministic vision rejection", async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const queue = new JobQueueService({
+      analysis: {
+        findUnique: vi.fn().mockResolvedValue({
+          attemptCount: 1,
+          maxAttempts: 3,
+          cancellationRequested: false,
+        }),
+        updateMany,
+      },
+    } as unknown as DatabaseService);
+
+    await queue.fail(
+      analysisId,
+      "worker-1",
+      new VisionServiceError(
+        422,
+        "UNSAFE_ALIGNMENT",
+        "Verify page, scale, and sheet selection.",
+      ),
+    );
+
+    const updateInput = updateMany.mock.calls[0]?.[0] as {
+      where: { id: string; leaseOwner: string };
+      data: {
+        status: string;
+        nextAttemptAt: Date | null;
+        errorCode: string;
+        errorMessage: string;
+      };
+    };
+    expect(updateInput.where).toEqual({ id: analysisId, leaseOwner: "worker-1" });
+    expect(updateInput.data).toMatchObject({
+      status: "FAILED",
+      nextAttemptAt: null,
+      errorCode: "UNSAFE_ALIGNMENT",
+      errorMessage: "Verify page, scale, and sheet selection.",
     });
   });
 });

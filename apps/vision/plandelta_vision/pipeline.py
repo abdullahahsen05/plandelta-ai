@@ -249,7 +249,8 @@ def analyze(request: AnalysisRequest, settings: VisionSettings) -> AnalysisRespo
 
     changes: list[DetectedChangeResult] = []
     warnings: list[str] = []
-    ocr_enabled = request.configuration.ocr_enabled and settings.ocr_enabled
+    ocr_requested = request.configuration.ocr_enabled and settings.ocr_enabled
+    ocr_enabled = ocr_requested and len(difference.regions) <= settings.max_ocr_regions
     for sequence, region in enumerate(difference.regions, start=1):
         baseline_crop = _crop(baseline_color, region)
         candidate_crop = _crop(aligned.image, region)
@@ -286,7 +287,12 @@ def analyze(request: AnalysisRequest, settings: VisionSettings) -> AnalysisRespo
         if classifier_warning:
             warnings.append(f"Region {sequence}: {classifier_warning}")
 
-    if not ocr_enabled:
+    if ocr_requested and not ocr_enabled:
+        warnings.append(
+            "Crop OCR was skipped because the detected region count exceeded the bounded "
+            f"limit of {settings.max_ocr_regions}; visual evidence remains available."
+        )
+    elif not ocr_enabled:
         warnings.append("Crop OCR was disabled for this analysis.")
     duration_ms = round((perf_counter() - started) * 1000)
     return AnalysisResponse(

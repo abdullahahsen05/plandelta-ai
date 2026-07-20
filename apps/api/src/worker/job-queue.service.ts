@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Analysis, AnalysisStatus } from "../generated/prisma/client.js";
 import { DatabaseService } from "../database/database.service.js";
+import { VisionServiceError } from "./vision-client.js";
 
 @Injectable()
 export class JobQueueService {
@@ -73,7 +74,8 @@ export class JobQueueService {
       });
       return;
     }
-    const retry = analysis.attemptCount < analysis.maxAttempts;
+    const retryable = !(error instanceof VisionServiceError) || error.retryable;
+    const retry = retryable && analysis.attemptCount < analysis.maxAttempts;
     const retryDelaySeconds = Math.min(300, 2 ** Math.max(analysis.attemptCount, 1) * 5);
     await this.database.analysis.updateMany({
       where: { id: analysisId, leaseOwner: workerId },
@@ -82,9 +84,15 @@ export class JobQueueService {
         currentStage: retry ? "retry_scheduled" : "failed",
         nextAttemptAt: retry ? new Date(Date.now() + retryDelaySeconds * 1000) : null,
         completedAt: retry ? null : new Date(),
-        errorCode: retry ? "TEMPORARY_PROCESSING_FAILURE" : "PROCESSING_FAILED",
+        errorCode: retry
+          ? "TEMPORARY_PROCESSING_FAILURE"
+          : error instanceof VisionServiceError
+            ? error.code
+            : "PROCESSING_FAILED",
         errorMessage:
-          error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
+          error instanceof VisionServiceError
+            ? error.safeMessage
+            : error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
             ? "The vision service timed out."
             : "The analysis could not be completed.",
         leaseOwner: null,

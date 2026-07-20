@@ -29,6 +29,25 @@ def _ink_iou(baseline: GrayImage, candidate: GrayImage, valid: GrayImage) -> flo
     return float(np.count_nonzero(baseline_ink & candidate_ink) / union)
 
 
+def _perimeter_anchor_iou(baseline: GrayImage, candidate: GrayImage) -> float:
+    """Score a shared sheet frame without trusting empty image borders."""
+    height, width = baseline.shape
+    band_height = max(1, round(height * 0.05))
+    band_width = max(1, round(width * 0.05))
+    perimeter = np.zeros_like(baseline, dtype=bool)
+    perimeter[:band_height, :] = True
+    perimeter[-band_height:, :] = True
+    perimeter[:, :band_width] = True
+    perimeter[:, -band_width:] = True
+    baseline_ink = (baseline < 205) & perimeter
+    candidate_ink = (candidate < 205) & perimeter
+    union = int(np.count_nonzero(baseline_ink | candidate_ink))
+    minimum_anchor_pixels = max(100, round(baseline.size * 0.0002))
+    if union < minimum_anchor_pixels:
+        return 0.0
+    return float(np.count_nonzero(baseline_ink & candidate_ink) / union)
+
+
 def _identity(
     candidate: ColorImage, candidate_gray: GrayImage, confidence: float = 1.0
 ) -> AlignedImage:
@@ -213,6 +232,9 @@ def align_candidate(
     aligned = _ecc_alignment(baseline_gray, candidate, candidate_gray)
     if aligned is not None:
         return aligned
+    perimeter_overlap = _perimeter_anchor_iou(baseline_gray, candidate_gray)
+    if perimeter_overlap >= 0.78:
+        return _identity(candidate, candidate_gray, perimeter_overlap)
     raise UnsafeAlignmentError(
         "The drawings could not be aligned with sufficient confidence; "
         "verify page, scale, and sheet selection."
