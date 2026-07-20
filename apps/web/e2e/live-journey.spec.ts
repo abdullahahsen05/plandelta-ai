@@ -137,15 +137,16 @@ test("authenticated upload reaches real evidence and printable report", async ({
       reportPage.getByRole("heading", { name: "Revision comparison report" }),
     ).toBeVisible();
     await expect(reportPage.getByRole("heading", { name: "Change register" })).toBeVisible();
-    await expect(reportPage.locator(".result-label")).toHaveText("change identified");
-    await expect(reportPage.locator(".evidence img")).toHaveJSProperty("complete", true);
+    await expect(reportPage.locator(".result-label")).toHaveText(/changes? identified/);
+    const reportEvidenceImages = reportPage.locator(".evidence img");
+    await expect(reportEvidenceImages.first()).toBeVisible();
     await expect
       .poll(() =>
-        reportPage
-          .locator(".evidence img")
-          .evaluate((image: HTMLImageElement) => image.naturalWidth),
+        reportEvidenceImages.evaluateAll((images: HTMLImageElement[]) =>
+          images.every((image) => image.complete && image.naturalWidth > 0),
+        ),
       )
-      .toBeGreaterThan(0);
+      .toBe(true);
 
     const revisions = await admin.from("plan_revisions").select("id").eq("project_id", projectId);
     if (revisions.error) throw revisions.error;
