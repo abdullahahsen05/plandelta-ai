@@ -11,7 +11,7 @@ import { createBrowserSupabaseClient } from "../lib/supabase/client";
 const maximumBytes = 20 * 1024 * 1024;
 const acceptedTypes = new Set(["application/pdf", "image/png", "image/jpeg"]);
 
-type ProgressStage = "idle" | "project" | "baseline" | "candidate" | "analysis";
+type ProgressStage = "idle" | "project" | "revisions" | "analysis";
 type AnalysisProfile = "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
 
 function FileField({
@@ -125,10 +125,11 @@ export function UploadComparisonForm() {
       });
       projectId = project.id;
 
-      setStage("baseline");
-      const baselineRevision = await uploadRevision(token, project.id, baseline, "BASELINE");
-      setStage("candidate");
-      const candidateRevision = await uploadRevision(token, project.id, candidate, "CANDIDATE");
+      setStage("revisions");
+      const [baselineRevision, candidateRevision] = await Promise.all([
+        uploadRevision(token, project.id, baseline, "BASELINE"),
+        uploadRevision(token, project.id, candidate, "CANDIDATE"),
+      ]);
 
       setStage("analysis");
       const analysis = await apiRequest(`/projects/${project.id}/analyses`, token, analysisSchema, {
@@ -169,8 +170,7 @@ export function UploadComparisonForm() {
   const progress = {
     idle: ready ? "Ready to analyze" : "Complete all fields",
     project: "Creating secure project…",
-    baseline: "Uploading baseline…",
-    candidate: "Uploading candidate…",
+    revisions: "Uploading both revisions…",
     analysis: "Queueing analysis…",
   }[stage];
 
