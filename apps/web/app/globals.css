@@ -305,6 +305,10 @@ button {
     @apply mt-8 flex flex-wrap items-center justify-between gap-4 border-t border-[#D8D4CA] pt-5;
   }
 
+  .cancel-analysis-button {
+    @apply inline-flex min-h-11 items-center justify-center gap-2 border border-[#C53F3F] bg-[#FBFAF6] px-5 font-semibold text-[#A63232] transition-colors hover:bg-[#FFF1F1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#C53F3F] disabled:cursor-not-allowed disabled:border-[#B9B6AE] disabled:bg-[#F0EEE8] disabled:text-[#777A75];
+  }
+
   .project-heading {
     @apply border-b border-[#D8D4CA] pb-8;
   }
