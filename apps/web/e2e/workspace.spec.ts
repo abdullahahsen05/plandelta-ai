@@ -31,6 +31,30 @@ test("comparison controls expose zoom, swipe, filtering, and evidence selection"
     "aria-pressed",
     "true",
   );
+  await page.getByRole("button", { name: "Open revised" }).click();
+  const largeViewer = page.getByRole("dialog", { name: "Large drawing comparison" });
+  await expect(largeViewer).toBeVisible();
+  await expect(largeViewer.getByRole("button", { name: "Revised + labels" })).toHaveAttribute(
+    "aria-pressed",
+    "true",
+  );
+  await expect(
+    largeViewer.getByText("01 · Vertical partition line added", { exact: true }),
+  ).toBeVisible();
+  await largeViewer.getByRole("button", { name: "Zoom in large drawing" }).click();
+  await expect(largeViewer.getByText("115%", { exact: true })).toBeVisible();
+  await largeViewer.getByRole("button", { name: "Close" }).click();
+  await expect(largeViewer).toBeHidden();
+
+  const comparisonCanvas = page.locator(".blueprint-canvas-host canvas");
+  const canvasBox = await comparisonCanvas.boundingBox();
+  if (!canvasBox) throw new Error("The comparison canvas is not visible.");
+  await comparisonCanvas.click({
+    position: { x: canvasBox.width * 0.76, y: canvasBox.height * 0.46 },
+  });
+  await expect(largeViewer).toBeVisible();
+  await largeViewer.getByRole("button", { name: "Close" }).click();
+
   await page.getByRole("button", { name: "Swipe", exact: true }).click();
   await expect(page.getByLabel("Divider")).toBeVisible();
 
