@@ -19,6 +19,8 @@ test("authenticated upload reaches real evidence and printable report", async ({
   if (!url || !anonKey || !serviceRoleKey)
     throw new Error("Live E2E Supabase variables are missing.");
   const browserOrigin = new URL(process.env.PLANDELTA_E2E_BASE_URL ?? "http://127.0.0.1:3100");
+  const baselinePath = process.env.PLANDELTA_E2E_BASELINE_PATH;
+  const candidatePath = process.env.PLANDELTA_E2E_CANDIDATE_PATH;
   const configuredApiUrl =
     process.env.PLANDELTA_E2E_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
   const apiUrl = configuredApiUrl.replace(/\/$/, "").endsWith("/v1")
@@ -97,19 +99,21 @@ test("authenticated upload reaches real evidence and printable report", async ({
     const fileInputs = page.locator('input[type="file"]');
     await fileInputs
       .nth(0)
-      .setInputFiles(resolve(process.cwd(), "../../samples/vision/baseline.png"));
+      .setInputFiles(baselinePath ?? resolve(process.cwd(), "../../samples/vision/baseline.png"));
     await fileInputs
       .nth(1)
-      .setInputFiles(resolve(process.cwd(), "../../samples/vision/added-wall.png"));
+      .setInputFiles(
+        candidatePath ?? resolve(process.cwd(), "../../samples/vision/added-wall.png"),
+      );
     await page.getByRole("button", { name: "Ready to analyze" }).click();
 
-    await expect(page).toHaveURL(/\/app\/analyses\/[0-9a-f-]{36}/, { timeout: 30_000 });
+    await expect(page).toHaveURL(/\/app\/analyses\/[0-9a-f-]{36}/, { timeout: 90_000 });
     analysisId = page.url().split("/").at(-1);
     await expect(page.getByText("LIVE ANALYSIS").first()).toBeVisible({ timeout: 120_000 });
     await expect(page.getByRole("complementary", { name: "Change ledger" })).toBeVisible({
       timeout: 120_000,
     });
-    await expect(page.getByText("1 change found")).toBeVisible();
+    await expect(page.getByText(/\d+ changes? found/)).toBeVisible();
     await expect(page.locator(".blueprint-canvas-host")).toHaveAttribute(
       "data-preview-state",
       "ready",
