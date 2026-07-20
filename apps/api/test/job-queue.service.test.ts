@@ -81,11 +81,7 @@ describe("JobQueueService cancellation", () => {
     await queue.fail(
       analysisId,
       "worker-1",
-      new VisionServiceError(
-        422,
-        "UNSAFE_ALIGNMENT",
-        "Verify page, scale, and sheet selection.",
-      ),
+      new VisionServiceError(422, "UNSAFE_ALIGNMENT", "Verify page, scale, and sheet selection."),
     );
 
     const updateInput = updateMany.mock.calls[0]?.[0] as {

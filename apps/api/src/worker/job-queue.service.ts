@@ -93,8 +93,8 @@ export class JobQueueService {
           error instanceof VisionServiceError
             ? error.safeMessage
             : error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
-            ? "The vision service timed out."
-            : "The analysis could not be completed.",
+              ? "The vision service timed out."
+              : "The analysis could not be completed.",
         leaseOwner: null,
         leaseExpiresAt: null,
         heartbeatAt: null,
