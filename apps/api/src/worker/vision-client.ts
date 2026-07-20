@@ -110,6 +110,7 @@ type VisionRequest = {
   analysisProfile: "construction_drawing" | "engineering_schematic";
   configuration: unknown;
   artifactOutput: { kind: "local"; prefix: string };
+  signal?: AbortSignal;
 };
 
 @Injectable()
@@ -119,6 +120,11 @@ export class VisionClient {
     const internalSecret = process.env.INTERNAL_SERVICE_SECRET;
     if (!internalSecret) throw new Error("INTERNAL_SERVICE_SECRET is required by the worker.");
 
+    const { signal: requestSignal, ...payload } = request;
+    const timeoutSignal = AbortSignal.timeout(
+      Number(process.env.VISION_TIMEOUT_SECONDS ?? 240) * 1000,
+    );
+    const signal = requestSignal ? AbortSignal.any([requestSignal, timeoutSignal]) : timeoutSignal;
     const response = await fetch(`${serviceUrl.replace(/\/$/, "")}/internal/v1/analyses`, {
       method: "POST",
       headers: {
@@ -126,8 +132,8 @@ export class VisionClient {
         "x-internal-service-secret": internalSecret,
         "x-correlation-id": request.correlationId,
       },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(Number(process.env.VISION_TIMEOUT_SECONDS ?? 240) * 1000),
+      body: JSON.stringify(payload),
+      signal,
     });
     if (!response.ok) {
       throw new Error(`Vision service returned HTTP ${response.status}.`);

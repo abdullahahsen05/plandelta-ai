@@ -40,6 +40,7 @@ enum AnalysisStatus {
   RETRYING
   COMPLETED
   FAILED
+  CANCELLED
 }
 
 enum SummaryProvider {
@@ -255,35 +256,36 @@ model PlanRevision {
 }
 
 model Analysis {
-  id                  String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  projectId           String          @map("project_id") @db.Uuid
-  baselineRevisionId  String          @map("baseline_revision_id") @db.Uuid
-  candidateRevisionId String          @map("candidate_revision_id") @db.Uuid
-  requestedBy         String          @map("requested_by") @db.Uuid
-  status              AnalysisStatus  @default(QUEUED)
-  progress            Int             @default(0)
-  currentStage        String          @default("queued") @map("current_stage")
-  priority            Int             @default(0) @db.SmallInt
-  attemptCount        Int             @default(0) @map("attempt_count")
-  maxAttempts         Int             @default(3) @map("max_attempts")
-  leaseOwner          String?         @map("lease_owner")
-  leaseExpiresAt      DateTime?       @map("lease_expires_at") @db.Timestamptz(6)
-  heartbeatAt         DateTime?       @map("heartbeat_at") @db.Timestamptz(6)
-  nextAttemptAt       DateTime?       @map("next_attempt_at") @db.Timestamptz(6)
-  startedAt           DateTime?       @map("started_at") @db.Timestamptz(6)
-  completedAt         DateTime?       @map("completed_at") @db.Timestamptz(6)
-  errorCode           String?         @map("error_code")
-  errorMessage        String?         @map("error_message")
-  schemaVersion       String          @default("1.0") @map("schema_version")
-  engineVersion       String          @default("pending") @map("engine_version")
-  configuration       Json            @default("{}")
-  metrics             Json            @default("{}")
-  warnings            Json            @default("[]")
-  summaryProvider     SummaryProvider @default(DETERMINISTIC) @map("summary_provider")
-  analysisProfile     AnalysisProfile @default(CONSTRUCTION_DRAWING) @map("analysis_profile")
-  profileVersion      String          @default("1.0") @map("profile_version")
-  createdAt           DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
-  updatedAt           DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+  id                    String          @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  projectId             String          @map("project_id") @db.Uuid
+  baselineRevisionId    String          @map("baseline_revision_id") @db.Uuid
+  candidateRevisionId   String          @map("candidate_revision_id") @db.Uuid
+  requestedBy           String          @map("requested_by") @db.Uuid
+  status                AnalysisStatus  @default(QUEUED)
+  cancellationRequested Boolean         @default(false) @map("cancellation_requested")
+  progress              Int             @default(0)
+  currentStage          String          @default("queued") @map("current_stage")
+  priority              Int             @default(0) @db.SmallInt
+  attemptCount          Int             @default(0) @map("attempt_count")
+  maxAttempts           Int             @default(3) @map("max_attempts")
+  leaseOwner            String?         @map("lease_owner")
+  leaseExpiresAt        DateTime?       @map("lease_expires_at") @db.Timestamptz(6)
+  heartbeatAt           DateTime?       @map("heartbeat_at") @db.Timestamptz(6)
+  nextAttemptAt         DateTime?       @map("next_attempt_at") @db.Timestamptz(6)
+  startedAt             DateTime?       @map("started_at") @db.Timestamptz(6)
+  completedAt           DateTime?       @map("completed_at") @db.Timestamptz(6)
+  errorCode             String?         @map("error_code")
+  errorMessage          String?         @map("error_message")
+  schemaVersion         String          @default("1.0") @map("schema_version")
+  engineVersion         String          @default("pending") @map("engine_version")
+  configuration         Json            @default("{}")
+  metrics               Json            @default("{}")
+  warnings              Json            @default("[]")
+  summaryProvider       SummaryProvider @default(DETERMINISTIC) @map("summary_provider")
+  analysisProfile       AnalysisProfile @default(CONSTRUCTION_DRAWING) @map("analysis_profile")
+  profileVersion        String          @default("1.0") @map("profile_version")
+  createdAt             DateTime        @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt             DateTime        @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
 
   project           Project            @relation(fields: [projectId], references: [id], onDelete: Cascade)
   baselineRevision  PlanRevision       @relation("BaselineRevision", fields: [baselineRevisionId], references: [id], onDelete: Restrict)

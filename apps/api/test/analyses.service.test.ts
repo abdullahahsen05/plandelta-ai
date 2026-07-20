@@ -7,6 +7,7 @@ import { expectApiError } from "./expect-api-error.js";
 const baselineId = "00000000-0000-4000-8000-000000000031";
 const candidateId = "00000000-0000-4000-8000-000000000032";
 const projectId = "00000000-0000-4000-8000-000000000030";
+const analysisId = "00000000-0000-4000-8000-000000000033";
 const storage = {
   provider: "LOCAL" as const,
   write: vi.fn(),
@@ -108,5 +109,163 @@ describe("AnalysesService", () => {
       429,
     );
     expect(database.analysis.create).not.toHaveBeenCalled();
+  });
+
+  it("requests cooperative cancellation for an active analysis", async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const database = {
+      analysis: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: analysisId,
+            projectId,
+            status: "PREPROCESSING",
+            cancellationRequested: false,
+          })
+          .mockResolvedValueOnce({
+            id: analysisId,
+            projectId,
+            status: "PREPROCESSING",
+            cancellationRequested: true,
+            currentStage: "cancellation_requested",
+          }),
+        updateMany,
+      },
+    };
+    const service = new AnalysesService(database as unknown as DatabaseService, storage);
+
+    await expect(service.cancel("owner-a", analysisId)).resolves.toMatchObject({
+      cancellationRequested: true,
+      currentStage: "cancellation_requested",
+    });
+    expect(updateMany).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: {
+          cancellationRequested: true,
+          currentStage: "cancellation_requested",
+        },
+      }),
+    );
+  });
+
+  it("cancels queued work immediately without leaving a lease", async () => {
+    const updateMany = vi.fn().mockResolvedValue({ count: 1 });
+    const database = {
+      analysis: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: analysisId,
+            projectId,
+            status: "QUEUED",
+            cancellationRequested: false,
+          })
+          .mockResolvedValueOnce({
+            id: analysisId,
+            projectId,
+            status: "CANCELLED",
+            cancellationRequested: true,
+          }),
+        updateMany,
+      },
+    };
+    const service = new AnalysesService(database as unknown as DatabaseService, storage);
+
+    await expect(service.cancel("owner-a", analysisId)).resolves.toMatchObject({
+      status: "CANCELLED",
+    });
+    const cancelInput = updateMany.mock.calls[0]?.[0] as {
+      data: {
+        status: string;
+        cancellationRequested: boolean;
+        leaseOwner: string | null;
+        errorCode: string;
+      };
+    };
+    expect(cancelInput.data).toMatchObject({
+      status: "CANCELLED",
+      cancellationRequested: true,
+      leaseOwner: null,
+      errorCode: "ANALYSIS_CANCELLED",
+    });
+  });
+
+  it("still cancels when a queued analysis is claimed during the request", async () => {
+    const updateMany = vi
+      .fn()
+      .mockResolvedValueOnce({ count: 0 })
+      .mockResolvedValueOnce({ count: 1 });
+    const database = {
+      analysis: {
+        findFirst: vi
+          .fn()
+          .mockResolvedValueOnce({
+            id: analysisId,
+            projectId,
+            status: "QUEUED",
+            cancellationRequested: false,
+          })
+          .mockResolvedValueOnce({
+            id: analysisId,
+            projectId,
+            status: "CLAIMED",
+            cancellationRequested: true,
+            currentStage: "cancellation_requested",
+          }),
+        updateMany,
+      },
+    };
+    const service = new AnalysesService(database as unknown as DatabaseService, storage);
+
+    await expect(service.cancel("owner-a", analysisId)).resolves.toMatchObject({
+      cancellationRequested: true,
+      currentStage: "cancellation_requested",
+    });
+    expect(updateMany).toHaveBeenCalledTimes(2);
+    const fallbackInput = updateMany.mock.calls[1]?.[0] as {
+      data: { cancellationRequested: boolean; currentStage: string };
+    };
+    expect(fallbackInput.data).toEqual({
+      cancellationRequested: true,
+      currentStage: "cancellation_requested",
+    });
+  });
+
+  it("resets cancellation state when a cancelled analysis is retried", async () => {
+    const update = vi.fn().mockResolvedValue({
+      id: analysisId,
+      status: "QUEUED",
+      cancellationRequested: false,
+    });
+    const database = {
+      analysis: {
+        findFirst: vi.fn().mockResolvedValue({
+          id: analysisId,
+          projectId,
+          status: "CANCELLED",
+          cancellationRequested: true,
+        }),
+        update,
+      },
+    };
+    const service = new AnalysesService(database as unknown as DatabaseService, storage);
+
+    await expect(service.retry("owner-a", analysisId)).resolves.toMatchObject({
+      status: "QUEUED",
+      cancellationRequested: false,
+    });
+    const retryInput = update.mock.calls[0]?.[0] as {
+      data: {
+        status: string;
+        cancellationRequested: boolean;
+        errorCode: string | null;
+      };
+    };
+    expect(retryInput.data).toMatchObject({
+      status: "QUEUED",
+      cancellationRequested: false,
+      errorCode: null,
+    });
   });
 });

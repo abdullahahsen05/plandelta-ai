@@ -13,6 +13,7 @@ export const safeAnalysisSelect = {
   candidateRevisionId: true,
   requestedBy: true,
   status: true,
+  cancellationRequested: true,
   progress: true,
   currentStage: true,
   attemptCount: true,
@@ -203,10 +204,10 @@ export class AnalysesService {
 
   async retry(ownerId: string, analysisId: string) {
     const analysis = await this.getOwned(ownerId, analysisId);
-    if (analysis.status !== "FAILED") {
+    if (!["FAILED", "CANCELLED"].includes(analysis.status)) {
       throw new ApiException(
         "ANALYSIS_NOT_RETRYABLE",
-        "Only a failed analysis can be retried.",
+        "Only a failed or cancelled analysis can be retried.",
         HttpStatus.CONFLICT,
       );
     }
@@ -214,6 +215,7 @@ export class AnalysesService {
       where: { id: analysisId },
       data: {
         status: "QUEUED",
+        cancellationRequested: false,
         progress: 0,
         currentStage: "queued",
         attemptCount: 0,
@@ -228,10 +230,80 @@ export class AnalysesService {
     });
   }
 
+  async cancel(ownerId: string, analysisId: string) {
+    const analysis = await this.getOwned(ownerId, analysisId);
+    if (analysis.status === "CANCELLED") return analysis;
+    if (["COMPLETED", "FAILED"].includes(analysis.status)) {
+      throw new ApiException(
+        "ANALYSIS_NOT_CANCELLABLE",
+        "A completed or failed analysis cannot be cancelled.",
+        HttpStatus.CONFLICT,
+      );
+    }
+
+    const cancelQueued = () =>
+      this.database.analysis.updateMany({
+        where: { id: analysisId, status: { in: ["QUEUED", "RETRYING"] } },
+        data: {
+          status: "CANCELLED",
+          cancellationRequested: true,
+          currentStage: "cancelled",
+          nextAttemptAt: null,
+          completedAt: new Date(),
+          errorCode: "ANALYSIS_CANCELLED",
+          errorMessage: "The analysis was cancelled.",
+          leaseOwner: null,
+          leaseExpiresAt: null,
+          heartbeatAt: null,
+        },
+      });
+    const requestActiveCancellation = () =>
+      this.database.analysis.updateMany({
+        where: {
+          id: analysisId,
+          status: {
+            in: [
+              "CLAIMED",
+              "PREPROCESSING",
+              "ALIGNING",
+              "DIFFING",
+              "OCR",
+              "CLASSIFYING",
+              "SUMMARIZING",
+            ],
+          },
+        },
+        data: {
+          cancellationRequested: true,
+          currentStage: "cancellation_requested",
+        },
+      });
+
+    const queued = ["QUEUED", "RETRYING"].includes(analysis.status);
+    let updated = queued ? await cancelQueued() : await requestActiveCancellation();
+    if (updated.count !== 1) {
+      updated = queued ? await requestActiveCancellation() : await cancelQueued();
+    }
+
+    if (updated.count !== 1) {
+      const current = await this.getOwned(ownerId, analysisId);
+      if (current.status === "CANCELLED") return current;
+      throw new ApiException(
+        "ANALYSIS_NOT_CANCELLABLE",
+        "The analysis finished before cancellation could be requested.",
+        HttpStatus.CONFLICT,
+      );
+    }
+    return this.getOwned(ownerId, analysisId);
+  }
+
   async delete(ownerId: string, analysisId: string) {
     await this.getOwned(ownerId, analysisId);
     const deleted = await this.database.analysis.deleteMany({
-      where: { id: analysisId, status: { in: ["QUEUED", "RETRYING", "FAILED", "COMPLETED"] } },
+      where: {
+        id: analysisId,
+        status: { in: ["QUEUED", "RETRYING", "FAILED", "COMPLETED", "CANCELLED"] },
+      },
     });
     if (deleted.count !== 1) {
       throw new ApiException(

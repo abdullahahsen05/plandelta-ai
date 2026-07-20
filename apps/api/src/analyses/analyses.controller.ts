@@ -58,6 +58,14 @@ export class AnalysesController {
     return this.analyses.retry(auth.userId, analysisId);
   }
 
+  @Post("analyses/:analysisId/cancel")
+  cancel(
+    @CurrentAuth() auth: AuthContext,
+    @Param("analysisId", new ParseUUIDPipe()) analysisId: string,
+  ) {
+    return this.analyses.cancel(auth.userId, analysisId);
+  }
+
   @Delete("analyses/:analysisId")
   @HttpCode(HttpStatus.NO_CONTENT)
   delete(
