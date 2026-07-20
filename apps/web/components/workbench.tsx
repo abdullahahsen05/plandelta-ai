@@ -11,10 +11,11 @@ import {
   Minus,
   Plus,
   RotateCcw,
+  X,
 } from "lucide-react";
 import dynamic from "next/dynamic";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
   sampleChanges,
@@ -185,6 +186,153 @@ function modeDescription(mode: CompareMode) {
   return "The aligned baseline and revised drawing alternate automatically.";
 }
 
+type LargeDrawingView = "split" | "baseline" | "candidate";
+
+function DrawingLightbox({
+  data,
+  mode,
+  selectedId,
+  onClose,
+  onModeChange,
+  onSelect,
+}: {
+  data: WorkbenchData;
+  mode: LargeDrawingView;
+  selectedId: string;
+  onClose: () => void;
+  onModeChange: (mode: LargeDrawingView) => void;
+  onSelect: (id: string) => void;
+}) {
+  const [zoom, setZoom] = useState(1);
+  const [fitToken, setFitToken] = useState(0);
+  const selectedChange = data.changes.find((change) => change.id === selectedId);
+
+  useEffect(() => {
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") onClose();
+    };
+    window.addEventListener("keydown", closeOnEscape);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      window.removeEventListener("keydown", closeOnEscape);
+    };
+  }, [onClose]);
+
+  const fit = () => {
+    setZoom(1);
+    setFitToken((value) => value + 1);
+  };
+
+  return (
+    <div
+      aria-label="Large drawing comparison"
+      aria-modal="true"
+      className="drawing-lightbox"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) onClose();
+      }}
+      role="dialog"
+    >
+      <section className="drawing-lightbox-panel">
+        <header className="drawing-lightbox-header">
+          <div>
+            <p className="eyebrow">FULL-SHEET REVIEW</p>
+            <h2>Inspect the source drawings</h2>
+            <p>
+              Revised markers are numbered to match the change list. Scroll to zoom and drag to pan.
+            </p>
+          </div>
+          <button autoFocus className="drawing-lightbox-close" onClick={onClose} type="button">
+            <X aria-hidden="true" size={18} /> Close
+          </button>
+        </header>
+
+        <div className="drawing-lightbox-toolbar">
+          <div aria-label="Large drawing view" className="drawing-lightbox-views" role="group">
+            <button
+              aria-pressed={mode === "split"}
+              onClick={() => onModeChange("split")}
+              type="button"
+            >
+              Side by side
+            </button>
+            <button
+              aria-pressed={mode === "baseline"}
+              onClick={() => onModeChange("baseline")}
+              type="button"
+            >
+              Before
+            </button>
+            <button
+              aria-pressed={mode === "candidate"}
+              onClick={() => onModeChange("candidate")}
+              type="button"
+            >
+              Revised + labels
+            </button>
+          </div>
+          <div className="drawing-lightbox-zoom" role="group" aria-label="Large drawing zoom">
+            <button
+              aria-label="Zoom out large drawing"
+              onClick={() => setZoom((value) => Math.max(0.65, value - 0.15))}
+              type="button"
+            >
+              <Minus aria-hidden="true" size={15} />
+            </button>
+            <span className="technical">{Math.round(zoom * 100)}%</span>
+            <button
+              aria-label="Zoom in large drawing"
+              onClick={() => setZoom((value) => Math.min(2.4, value + 0.15))}
+              type="button"
+            >
+              <Plus aria-hidden="true" size={15} />
+            </button>
+            <button onClick={fit} type="button">
+              <Maximize2 aria-hidden="true" size={15} /> Fit
+            </button>
+          </div>
+        </div>
+
+        <div className="drawing-lightbox-canvas">
+          <BlueprintCanvas
+            alignedCandidateImageUrl={data.alignedCandidateImageUrl}
+            baselineImageUrl={data.baselineImageUrl}
+            candidateImageUrl={data.candidateImageUrl}
+            changes={data.changes}
+            documentHeight={data.documentHeight}
+            documentWidth={data.documentWidth}
+            fitToken={fitToken}
+            mode={mode}
+            onSelect={onSelect}
+            onZoomChange={setZoom}
+            opacity={100}
+            selectedId={selectedId}
+            swipe={50}
+            zoom={zoom}
+          />
+        </div>
+
+        <footer className="drawing-lightbox-footer">
+          <span>
+            {mode === "baseline"
+              ? "BEFORE · SOURCE DRAWING"
+              : mode === "candidate"
+                ? "REVISED · NUMBERED FINDINGS"
+                : "BEFORE + REVISED · LINKED REVIEW"}
+          </span>
+          <span>
+            {selectedChange && mode !== "baseline"
+              ? `${String(selectedChange.sequence).padStart(2, "0")} · ${selectedChange.title}`
+              : `${data.changes.length} evidence regions · select a marker to update the ledger`}
+          </span>
+        </footer>
+      </section>
+    </div>
+  );
+}
+
 export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) {
   const [selectedId, setSelectedId] = useState(data.changes[0]?.id ?? "");
   const [filter, setFilter] = useState<ChangeFilter>("all");
@@ -194,6 +342,7 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
   const [zoom, setZoom] = useState(1);
   const [fitToken, setFitToken] = useState(0);
   const [synchronized, setSynchronized] = useState(true);
+  const [largeView, setLargeView] = useState<LargeDrawingView | null>(null);
 
   const selectChange = (id: string) => {
     setSelectedId(id);
@@ -359,6 +508,7 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
             fitToken={fitToken}
             mode={mode}
             onSelect={selectChange}
+            onOpenLarge={setLargeView}
             onZoomChange={setZoom}
             opacity={opacity}
             selectedId={selectedId}
@@ -395,6 +545,16 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           sample={data.sample}
         />
       </div>
+      {largeView ? (
+        <DrawingLightbox
+          data={data}
+          mode={largeView}
+          onClose={() => setLargeView(null)}
+          onModeChange={setLargeView}
+          onSelect={selectChange}
+          selectedId={selectedId}
+        />
+      ) : null}
     </main>
   );
 }
