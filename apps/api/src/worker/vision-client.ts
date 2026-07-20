@@ -101,6 +101,27 @@ export const visionResultSchema = z.object({
 
 export type VisionResult = z.infer<typeof visionResultSchema>;
 
+const visionErrorSchema = z.object({
+  error: z.object({
+    code: z.string().min(1).max(80),
+    message: z.string().min(1).max(500),
+  }),
+});
+
+export class VisionServiceError extends Error {
+  override readonly name = "VisionServiceError";
+  readonly retryable: boolean;
+
+  constructor(
+    readonly status: number,
+    readonly code: string,
+    readonly safeMessage: string,
+  ) {
+    super(`Vision service rejected analysis (${code}, HTTP ${status}).`);
+    this.retryable = status >= 500 || status === 408 || status === 429;
+  }
+}
+
 type VisionRequest = {
   analysisId: string;
   correlationId: string;
@@ -110,6 +131,7 @@ type VisionRequest = {
   analysisProfile: "construction_drawing" | "engineering_schematic";
   configuration: unknown;
   artifactOutput: { kind: "local"; prefix: string };
+  signal?: AbortSignal;
 };
 
 @Injectable()
@@ -119,6 +141,11 @@ export class VisionClient {
     const internalSecret = process.env.INTERNAL_SERVICE_SECRET;
     if (!internalSecret) throw new Error("INTERNAL_SERVICE_SECRET is required by the worker.");
 
+    const { signal: requestSignal, ...payload } = request;
+    const timeoutSignal = AbortSignal.timeout(
+      Number(process.env.VISION_TIMEOUT_SECONDS ?? 240) * 1000,
+    );
+    const signal = requestSignal ? AbortSignal.any([requestSignal, timeoutSignal]) : timeoutSignal;
     const response = await fetch(`${serviceUrl.replace(/\/$/, "")}/internal/v1/analyses`, {
       method: "POST",
       headers: {
@@ -126,11 +153,16 @@ export class VisionClient {
         "x-internal-service-secret": internalSecret,
         "x-correlation-id": request.correlationId,
       },
-      body: JSON.stringify(request),
-      signal: AbortSignal.timeout(Number(process.env.VISION_TIMEOUT_SECONDS ?? 240) * 1000),
+      body: JSON.stringify(payload),
+      signal,
     });
     if (!response.ok) {
-      throw new Error(`Vision service returned HTTP ${response.status}.`);
+      const parsed = visionErrorSchema.safeParse(await response.json().catch(() => null));
+      throw new VisionServiceError(
+        response.status,
+        parsed.success ? parsed.data.error.code : "VISION_SERVICE_ERROR",
+        parsed.success ? parsed.data.error.message : "The vision service rejected the analysis.",
+      );
     }
     return visionResultSchema.parse(await response.json());
   }

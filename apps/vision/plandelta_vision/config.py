@@ -30,6 +30,7 @@ class VisionSettings(BaseModel):
     render_dpi: int = Field(default=180, ge=96, le=300)
     ocr_enabled: bool = True
     ocr_language: str = "en"
+    max_ocr_regions: int = Field(default=4, ge=0, le=20)
     onnx_classifier_enabled: bool = True
     onnx_model_path: Path = (
         Path(__file__).resolve().parents[1] / "models" / "changed-region-classifier.onnx"
@@ -53,6 +54,7 @@ def load_settings() -> VisionSettings:
         render_dpi=int(os.getenv("VISION_RENDER_DPI", "180")),
         ocr_enabled=os.getenv("OCR_ENABLED", "true").lower() == "true",
         ocr_language=os.getenv("OCR_LANGUAGE", "en"),
+        max_ocr_regions=int(os.getenv("VISION_MAX_OCR_REGIONS", "4")),
         onnx_classifier_enabled=os.getenv("ONNX_CLASSIFIER_ENABLED", "true").lower() == "true",
         onnx_model_path=_platform_path(
             os.getenv(

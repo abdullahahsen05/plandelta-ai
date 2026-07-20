@@ -55,6 +55,14 @@ def calculate_differences(
     _, added = cv2.threshold(added_delta, threshold, 255, cv2.THRESH_BINARY)
     _, removed = cv2.threshold(removed_delta, threshold, 255, cv2.THRESH_BINARY)
 
+    # Ignore one-pixel rasterization and resampling jitter around otherwise matching ink.
+    # True additions/removals still retain pixels beyond the opposing ink neighbourhood.
+    jitter_kernel = np.ones((3, 3), dtype=np.uint8)
+    baseline_nearby = cv2.dilate((baseline_blur < 220).astype(np.uint8) * 255, jitter_kernel)
+    candidate_nearby = cv2.dilate((candidate_blur < 220).astype(np.uint8) * 255, jitter_kernel)
+    added = cv2.bitwise_and(added, cv2.bitwise_not(baseline_nearby))
+    removed = cv2.bitwise_and(removed, cv2.bitwise_not(candidate_nearby))
+
     valid = cv2.erode(valid_mask, np.ones((5, 5), dtype=np.uint8), iterations=1)
     added = cv2.bitwise_and(added, valid)
     removed = cv2.bitwise_and(removed, valid)
@@ -62,7 +70,9 @@ def calculate_differences(
     added = cv2.morphologyEx(added, cv2.MORPH_CLOSE, close_kernel, iterations=1)
     removed = cv2.morphologyEx(removed, cv2.MORPH_CLOSE, close_kernel, iterations=1)
     combined = cv2.bitwise_or(added, removed)
-    region_mask = cv2.dilate(combined, np.ones((5, 5), dtype=np.uint8), iterations=1)
+    # Group nearby strokes into reviewable evidence regions instead of reporting each
+    # anti-aliased line or character as a separate construction change.
+    region_mask = cv2.dilate(combined, np.ones((21, 21), dtype=np.uint8), iterations=1)
 
     component_count, labels, statistics, _ = cv2.connectedComponentsWithStats(
         region_mask, connectivity=8

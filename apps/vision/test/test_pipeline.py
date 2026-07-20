@@ -6,6 +6,7 @@ from pathlib import Path
 
 import pytest
 
+from plandelta_vision.alignment import align_candidate
 from plandelta_vision.config import VisionSettings
 from plandelta_vision.errors import UnsafeAlignmentError, VisionError
 from plandelta_vision.models import AnalysisRequest
@@ -152,6 +153,48 @@ def test_auto_classifier_uses_selected_onnx_model(fixture_root: Path) -> None:
 def test_unrelated_sheets_fail_alignment_instead_of_returning_boxes(fixture_root: Path) -> None:
     with pytest.raises(UnsafeAlignmentError, match="sufficient confidence"):
         analyze(request("unrelated.png", "artifacts/unrelated"), settings(fixture_root))
+
+
+def test_matching_sheet_frame_allows_large_internal_revision(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    import cv2
+    import numpy as np
+
+    baseline = np.full((400, 600), 255, dtype=np.uint8)
+    candidate = np.full((400, 600), 255, dtype=np.uint8)
+    for image in (baseline, candidate):
+        cv2.rectangle(image, (4, 4), (595, 395), 0, 3)
+        cv2.line(image, (4, 340), (595, 340), 0, 3)
+    cv2.rectangle(baseline, (80, 80), (250, 250), 0, 4)
+    cv2.circle(candidate, (390, 190), 100, 0, 4)
+    candidate_color = cv2.cvtColor(candidate, cv2.COLOR_GRAY2BGR)
+    monkeypatch.setattr("plandelta_vision.alignment._orb_alignment", lambda *_: None)
+    monkeypatch.setattr("plandelta_vision.alignment._ecc_alignment", lambda *_: None)
+
+    result = align_candidate(baseline, candidate_color, candidate)
+
+    assert result.result.method == "IDENTITY"
+    assert result.result.confidence >= 0.78
+
+
+def test_ocr_is_skipped_when_region_budget_is_exceeded(
+    fixture_root: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    configured = settings(fixture_root)
+    configured.ocr_enabled = True
+    configured.max_ocr_regions = 0
+    analysis_request = request("added-wall.png", "artifacts/bounded-ocr")
+    analysis_request.configuration.ocr_enabled = True
+    monkeypatch.setattr(
+        "plandelta_vision.pipeline.extract_crop_text",
+        lambda *_: pytest.fail("OCR must not run after the region budget is exceeded."),
+    )
+
+    result = analyze(analysis_request, configured)
+
+    assert result.changes
+    assert any("bounded limit of 0" in warning for warning in result.warnings)
 
 
 def test_malformed_input_is_rejected_before_processing(fixture_root: Path) -> None:

@@ -24,6 +24,18 @@ export class AnalysisProcessorService {
     @Inject(SUMMARY_PROVIDER) private readonly summary: SummaryProvider,
   ) {}
 
+  private async throwIfCancelled(
+    analysisId: string,
+    workerId: string,
+    controller: AbortController,
+  ) {
+    if (!(await this.queue.isCancellationRequested(analysisId, workerId))) return;
+    controller.abort();
+    const error = new Error("Analysis cancellation requested.");
+    error.name = "AbortError";
+    throw error;
+  }
+
   async process(claimed: Analysis, workerId: string, leaseSeconds: number) {
     const startedAt = Date.now();
     const correlationId = randomUUID();
@@ -42,6 +54,16 @@ export class AnalysisProcessorService {
       Math.max(10_000, Math.floor((leaseSeconds * 1000) / 3)),
     );
     heartbeat.unref();
+    const cancellationController = new AbortController();
+    const cancellationPoll = setInterval(() => {
+      void this.queue
+        .isCancellationRequested(claimed.id, workerId)
+        .then((requested) => {
+          if (requested) cancellationController.abort();
+        })
+        .catch(() => undefined);
+    }, 1000);
+    cancellationPoll.unref();
 
     try {
       const analysis = await this.database.analysis.findUnique({
@@ -49,6 +71,7 @@ export class AnalysisProcessorService {
         include: { baselineRevision: true, candidateRevision: true },
       });
       if (!analysis) throw new Error("Claimed analysis no longer exists.");
+      await this.throwIfCancelled(analysis.id, workerId, cancellationController);
       await this.queue.advance(analysis.id, workerId, "PREPROCESSING", "vision_request", 5);
 
       const referenceLifetime = Math.min(
@@ -79,7 +102,9 @@ export class AnalysisProcessorService {
             : "construction_drawing",
         configuration: analysis.configuration,
         artifactOutput: { kind: "local", prefix: scratchPrefix },
+        signal: cancellationController.signal,
       });
+      await this.throwIfCancelled(analysis.id, workerId, cancellationController);
       if (visionResult.analysisId !== analysis.id) {
         await this.localStorage.deletePrefix(scratchPrefix).catch(() => undefined);
         throw new Error("Vision result analysis id mismatch.");
@@ -93,6 +118,15 @@ export class AnalysisProcessorService {
       );
 
       await this.database.inTransaction(async (transaction) => {
+        const stillActive = await transaction.analysis.updateMany({
+          where: {
+            id: analysis.id,
+            leaseOwner: workerId,
+            cancellationRequested: false,
+          },
+          data: { updatedAt: new Date() },
+        });
+        if (stillActive.count !== 1) throw new Error("Analysis cancellation requested.");
         await transaction.detectedChange.deleteMany({ where: { analysisId: analysis.id } });
         await transaction.analysisArtifact.deleteMany({ where: { analysisId: analysis.id } });
         if (result.changes.length > 0) {
@@ -156,6 +190,7 @@ export class AnalysisProcessorService {
       const summary = await this.summary.summarizeAnalysis(persistedChanges, {
         analysisProfile: analysis.analysisProfile,
       });
+      await this.throwIfCancelled(analysis.id, workerId, cancellationController);
 
       await this.database.inTransaction(async (transaction) => {
         await transaction.analysisReport.upsert({
@@ -177,7 +212,11 @@ export class AnalysisProcessorService {
           },
         });
         const completion = await transaction.analysis.updateMany({
-          where: { id: analysis.id, leaseOwner: workerId },
+          where: {
+            id: analysis.id,
+            leaseOwner: workerId,
+            cancellationRequested: false,
+          },
           data: {
             status: "COMPLETED",
             progress: 100,
@@ -210,6 +249,7 @@ export class AnalysisProcessorService {
       );
     } finally {
       clearInterval(heartbeat);
+      clearInterval(cancellationPoll);
     }
   }
 }

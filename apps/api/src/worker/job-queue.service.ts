@@ -3,6 +3,7 @@ import { Injectable } from "@nestjs/common";
 import { Prisma } from "../generated/prisma/client.js";
 import type { Analysis, AnalysisStatus } from "../generated/prisma/client.js";
 import { DatabaseService } from "../database/database.service.js";
+import { VisionServiceError } from "./vision-client.js";
 
 @Injectable()
 export class JobQueueService {
@@ -28,6 +29,14 @@ export class JobQueueService {
     );
   }
 
+  async isCancellationRequested(analysisId: string, workerId: string) {
+    const analysis = await this.database.analysis.findFirst({
+      where: { id: analysisId, leaseOwner: workerId },
+      select: { cancellationRequested: true },
+    });
+    return analysis?.cancellationRequested ?? true;
+  }
+
   async advance(
     analysisId: string,
     workerId: string,
@@ -36,7 +45,7 @@ export class JobQueueService {
     progress: number,
   ) {
     const updated = await this.database.analysis.updateMany({
-      where: { id: analysisId, leaseOwner: workerId },
+      where: { id: analysisId, leaseOwner: workerId, cancellationRequested: false },
       data: { status, currentStage, progress },
     });
     if (updated.count !== 1) throw new Error("Analysis lease ownership was lost.");
@@ -45,10 +54,28 @@ export class JobQueueService {
   async fail(analysisId: string, workerId: string, error: unknown) {
     const analysis = await this.database.analysis.findUnique({
       where: { id: analysisId },
-      select: { attemptCount: true, maxAttempts: true },
+      select: { attemptCount: true, maxAttempts: true, cancellationRequested: true },
     });
     if (!analysis) return;
-    const retry = analysis.attemptCount < analysis.maxAttempts;
+    if (analysis.cancellationRequested) {
+      await this.database.analysis.updateMany({
+        where: { id: analysisId, leaseOwner: workerId },
+        data: {
+          status: "CANCELLED",
+          currentStage: "cancelled",
+          nextAttemptAt: null,
+          completedAt: new Date(),
+          errorCode: "ANALYSIS_CANCELLED",
+          errorMessage: "The analysis was cancelled.",
+          leaseOwner: null,
+          leaseExpiresAt: null,
+          heartbeatAt: null,
+        },
+      });
+      return;
+    }
+    const retryable = !(error instanceof VisionServiceError) || error.retryable;
+    const retry = retryable && analysis.attemptCount < analysis.maxAttempts;
     const retryDelaySeconds = Math.min(300, 2 ** Math.max(analysis.attemptCount, 1) * 5);
     await this.database.analysis.updateMany({
       where: { id: analysisId, leaseOwner: workerId },
@@ -57,11 +84,17 @@ export class JobQueueService {
         currentStage: retry ? "retry_scheduled" : "failed",
         nextAttemptAt: retry ? new Date(Date.now() + retryDelaySeconds * 1000) : null,
         completedAt: retry ? null : new Date(),
-        errorCode: retry ? "TEMPORARY_PROCESSING_FAILURE" : "PROCESSING_FAILED",
+        errorCode: retry
+          ? "TEMPORARY_PROCESSING_FAILURE"
+          : error instanceof VisionServiceError
+            ? error.code
+            : "PROCESSING_FAILED",
         errorMessage:
-          error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
-            ? "The vision service timed out."
-            : "The analysis could not be completed.",
+          error instanceof VisionServiceError
+            ? error.safeMessage
+            : error instanceof Error && ["AbortError", "TimeoutError"].includes(error.name)
+              ? "The vision service timed out."
+              : "The analysis could not be completed.",
         leaseOwner: null,
         leaseExpiresAt: null,
         heartbeatAt: null,
