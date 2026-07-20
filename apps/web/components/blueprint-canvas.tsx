@@ -1,6 +1,7 @@
 "use client";
 
 import Konva from "konva";
+import { Maximize2 } from "lucide-react";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Group, Image as KonvaImage, Layer, Line, Rect, Stage, Text } from "react-konva";
 
@@ -202,6 +203,7 @@ export function BlueprintCanvas({
   fitToken,
   onSelect,
   onZoomChange,
+  onOpenLarge,
   baselineImageUrl,
   candidateImageUrl,
   alignedCandidateImageUrl,
@@ -217,6 +219,7 @@ export function BlueprintCanvas({
   fitToken: number;
   onSelect: (id: string) => void;
   onZoomChange: (zoom: number) => void;
+  onOpenLarge?: ((view: "split" | "baseline" | "candidate") => void) | undefined;
   baselineImageUrl?: string | undefined;
   candidateImageUrl?: string | undefined;
   alignedCandidateImageUrl?: string | undefined;
@@ -235,7 +238,8 @@ export function BlueprintCanvas({
   );
   const usesArtifacts = Boolean(baselineImageUrl && candidateImageUrl);
   const isSideBySide = mode === "split";
-  const activeCandidateImageState = isSideBySide ? candidateImageState : alignedCandidateImageState;
+  const activeCandidateImageState =
+    isSideBySide || mode === "candidate" ? candidateImageState : alignedCandidateImageState;
   const imagesReady =
     !usesArtifacts ||
     (baselineImageState.status === "ready" && activeCandidateImageState.status === "ready");
@@ -316,7 +320,7 @@ export function BlueprintCanvas({
       className="blueprint-canvas-host"
       data-preview-state={imageLoadFailed ? "error" : imagesReady ? "ready" : "loading"}
       ref={hostRef}
-      role="img"
+      role="group"
     >
       <Stage
         draggable
@@ -390,6 +394,15 @@ export function BlueprintCanvas({
                     stroke="#263844"
                   />
                 ) : null}
+                {onOpenLarge ? (
+                  <Rect
+                    fill="rgba(255,255,255,0.001)"
+                    height={documentHeight}
+                    onClick={() => onOpenLarge("baseline")}
+                    onTap={() => onOpenLarge("baseline")}
+                    width={documentWidth}
+                  />
+                ) : null}
               </Group>
               <Group
                 scaleX={sideBySideScale}
@@ -409,6 +422,15 @@ export function BlueprintCanvas({
                     lines={candidateLines}
                     opacity={0.92}
                     stroke="#263844"
+                  />
+                ) : null}
+                {onOpenLarge ? (
+                  <Rect
+                    fill="rgba(255,255,255,0.001)"
+                    height={documentHeight}
+                    onClick={() => onOpenLarge("candidate")}
+                    onTap={() => onOpenLarge("candidate")}
+                    width={documentWidth}
                   />
                 ) : null}
                 <ChangeRegions
@@ -478,6 +500,15 @@ export function BlueprintCanvas({
                   />
                 </Group>
               ) : null}
+              {onOpenLarge && (mode === "baseline" || mode === "candidate") ? (
+                <Rect
+                  fill="rgba(255,255,255,0.001)"
+                  height={documentHeight}
+                  onClick={() => onOpenLarge(mode)}
+                  onTap={() => onOpenLarge(mode)}
+                  width={documentWidth}
+                />
+              ) : null}
               {mode !== "baseline" ? (
                 <ChangeRegions
                   changes={changes}
@@ -516,6 +547,29 @@ export function BlueprintCanvas({
               ? "The viewer did not substitute another drawing. Refresh to retry the secure preview."
               : "PlanDelta is opening the uploaded files."}
           </span>
+        </div>
+      ) : null}
+      {onOpenLarge && imagesReady ? (
+        <div className="drawing-open-actions" role="group" aria-label="Open drawings large">
+          {isSideBySide ? (
+            <>
+              <button onClick={() => onOpenLarge("baseline")} type="button">
+                <Maximize2 aria-hidden="true" size={14} /> Open before
+              </button>
+              <button onClick={() => onOpenLarge("candidate")} type="button">
+                <Maximize2 aria-hidden="true" size={14} /> Open revised
+              </button>
+            </>
+          ) : (
+            <button
+              onClick={() =>
+                onOpenLarge(mode === "baseline" || mode === "candidate" ? mode : "split")
+              }
+              type="button"
+            >
+              <Maximize2 aria-hidden="true" size={14} /> Open large viewer
+            </button>
+          )}
         </div>
       ) : null}
       <span className="canvas-instruction">

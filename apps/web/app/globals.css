@@ -843,6 +843,76 @@ button {
     @apply technical pointer-events-none absolute right-3 bottom-3 border border-[#AAA79F] bg-[#FBFAF6]/95 px-2 py-1 text-[9px] tracking-[0.08em] text-[#646762];
   }
 
+  .drawing-open-actions {
+    @apply pointer-events-none absolute inset-x-6 top-5 z-10 grid grid-cols-2 gap-9;
+  }
+
+  .drawing-open-actions button {
+    @apply pointer-events-auto flex min-h-8 items-center gap-1.5 justify-self-end border border-[#8C8982] bg-[#FBFAF6]/95 px-2.5 text-[10px] font-semibold text-[#171A1C] shadow-sm transition-colors hover:border-[#171A1C] hover:bg-white focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E6532F];
+  }
+
+  .drawing-open-actions button:only-child {
+    @apply col-span-2;
+  }
+
+  .drawing-lightbox {
+    @apply fixed inset-0 z-[100] grid place-items-center bg-[#101820]/90 p-4;
+  }
+
+  .drawing-lightbox-panel {
+    @apply flex h-[94dvh] w-[96vw] max-w-[1800px] flex-col overflow-hidden border border-t-4 border-[#8C8982] border-t-[#E6532F] bg-[#FBFAF6] shadow-2xl;
+  }
+
+  .drawing-lightbox-header {
+    @apply flex items-start justify-between gap-6 border-b border-[#C7C3BA] px-5 py-4;
+  }
+
+  .drawing-lightbox-header h2 {
+    @apply mt-1 text-2xl font-semibold tracking-[-0.02em];
+  }
+
+  .drawing-lightbox-header p:not(.eyebrow) {
+    @apply mt-1 text-xs text-[#646762];
+  }
+
+  .drawing-lightbox-close {
+    @apply flex min-h-9 shrink-0 items-center gap-2 border border-[#9D9990] px-3 text-xs font-semibold hover:bg-[#ECE9E1] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E6532F];
+  }
+
+  .drawing-lightbox-toolbar {
+    @apply flex flex-wrap items-center justify-between gap-3 border-b border-[#C7C3BA] bg-[#F3F0E8] px-4 py-2;
+  }
+
+  .drawing-lightbox-views,
+  .drawing-lightbox-zoom {
+    @apply flex items-center border border-[#9D9990] bg-[#FBFAF6];
+  }
+
+  .drawing-lightbox-views button,
+  .drawing-lightbox-zoom button {
+    @apply flex min-h-9 items-center gap-1.5 border-r border-[#C7C3BA] px-3 text-xs font-semibold last:border-r-0 hover:bg-[#ECE9E1];
+  }
+
+  .drawing-lightbox-views button[aria-pressed="true"] {
+    @apply bg-[#171A1C] text-white;
+  }
+
+  .drawing-lightbox-zoom span {
+    @apply min-w-14 border-r border-[#C7C3BA] px-2 text-center text-[10px];
+  }
+
+  .drawing-lightbox-canvas {
+    @apply min-h-0 flex-1 bg-[#D9D7D0];
+  }
+
+  .drawing-lightbox-canvas .blueprint-canvas-host {
+    @apply h-full min-h-0;
+  }
+
+  .drawing-lightbox-footer {
+    @apply technical flex min-h-8 flex-wrap items-center justify-between gap-2 border-t border-[#C7C3BA] bg-[#F3F0E8] px-4 py-1.5 text-[9px] tracking-[0.06em] text-[#646762];
+  }
+
   .blueprint-canvas-loading {
     @apply flex flex-col items-center justify-center gap-4 text-sm text-white/60;
   }
@@ -1453,6 +1523,56 @@ button {
   .blueprint-canvas-host,
   .blueprint-canvas-loading {
     min-height: 520px;
+  }
+
+  .drawing-open-actions {
+    @apply inset-x-3 top-3 gap-3;
+  }
+
+  .drawing-open-actions button {
+    @apply px-2 text-[9px];
+  }
+
+  .drawing-lightbox {
+    @apply p-0;
+  }
+
+  .drawing-lightbox-panel {
+    @apply h-[100dvh] w-screen border-x-0 border-b-0;
+  }
+
+  .drawing-lightbox-header {
+    @apply px-3 py-3;
+  }
+
+  .drawing-lightbox-header h2 {
+    @apply text-lg;
+  }
+
+  .drawing-lightbox-header p:not(.eyebrow) {
+    @apply hidden;
+  }
+
+  .drawing-lightbox-close {
+    @apply px-2;
+  }
+
+  .drawing-lightbox-toolbar {
+    @apply items-stretch px-2;
+  }
+
+  .drawing-lightbox-views,
+  .drawing-lightbox-zoom {
+    @apply flex-1;
+  }
+
+  .drawing-lightbox-views button,
+  .drawing-lightbox-zoom button {
+    @apply flex-1 px-2 text-[10px];
+  }
+
+  .drawing-lightbox-canvas .blueprint-canvas-host {
+    min-height: 0;
   }
 
   .ledger-list {
