@@ -6,6 +6,7 @@ import {
   analysisSchema,
   artifactListSchema,
   changeListSchema,
+  knowledgeDocumentListSchema,
   projectSchema,
   reportSchema,
   revisionListSchema,
@@ -42,13 +43,20 @@ export default async function AnalysisPage({
   const analysis = await apiRequest(`/analyses/${analysisId}`, token, analysisSchema);
   if (analysis.status !== "COMPLETED") return <AnalysisProgress initial={analysis} />;
 
-  const [project, revisions, changePage, artifacts, report] = await Promise.all([
-    apiRequest(`/projects/${analysis.projectId}`, token, projectSchema),
-    apiRequest(`/projects/${analysis.projectId}/revisions`, token, revisionListSchema),
-    apiRequest(`/analyses/${analysis.id}/changes?limit=100`, token, changeListSchema),
-    apiRequest(`/analyses/${analysis.id}/artifacts`, token, artifactListSchema),
-    apiRequest(`/analyses/${analysis.id}/report`, token, reportSchema),
-  ]);
+  const [project, revisions, changePage, artifacts, report, knowledgeDocuments] = await Promise.all(
+    [
+      apiRequest(`/projects/${analysis.projectId}`, token, projectSchema),
+      apiRequest(`/projects/${analysis.projectId}/revisions`, token, revisionListSchema),
+      apiRequest(`/analyses/${analysis.id}/changes?limit=100`, token, changeListSchema),
+      apiRequest(`/analyses/${analysis.id}/artifacts`, token, artifactListSchema),
+      apiRequest(`/analyses/${analysis.id}/report`, token, reportSchema),
+      apiRequest(
+        `/projects/${analysis.projectId}/knowledge-documents`,
+        token,
+        knowledgeDocumentListSchema,
+      ),
+    ],
+  );
   const baselineRevision = revisions.find(
     (revision) => revision.id === analysis.baselineRevisionId,
   );
@@ -132,6 +140,7 @@ export default async function AnalysisPage({
     reportSummary: report.executiveSummary,
     summaryProvider: report.provider === "BEDROCK" ? "BEDROCK" : "DETERMINISTIC",
     reportUrl: `/api/analyses/${analysis.id}/report`,
+    knowledgeDocuments,
   };
   return <Workbench data={data} />;
 }

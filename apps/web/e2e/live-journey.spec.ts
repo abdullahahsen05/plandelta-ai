@@ -21,6 +21,9 @@ test("authenticated upload reaches real evidence and printable report", async ({
   const browserOrigin = new URL(process.env.PLANDELTA_E2E_BASE_URL ?? "http://127.0.0.1:3100");
   const baselinePath = process.env.PLANDELTA_E2E_BASELINE_PATH;
   const candidatePath = process.env.PLANDELTA_E2E_CANDIDATE_PATH;
+  const evidencePath =
+    process.env.PLANDELTA_E2E_EVIDENCE_PATH ??
+    resolve(process.cwd(), "../../samples/knowledge/coordination-specification.txt");
   const configuredApiUrl =
     process.env.PLANDELTA_E2E_API_URL ?? process.env.NEXT_PUBLIC_API_URL ?? "http://127.0.0.1:4000";
   const apiUrl = configuredApiUrl.replace(/\/$/, "").endsWith("/v1")
@@ -105,6 +108,8 @@ test("authenticated upload reaches real evidence and printable report", async ({
       .setInputFiles(
         candidatePath ?? resolve(process.cwd(), "../../samples/vision/added-wall.png"),
       );
+    await page.getByLabel(/Add evidence documents/).setInputFiles(evidencePath);
+    await expect(page.getByText("coordination-specification.txt")).toBeVisible();
     await page.getByRole("button", { name: "Ready to analyze" }).click();
 
     await expect(page).toHaveURL(/\/app\/analyses\/[0-9a-f-]{36}/, { timeout: 90_000 });
@@ -114,6 +119,13 @@ test("authenticated upload reaches real evidence and printable report", async ({
       timeout: 120_000,
     });
     await expect(page.getByText(/\d+ changes? found/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Upload evidence" })).toBeVisible();
+    await page.getByRole("button", { name: /Review documents/ }).click();
+    const evidenceDrawer = page.getByRole("dialog", { name: "Project evidence" });
+    await expect(evidenceDrawer).toBeVisible();
+    await expect(evidenceDrawer.getByText("coordination-specification.txt")).toBeVisible();
+    await evidenceDrawer.getByRole("button", { name: "Close project evidence" }).click();
+    await expect(evidenceDrawer).toBeHidden();
     await expect(page.locator(".blueprint-canvas-host")).toHaveAttribute(
       "data-preview-state",
       "ready",

@@ -249,6 +249,71 @@ button {
     @apply sr-only;
   }
 
+  .evidence-setup {
+    @apply mt-5 grid border border-[#171A1C] bg-[#FBFAF6] lg:grid-cols-[1fr_280px];
+  }
+
+  .evidence-setup-copy {
+    @apply border-b border-[#D8D4CA] p-5 sm:p-6 lg:border-r lg:border-b-0;
+  }
+
+  .evidence-setup-copy h2 {
+    @apply mt-1 text-xl font-semibold tracking-[-0.02em];
+  }
+
+  .evidence-setup-copy p:not(.eyebrow) {
+    @apply mt-2 max-w-2xl text-sm leading-6 text-[#646762];
+  }
+
+  .evidence-setup-add {
+    @apply flex min-h-36 cursor-pointer flex-col items-center justify-center bg-[#10263B] px-5 text-center text-white transition-colors hover:bg-[#183753];
+  }
+
+  .evidence-setup-add span {
+    @apply mt-2 font-semibold;
+  }
+
+  .evidence-setup-add small {
+    @apply mt-1 text-xs text-[#C8D4DC];
+  }
+
+  .evidence-setup-add input {
+    @apply sr-only;
+  }
+
+  .evidence-setup-register {
+    @apply border-t border-[#D8D4CA] lg:col-span-2;
+  }
+
+  .evidence-setup-register > p {
+    @apply flex items-center gap-2 px-5 py-3 text-xs text-[#646762];
+  }
+
+  .evidence-setup-register > div {
+    @apply grid grid-cols-[32px_20px_1fr_36px] items-center gap-2 border-b border-[#D8D4CA] px-4 py-3 last:border-b-0;
+  }
+
+  .evidence-setup-register > div > span:nth-child(3) {
+    @apply min-w-0;
+  }
+
+  .evidence-setup-register strong,
+  .evidence-setup-register small {
+    @apply block truncate;
+  }
+
+  .evidence-setup-register strong {
+    @apply text-sm font-semibold;
+  }
+
+  .evidence-setup-register small {
+    @apply mt-0.5 text-xs text-[#646762];
+  }
+
+  .evidence-setup-register button {
+    @apply grid h-8 w-8 place-items-center border border-transparent hover:border-[#AAA79F] hover:bg-[#ECE9E1] disabled:cursor-not-allowed disabled:opacity-50;
+  }
+
   .submission-bar {
     @apply mt-5 flex flex-col justify-between gap-5 border border-[#D8D4CA] bg-[#FBFAF6] p-5 sm:flex-row sm:items-center;
   }
@@ -530,6 +595,7 @@ button {
     @apply flex flex-wrap items-center gap-x-4 gap-y-2 lg:justify-end;
   }
 
+  .knowledge-actions a,
   .knowledge-actions button,
   .knowledge-actions label {
     @apply inline-flex min-h-9 cursor-pointer items-center gap-1.5 text-xs font-semibold underline-offset-4 hover:underline disabled:cursor-not-allowed disabled:text-[#AAA79F];
@@ -695,6 +761,54 @@ button {
 
   .comparison-mode select {
     @apply h-7 border-l border-[#D8D4CA] bg-transparent pl-2 font-semibold outline-none;
+  }
+
+  .evidence-toolbar-actions {
+    @apply flex min-h-8 border border-[#9D9990] bg-[#FBFAF6];
+  }
+
+  .evidence-toolbar-actions button {
+    @apply flex min-h-8 items-center gap-1.5 border-r border-[#C7C3BA] px-2.5 text-xs font-semibold transition-colors last:border-r-0 hover:bg-[#FFF4EF] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#E6532F];
+  }
+
+  .evidence-toolbar-actions button:first-child {
+    @apply bg-[#171A1C] text-white hover:bg-[#313538];
+  }
+
+  .evidence-toolbar-actions .technical {
+    @apply grid h-5 min-w-5 place-items-center bg-[#ECE9E1] px-1 text-[9px] text-[#171A1C];
+  }
+
+  .evidence-drawer-backdrop {
+    @apply fixed inset-0 z-[80] flex justify-end bg-[#171A1C]/45;
+  }
+
+  .evidence-drawer {
+    @apply flex h-full w-full max-w-[900px] flex-col border-l border-[#171A1C] bg-[#F3F0E8] shadow-[-20px_0_50px_rgb(23_26_28_/_0.18)];
+  }
+
+  .evidence-drawer-header {
+    @apply flex shrink-0 items-start justify-between gap-4 border-b-2 border-[#171A1C] bg-[#FBFAF6] px-5 py-5 sm:px-7;
+  }
+
+  .evidence-drawer-header h2 {
+    @apply mt-1 text-2xl font-semibold tracking-[-0.03em];
+  }
+
+  .evidence-drawer-header p:not(.eyebrow) {
+    @apply mt-1 max-w-xl text-sm leading-5 text-[#646762];
+  }
+
+  .evidence-drawer-header > button {
+    @apply grid h-10 w-10 shrink-0 place-items-center border border-[#AAA79F] hover:border-[#171A1C] hover:bg-[#ECE9E1];
+  }
+
+  .evidence-drawer-body {
+    @apply flex-1 overflow-y-auto px-5 pb-10 sm:px-7;
+  }
+
+  .evidence-drawer .knowledge-register {
+    @apply mt-0 border-t-0 pt-6;
   }
 
   .comparison-view-switcher {

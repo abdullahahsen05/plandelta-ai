@@ -64,6 +64,10 @@ describe("KnowledgeRegister", () => {
     expect(screen.getByText("Rev 04")).toBeInTheDocument();
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "100");
     expect(screen.getByText("completed")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Review source" })).toHaveAttribute(
+      "href",
+      `/api/projects/${readyDocument.projectId}/knowledge-documents/${readyDocument.id}/source`,
+    );
     expect(screen.queryByRole("button", { name: "Retry" })).not.toBeInTheDocument();
   });
 

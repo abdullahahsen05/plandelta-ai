@@ -7,6 +7,7 @@ import {
   LoaderCircle,
   RefreshCw,
   RotateCcw,
+  SquareArrowOutUpRight,
   Trash2,
   Upload,
 } from "lucide-react";
@@ -59,9 +60,11 @@ function actionError(error: unknown) {
 export function KnowledgeRegister({
   initialDocuments,
   projectId,
+  onDocumentsChange,
 }: {
   initialDocuments: KnowledgeDocument[];
   projectId: string;
+  onDocumentsChange?: (documents: KnowledgeDocument[]) => void;
 }) {
   const [documents, setDocuments] = useState(initialDocuments);
   const [busyAction, setBusyAction] = useState<string | null>(null);
@@ -70,6 +73,10 @@ export function KnowledgeRegister({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const formRef = useRef<HTMLFormElement>(null);
   const supabaseRef = useRef(createBrowserSupabaseClient());
+
+  useEffect(() => {
+    onDocumentsChange?.(documents);
+  }, [documents, onDocumentsChange]);
 
   const accessToken = useCallback(async () => {
     const { data } = await supabaseRef.current.auth.getSession();
@@ -375,6 +382,13 @@ export function KnowledgeRegister({
                   ) : null}
                 </div>
                 <div className="knowledge-actions">
+                  <a
+                    href={`/api/projects/${projectId}/knowledge-documents/${document.id}/source`}
+                    rel="noreferrer"
+                    target="_blank"
+                  >
+                    <SquareArrowOutUpRight aria-hidden="true" size={14} /> Review source
+                  </a>
                   {failed ? (
                     <button disabled={itemBusy} onClick={() => void retry(document)} type="button">
                       <RotateCcw aria-hidden="true" size={14} /> Retry
