@@ -97,7 +97,7 @@ test("authenticated upload reaches real evidence and printable report", async ({
     );
 
     await page.goto("/app/projects/new");
-    await expect(page.getByText("AUTHENTICATED")).toBeVisible();
+    await expect(page.getByText("PUBLIC ACCESS")).toBeVisible();
     await page.getByLabel("Project name").fill("Playwright live comparison");
     const fileInputs = page.locator('input[type="file"]');
     await fileInputs

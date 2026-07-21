@@ -80,7 +80,8 @@ export function KnowledgeRegister({
 
   const accessToken = useCallback(async () => {
     const { data } = await supabaseRef.current.auth.getSession();
-    if (!data.session?.access_token) throw new Error("Your guest session has expired. Reopen the workspace.");
+    if (!data.session?.access_token)
+      throw new Error("Your guest session has expired. Reopen the workspace.");
     return data.session.access_token;
   }, []);
 

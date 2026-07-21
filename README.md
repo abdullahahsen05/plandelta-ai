@@ -34,11 +34,11 @@ OpenCV/OCR pipeline. Built-in demonstrations are always labelled as sample data.
 
 ## Explore the product
 
-| Journey                                                                                       | What it demonstrates                                                                                   |
-| --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
-| [Construction sample](https://plandelta-ai.vercel.app/app/analyses/sample)                    | Linked drawing evidence, change ledger, side-by-side comparison, and printable reporting               |
-| [Engineering schematic sample](https://plandelta-ai.vercel.app/app/analyses/schematic-sample) | Three schematic changes, cited Evidence Copilot answer, and citation-to-ledger navigation              |
-| [Live workspace](https://plandelta-ai.vercel.app/app)                                         | No-sign-in guest access, isolated projects, real uploads, durable processing, and project knowledge    |
+| Journey                                                                                       | What it demonstrates                                                                                |
+| --------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------- |
+| [Construction sample](https://plandelta-ai.vercel.app/app/analyses/sample)                    | Linked drawing evidence, change ledger, side-by-side comparison, and printable reporting            |
+| [Engineering schematic sample](https://plandelta-ai.vercel.app/app/analyses/schematic-sample) | Three schematic changes, cited Evidence Copilot answer, and citation-to-ledger navigation           |
+| [Live workspace](https://plandelta-ai.vercel.app/app)                                         | No-sign-in guest access, isolated projects, real uploads, durable processing, and project knowledge |
 
 For a live comparison:
 

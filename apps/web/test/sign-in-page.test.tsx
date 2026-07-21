@@ -1,28 +1,19 @@
-import { render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 import SignInPage from "../app/auth/sign-in/page";
 
-const originalLiveProcessingValue = process.env.NEXT_PUBLIC_LIVE_PROCESSING_ENABLED;
+const redirectMock = vi.hoisted(() => vi.fn());
 
-afterEach(() => {
-  if (originalLiveProcessingValue === undefined) {
-    delete process.env.NEXT_PUBLIC_LIVE_PROCESSING_ENABLED;
-  } else {
-    process.env.NEXT_PUBLIC_LIVE_PROCESSING_ENABLED = originalLiveProcessingValue;
-  }
+vi.mock("next/navigation", () => {
+  return { redirect: redirectMock };
 });
 
 describe("sign-in boundary", () => {
-  it("does not offer passwordless sign-in while portfolio mode is active", async () => {
-    process.env.NEXT_PUBLIC_LIVE_PROCESSING_ENABLED = "false";
+  beforeEach(() => redirectMock.mockReset());
 
-    render(await SignInPage({ searchParams: Promise.resolve({}) }));
+  it("redirects legacy sign-in traffic into an isolated guest session", async () => {
+    await SignInPage({ searchParams: Promise.resolve({ next: "/app/projects/new" }) });
 
-    expect(
-      screen.getByRole("heading", { name: "Live project access is temporarily offline" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByRole("textbox", { name: "Work email" })).not.toBeInTheDocument();
-    expect(screen.getByRole("link", { name: "Open the labelled sample" })).toBeInTheDocument();
+    expect(redirectMock).toHaveBeenCalledWith("/auth/guest?next=%2Fapp%2Fprojects%2Fnew");
   });
 });
