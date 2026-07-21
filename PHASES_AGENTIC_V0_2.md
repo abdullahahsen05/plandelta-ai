@@ -12,6 +12,13 @@ remaining safe work.
 
 ## Current execution state
 
+- Post-release task (2026-07-22): evidence upload/review is implemented on
+  `codex/project-evidence-access`; local web checks and the explicit real Supabase RAG integration
+  pass. Handoff documentation is complete. Branch push, CI, merge, AWS/Vercel refresh, and
+  authenticated production RAG/browser verification remain in progress.
+- Post-release implementation checkpoints: `c1acf45` (project evidence UI/source proxy/tests) and
+  `3746b0a` (complete new-agent handoff package).
+
 - Current phase: Complete — Phases 12 through 22 passed
 - Current task: Complete; `v0.2.0` is published and the released public paths are verified
 - Starting main commit: `8a5cd34c2452db3537128b53dc30cf73affbd2b3`
