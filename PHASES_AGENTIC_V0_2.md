@@ -12,6 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
+- Post-release task (2026-07-22): public guest access implementation in progress. The passwordless
+  email screen is being replaced by an automatic per-browser guest session while retaining API
+  authorization, RLS ownership, quotas, and project isolation.
 - Post-release task (2026-07-22): complete. Evidence upload/review shipped through PR #21 and merge
   `ecac5f4`; PR/main CI, Vercel production, the explicit Supabase RAG integration, authenticated
   production RAG/Copilot, production browser, and AWS Phase 9/10 verification all pass.

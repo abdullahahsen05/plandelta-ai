@@ -64,7 +64,7 @@ export function AnalysisProgress({ initial }: { initial: Analysis }) {
         const supabase = createBrowserSupabaseClient();
         const { data } = await supabase.auth.getSession();
         if (!data.session?.access_token) {
-          router.push("/auth/sign-in");
+          router.push("/auth/guest");
           return;
         }
         const next = await apiRequest(

@@ -38,11 +38,11 @@ OpenCV/OCR pipeline. Built-in demonstrations are always labelled as sample data.
 | --------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------ |
 | [Construction sample](https://plandelta-ai.vercel.app/app/analyses/sample)                    | Linked drawing evidence, change ledger, side-by-side comparison, and printable reporting               |
 | [Engineering schematic sample](https://plandelta-ai.vercel.app/app/analyses/schematic-sample) | Three schematic changes, cited Evidence Copilot answer, and citation-to-ledger navigation              |
-| [Live workspace](https://plandelta-ai.vercel.app/app)                                         | Passwordless authentication, private projects, real uploads, durable processing, and project knowledge |
+| [Live workspace](https://plandelta-ai.vercel.app/app)                                         | No-sign-in guest access, isolated projects, real uploads, durable processing, and project knowledge    |
 
 For a live comparison:
 
-1. Sign in with a passwordless email link.
+1. Open the workspace; PlanDelta creates an isolated guest session automatically.
 2. Create a project and upload the earlier drawing as the **baseline**.
 3. Upload the later drawing as the **candidate**.
 4. Start analysis and review the aligned sheets beside the change ledger.

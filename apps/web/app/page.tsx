@@ -92,8 +92,8 @@ export default function Home() {
             BLUEPRINT REVISION INTELLIGENCE
           </span>
           {liveProcessingEnabled ? (
-            <Link className="border-b border-[#171A1C] text-sm font-semibold" href="/auth/sign-in">
-              Sign in
+            <Link className="border-b border-[#171A1C] text-sm font-semibold" href="/auth/guest">
+              Open app
             </Link>
           ) : (
             <span className="technical text-[10px] tracking-[0.1em] text-[#646762]">
@@ -135,7 +135,7 @@ export default function Home() {
               {liveProcessingEnabled ? (
                 <Link
                   className="inline-flex min-h-11 items-center justify-center border border-[#171A1C] px-5 font-semibold transition-colors hover:bg-[#171A1C] hover:text-white"
-                  href="/app/projects/new"
+                  href="/auth/guest?next=/app/projects/new"
                 >
                   Compare revisions
                 </Link>
