@@ -4,6 +4,8 @@ import {
   AlignHorizontalSpaceAround,
   Download,
   Eye,
+  Files,
+  FileUp,
   Focus,
   Hand,
   Link2,
@@ -27,6 +29,8 @@ import type { SampleChange } from "../lib/sample-data";
 import type { CompareMode } from "./blueprint-canvas";
 import { ChangeLedger, type ChangeFilter } from "./change-ledger";
 import { EvidenceCopilot } from "./evidence-copilot/evidence-copilot";
+import { KnowledgeRegister } from "./knowledge-register";
+import type { KnowledgeDocument } from "../lib/api/contracts";
 
 const BlueprintCanvas = dynamic(
   () => import("./blueprint-canvas").then((module) => module.BlueprintCanvas),
@@ -65,6 +69,7 @@ export type WorkbenchData = {
   reportSummary?: string | undefined;
   summaryProvider?: "DETERMINISTIC" | "BEDROCK" | undefined;
   reportUrl?: string | undefined;
+  knowledgeDocuments?: KnowledgeDocument[] | undefined;
 };
 
 const sampleWorkbench: WorkbenchData = {
@@ -184,6 +189,60 @@ function modeDescription(mode: CompareMode) {
   if (mode === "baseline") return "Only the earlier baseline drawing is shown.";
   if (mode === "candidate") return "Only the revised drawing is shown.";
   return "The aligned baseline and revised drawing alternate automatically.";
+}
+
+function ProjectEvidenceDrawer({
+  documents,
+  focus,
+  onClose,
+  onDocumentsChange,
+  projectId,
+}: {
+  documents: KnowledgeDocument[];
+  focus: "upload" | "review";
+  onClose: () => void;
+  onDocumentsChange: (documents: KnowledgeDocument[]) => void;
+  projectId: string;
+}) {
+  useEffect(() => {
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = previous;
+    };
+  }, []);
+
+  return (
+    <div className="evidence-drawer-backdrop" onMouseDown={onClose} role="presentation">
+      <aside
+        aria-label="Project evidence"
+        aria-modal="true"
+        className="evidence-drawer"
+        onMouseDown={(event) => event.stopPropagation()}
+        role="dialog"
+      >
+        <header className="evidence-drawer-header">
+          <div>
+            <p className="eyebrow">PROJECT-SCOPED RAG EVIDENCE</p>
+            <h2>{focus === "upload" ? "Upload evidence" : "Review project documents"}</h2>
+            <p>
+              Evidence Copilot retrieves only ready, authorized documents shown in this register.
+            </p>
+          </div>
+          <button aria-label="Close project evidence" onClick={onClose} type="button">
+            <X aria-hidden="true" size={18} />
+          </button>
+        </header>
+        <div className="evidence-drawer-body">
+          <KnowledgeRegister
+            initialDocuments={documents}
+            onDocumentsChange={onDocumentsChange}
+            projectId={projectId}
+          />
+        </div>
+      </aside>
+    </div>
+  );
 }
 
 type LargeDrawingView = "split" | "baseline" | "candidate";
@@ -343,6 +402,8 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
   const [fitToken, setFitToken] = useState(0);
   const [synchronized, setSynchronized] = useState(true);
   const [largeView, setLargeView] = useState<LargeDrawingView | null>(null);
+  const [evidenceDrawer, setEvidenceDrawer] = useState<"upload" | "review" | null>(null);
+  const [knowledgeDocuments, setKnowledgeDocuments] = useState(data.knowledgeDocuments ?? []);
 
   const selectChange = (id: string) => {
     setSelectedId(id);
@@ -449,6 +510,22 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           </select>
         </div>
 
+        {!data.sample ? (
+          <div
+            aria-label="Project evidence controls"
+            className="evidence-toolbar-actions"
+            role="group"
+          >
+            <button onClick={() => setEvidenceDrawer("upload")} type="button">
+              <FileUp aria-hidden="true" size={15} /> Upload evidence
+            </button>
+            <button onClick={() => setEvidenceDrawer("review")} type="button">
+              <Files aria-hidden="true" size={15} /> Review documents
+              <span className="technical">{knowledgeDocuments.length}</span>
+            </button>
+          </div>
+        ) : null}
+
         {mode === "overlay" ? (
           <div className="control-group range-control">
             <label htmlFor="overlay-opacity">Revised opacity</label>
@@ -553,6 +630,15 @@ export function Workbench({ data = sampleWorkbench }: { data?: WorkbenchData }) 
           onModeChange={setLargeView}
           onSelect={selectChange}
           selectedId={selectedId}
+        />
+      ) : null}
+      {evidenceDrawer ? (
+        <ProjectEvidenceDrawer
+          documents={knowledgeDocuments}
+          focus={evidenceDrawer}
+          onClose={() => setEvidenceDrawer(null)}
+          onDocumentsChange={setKnowledgeDocuments}
+          projectId={data.projectId}
         />
       ) : null}
     </main>

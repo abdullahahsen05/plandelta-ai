@@ -1,17 +1,22 @@
 "use client";
 
-import { FileUp, LoaderCircle, ShieldCheck } from "lucide-react";
+import { FileText, FileUp, LoaderCircle, ShieldCheck, X } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useId, useState } from "react";
 
 import { apiRequest, apiRequestEmpty, PlanDeltaApiError } from "../lib/api/client";
-import { analysisSchema, projectSchema, revisionSchema } from "../lib/api/contracts";
+import {
+  analysisSchema,
+  knowledgeDocumentSchema,
+  projectSchema,
+  revisionSchema,
+} from "../lib/api/contracts";
 import { createBrowserSupabaseClient } from "../lib/supabase/client";
 
 const maximumBytes = 20 * 1024 * 1024;
 const acceptedTypes = new Set(["application/pdf", "image/png", "image/jpeg"]);
 
-type ProgressStage = "idle" | "project" | "revisions" | "analysis";
+type ProgressStage = "idle" | "project" | "evidence" | "revisions" | "analysis";
 type AnalysisProfile = "CONSTRUCTION_DRAWING" | "ENGINEERING_SCHEMATIC";
 
 function FileField({
@@ -78,6 +83,16 @@ async function uploadRevision(
   });
 }
 
+async function uploadEvidenceDocument(token: string, projectId: string, file: File) {
+  const form = new FormData();
+  form.set("file", file);
+  form.set("documentType", "SPECIFICATION");
+  return apiRequest(`/projects/${projectId}/knowledge-documents`, token, knowledgeDocumentSchema, {
+    method: "POST",
+    body: form,
+  });
+}
+
 export function UploadComparisonForm() {
   const router = useRouter();
   const [name, setName] = useState("");
@@ -85,6 +100,7 @@ export function UploadComparisonForm() {
   const [analysisProfile, setAnalysisProfile] = useState<AnalysisProfile>("CONSTRUCTION_DRAWING");
   const [baseline, setBaseline] = useState<File | null>(null);
   const [candidate, setCandidate] = useState<File | null>(null);
+  const [evidenceFiles, setEvidenceFiles] = useState<File[]>([]);
   const [stage, setStage] = useState<ProgressStage>("idle");
   const [error, setError] = useState<string | null>(null);
   const busy = stage !== "idle";
@@ -101,6 +117,9 @@ export function UploadComparisonForm() {
 
     setError(null);
     let projectId: string | null = null;
+    const createdDocumentIds: string[] = [];
+    const createdRevisionIds: string[] = [];
+    let accessToken: string | null = null;
     try {
       const supabase = createBrowserSupabaseClient();
       const { data } = await supabase.auth.getSession();
@@ -109,6 +128,7 @@ export function UploadComparisonForm() {
         router.push(`/auth/sign-in?next=${encodeURIComponent("/app/projects/new")}`);
         return;
       }
+      accessToken = token;
 
       setStage("project");
       const project = await apiRequest("/projects", token, projectSchema, {
@@ -125,11 +145,31 @@ export function UploadComparisonForm() {
       });
       projectId = project.id;
 
+      if (evidenceFiles.length > 0) {
+        setStage("evidence");
+        for (const file of evidenceFiles) {
+          const document = await uploadEvidenceDocument(token, project.id, file);
+          createdDocumentIds.push(document.id);
+        }
+      }
+
       setStage("revisions");
-      const [baselineRevision, candidateRevision] = await Promise.all([
+      const revisionResults = await Promise.allSettled([
         uploadRevision(token, project.id, baseline, "BASELINE"),
         uploadRevision(token, project.id, candidate, "CANDIDATE"),
       ]);
+      for (const result of revisionResults) {
+        if (result.status === "fulfilled") createdRevisionIds.push(result.value.id);
+      }
+      const [baselineResult, candidateResult] = revisionResults;
+      if (!baselineResult || baselineResult.status === "rejected") {
+        throw baselineResult?.reason ?? new Error("Baseline upload failed.");
+      }
+      if (!candidateResult || candidateResult.status === "rejected") {
+        throw candidateResult?.reason ?? new Error("Candidate upload failed.");
+      }
+      const baselineRevision = baselineResult.value;
+      const candidateRevision = candidateResult.value;
 
       setStage("analysis");
       const analysis = await apiRequest(`/projects/${project.id}/analyses`, token, analysisSchema, {
@@ -154,20 +194,31 @@ export function UploadComparisonForm() {
             ? "The application is missing required public configuration."
             : "The comparison could not be started. Check the files and try again.";
       setError(message);
-      if (projectId) {
-        const supabase = createBrowserSupabaseClient();
-        const { data } = await supabase.auth.getSession();
-        if (data.session?.access_token) {
-          await apiRequestEmpty(`/projects/${projectId}`, data.session.access_token, {
-            method: "DELETE",
-          }).catch(() => undefined);
-        }
+      if (projectId && accessToken) {
+        const cleanupProjectId = projectId;
+        const cleanupToken = accessToken;
+        await Promise.allSettled([
+          ...createdRevisionIds.map((revisionId) =>
+            apiRequestEmpty(`/revisions/${revisionId}`, cleanupToken, { method: "DELETE" }),
+          ),
+          ...createdDocumentIds.map((documentId) =>
+            apiRequestEmpty(
+              `/projects/${cleanupProjectId}/knowledge-documents/${documentId}`,
+              cleanupToken,
+              { method: "DELETE" },
+            ),
+          ),
+        ]);
+        await apiRequestEmpty(`/projects/${cleanupProjectId}`, cleanupToken, {
+          method: "DELETE",
+        }).catch(() => undefined);
       }
       setStage("idle");
     }
   }
 
   const progress = {
+    evidence: `Uploading ${evidenceFiles.length} evidence document${evidenceFiles.length === 1 ? "" : "s"}...`,
     idle: ready ? "Ready to analyze" : "Complete all fields",
     project: "Creating secure project…",
     revisions: "Uploading both revisions…",
@@ -246,6 +297,79 @@ export function UploadComparisonForm() {
           onChange={setCandidate}
         />
       </div>
+      <section className="evidence-setup" aria-labelledby="evidence-setup-heading">
+        <div className="evidence-setup-copy">
+          <p className="eyebrow">PROJECT EVIDENCE FOR RAG</p>
+          <h2 id="evidence-setup-heading">Ground the comparison before it starts</h2>
+          <p>
+            Add specifications, schedules, notes, or revision records now. Evidence Copilot will
+            retrieve only documents that finish validation and ingestion for this project.
+          </p>
+        </div>
+        <label className="evidence-setup-add">
+          <FileUp aria-hidden="true" size={18} />
+          <span>Add evidence documents</span>
+          <small>PDF or TXT · up to 20 MB each</small>
+          <input
+            accept=".pdf,.txt,application/pdf,text/plain"
+            disabled={busy}
+            multiple
+            onChange={(event) => {
+              const incoming = Array.from(event.target.files ?? []);
+              const allowedEvidenceTypes = new Set(["application/pdf", "text/plain"]);
+              const invalid = incoming.find(
+                (file) =>
+                  !allowedEvidenceTypes.has(file.type) ||
+                  file.size === 0 ||
+                  file.size > maximumBytes,
+              );
+              if (invalid) {
+                setError(`${invalid.name} must be a non-empty PDF or TXT file up to 20 MB.`);
+              } else {
+                setError(null);
+                setEvidenceFiles((current) => {
+                  const keys = new Set(current.map((file) => `${file.name}:${file.size}`));
+                  return [
+                    ...current,
+                    ...incoming.filter((file) => !keys.has(`${file.name}:${file.size}`)),
+                  ].slice(0, 8);
+                });
+              }
+              event.target.value = "";
+            }}
+            type="file"
+          />
+        </label>
+        <div className="evidence-setup-register" aria-live="polite">
+          {evidenceFiles.length === 0 ? (
+            <p>
+              <FileText aria-hidden="true" size={17} /> No documents queued. The visual comparison
+              can still run, but Copilot will report insufficient document evidence when needed.
+            </p>
+          ) : (
+            evidenceFiles.map((file, index) => (
+              <div key={`${file.name}:${file.size}`}>
+                <span className="technical">{String(index + 1).padStart(2, "0")}</span>
+                <FileText aria-hidden="true" size={16} />
+                <span>
+                  <strong>{file.name}</strong>
+                  <small>{Math.max(1, Math.round(file.size / 1024))} KB · Specification</small>
+                </span>
+                <button
+                  aria-label={`Remove ${file.name}`}
+                  disabled={busy}
+                  onClick={() =>
+                    setEvidenceFiles((current) => current.filter((entry) => entry !== file))
+                  }
+                  type="button"
+                >
+                  <X aria-hidden="true" size={15} />
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </section>
       <div className="submission-bar">
         <div className="flex gap-3">
           <ShieldCheck aria-hidden="true" className="mt-0.5 shrink-0 text-[#17845B]" size={20} />
