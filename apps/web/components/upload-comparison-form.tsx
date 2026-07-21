@@ -125,7 +125,7 @@ export function UploadComparisonForm() {
       const { data } = await supabase.auth.getSession();
       const token = data.session?.access_token;
       if (!token) {
-        router.push(`/auth/sign-in?next=${encodeURIComponent("/app/projects/new")}`);
+        router.push(`/auth/guest?next=${encodeURIComponent("/app/projects/new")}`);
         return;
       }
       accessToken = token;

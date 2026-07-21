@@ -824,7 +824,7 @@ export function EvidenceCopilot({
           {sample
             ? "CACHED SAMPLE OUTPUT"
             : liveAvailable
-              ? "AUTHENTICATED LIVE COMPUTE"
+              ? "PUBLIC LIVE COMPUTE"
               : "LIVE MODEL COMPUTE OFFLINE"}
         </span>
         <p>

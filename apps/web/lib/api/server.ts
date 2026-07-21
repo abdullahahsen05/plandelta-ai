@@ -8,7 +8,7 @@ export async function requireServerAccessToken() {
     supabase.auth.getUser(),
     supabase.auth.getSession(),
   ]);
-  if (!userData.user || !sessionData.session?.access_token) redirect("/auth/sign-in");
+  if (!userData.user || !sessionData.session?.access_token) redirect("/auth/guest");
   return sessionData.session.access_token;
 }
 
