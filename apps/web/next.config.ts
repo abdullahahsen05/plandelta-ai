@@ -23,7 +23,7 @@ const contentSecurityPolicy = [
   "frame-ancestors 'none'",
   "img-src 'self' blob: data:",
   "manifest-src 'self'",
-  "media-src 'none'",
+  "media-src 'self' blob:",
   "object-src 'none'",
   scriptSource,
   "style-src 'self' 'unsafe-inline'",
@@ -39,7 +39,10 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "Content-Security-Policy", value: contentSecurityPolicy },
           { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
-          { key: "Permissions-Policy", value: "camera=(), geolocation=(), microphone=()" },
+          {
+            key: "Permissions-Policy",
+            value: "camera=(self), geolocation=(), microphone=(self)",
+          },
           { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "X-Frame-Options", value: "DENY" },

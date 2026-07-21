@@ -12,6 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
+- Post-release task (2026-07-22): same-origin camera and microphone permissions enabled for Loom
+  recording on the deployed product tab; geolocation remains disabled and media playback remains
+  limited to same-origin/blob sources.
 - Post-release task (2026-07-22): public guest access implementation in progress. The passwordless
   email screen is being replaced by an automatic per-browser guest session while retaining API
   authorization, RLS ownership, quotas, and project isolation.
