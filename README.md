@@ -320,6 +320,7 @@ by a qualified reviewer before coordination, procurement, or construction.
 
 | Area                     | Reference                                                                                         |
 | ------------------------ | ------------------------------------------------------------------------------------------------- |
+| New-agent handoff        | [Start here](./HANDOFF.md) · [current state](./docs/HANDOFF/CURRENT_STATE.md)                     |
 | Product and phase record | [Plan](./PLAN_AGENTIC_V0_2.md) · [Phases](./PHASES_AGENTIC_V0_2.md)                               |
 | Architecture             | [v0.2 architecture](./docs/ARCHITECTURE_V0_2.md) · [system architecture](./docs/ARCHITECTURE.md)  |
 | API and chat contracts   | [API contract](./docs/API_CONTRACT.md) · [chat API](./docs/API_CHAT_V0_2.md)                      |
