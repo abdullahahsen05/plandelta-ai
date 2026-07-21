@@ -27,7 +27,8 @@ export async function GET(request: NextRequest) {
   });
   const identity = crypto.randomUUID();
   const email = `guest-${identity}@plandelta.demo`;
-  const password = `${crypto.randomUUID()}-${crypto.randomUUID()}`;
+  // Supabase passwords are bcrypt-backed and must not exceed 72 characters.
+  const password = `Pd1!${crypto.randomUUID()}`;
   const { error: createError } = await admin.auth.admin.createUser({
     email,
     password,
