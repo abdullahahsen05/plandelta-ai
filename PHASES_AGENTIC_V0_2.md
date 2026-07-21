@@ -12,6 +12,9 @@ remaining safe work.
 
 ## Current execution state
 
+- Post-release repair (2026-07-22): public guest provisioning redirected to the sample because its
+  generated password exceeded Supabase's 72-character bcrypt limit. The bounded replacement was
+  verified through disposable admin-create, password sign-in, and cleanup against production data.
 - Post-release task (2026-07-22): same-origin camera and microphone permissions enabled for Loom
   recording on the deployed product tab; geolocation remains disabled and media playback remains
   limited to same-origin/blob sources.
