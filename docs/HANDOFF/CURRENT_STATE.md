@@ -9,7 +9,7 @@ or material operational change. Never carry forward a success claim without re-v
 - Production web: <https://plandelta-ai.vercel.app>
 - Preserved releases: `v0.1.0` and `v0.2.0`
 - Default branch: `main`
-- Current implementation branch: `codex/project-evidence-access`
+- Current release-record branch: `codex/evidence-release-record` (documentation only)
 - AWS region/profile: `us-east-1` / `plandelta`
 - Cost boundary: USD 25 target, USD 100 promotional-credit ceiling
 
@@ -44,18 +44,26 @@ Implementation commit: `c1acf45` (`feat(web): surface project evidence across co
 - Desktop visual check: passed.
 - Mobile 390×844 visual check: passed with no horizontal overflow.
 
-## Still required before calling this change live
+## Release outcome
 
-- comprehensive handoff documents committed;
-- full repository/static/security checks appropriate to the diff;
-- reviewed branch pushed and CI green;
-- PR merged to `main`;
-- Vercel production `Ready` on the merge commit;
-- AWS runtime refreshed to the merge commit and Phase 9/10 verified;
-- authenticated production evidence upload/ingestion/Copilot answer with verified document citation
-  and source review;
-- production browser confirmation of the new toolbar/drawer and creation-page upload;
-- final commit/deployment/resource/cost evidence recorded below.
+The evidence-access change is live. PR #21 merged to `main` at `ecac5f4`. Vercel deployed that
+merge to production and the `plandelta-ai.vercel.app` alias is attached to the ready deployment.
+The AWS service images were intentionally not rebuilt: this diff changes only `apps/web` and
+documentation, while the API/agent/vision backend code is byte-for-byte unchanged. The retained
+immutable backend runtime passed Phase 9/10 verification and a fresh authenticated production RAG
+journey.
+
+Production proof on 2026-07-22:
+
+- a supporting technical note reached `COMPLETED` ingestion;
+- the knowledge specialist used local BGE plus hybrid retrieval;
+- Bedrock completed the answer with one verified document citation;
+- the generated RFI remained review-only;
+- all synthetic production records were cleaned up;
+- the authenticated Chromium journey selected evidence before project creation, completed real
+  drawing analysis, opened the workbench document register, rendered linked evidence/report, and
+  cleaned up in 40.3 seconds;
+- all nine CloudWatch alarms were `OK` and both AWS control/runtime verifiers passed.
 
 ## Final release evidence
 
@@ -63,16 +71,16 @@ Populate after deployment. Unknown values must remain `pending`, never guessed.
 
 | Evidence | Current value |
 | --- | --- |
-| PR | pending |
-| Merge commit | pending |
-| CI run | pending |
-| Vercel production deployment | pending |
-| Immutable AWS image/runtime commit | pending |
-| API health/version | pending |
-| Production RAG/Copilot smoke | pending |
-| Production browser smoke | pending |
-| CloudWatch alarms | pending |
-| AWS actual/forecast cost | pending |
+| PR | [#21](https://github.com/abdullahahsen05/plandelta-ai/pull/21) |
+| Merge commit | `ecac5f4166eb3bba850b3848484b4cefda7f2bb8` |
+| PR / main CI | `29869569858` / `29869702864`, both successful |
+| Vercel production deployment | `dpl_7HKA2c1ztHykYUshf8VisaSQiUuN`, Ready |
+| Immutable AWS image/runtime commit | `1e41ee4cf38853a4d89abb805f670ef2df5758c7`; unchanged backend images |
+| API health/version | `ok` / `0.2.0`; database, agent, and vision all `ok` |
+| Production RAG/Copilot smoke | passed: completed ingestion, 1 verified citation, Bedrock, cleanup |
+| Production browser smoke | passed in 40.3 seconds |
+| CloudWatch alarms | all 9 `OK`; Phase 9 and Phase 10 verifiers passed |
+| AWS actual/forecast cost | USD 2.148 actual against USD 25; forecast unavailable, not claimed |
 
 ## Known honest limitations
 
@@ -84,4 +92,3 @@ Populate after deployment. Unknown values must remain `pending`, never guessed.
 - Live AI synthesis depends on the single EC2 runtime, Supabase, and on-demand Bedrock availability.
 - The EC2 public IP can change after restart; automation must refresh certificates/origins.
 - Every finding, impact statement, citation, and RFI draft requires qualified human review.
-
